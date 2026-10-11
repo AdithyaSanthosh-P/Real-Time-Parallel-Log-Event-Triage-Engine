@@ -27,7 +27,7 @@ The order is deliberate: get a correct, single-threaded, end-to-end pipeline on 
   *Done when:* unit test with hand-built masks covers ties and multi-label cases.
 - [x] **T1.6 Router v0** (`route.c/.h`, §7). JSONL writer with correct JSON string escaping; sinks `out/alerts.jsonl` (severity ≥ HIGH), `out/store.jsonl` (all). PII masking comes later (T3.5).
   *Done when:* output of a test run parses with `python3 -m json.tool` line by line (script in `tools/check_jsonl.py`).
-- [ ] **T1.7 Single-thread pipeline + CLI** (`main.c`, `cli.c`). Wire reader → posix engine → aggregator → router in one thread. Implement CLI parsing for all flags in §8 (unimplemented ones print "not yet implemented" and exit 2).
+- [x] **T1.7 Single-thread pipeline + CLI** (`main.c`, `cli.c`). Wire reader → posix engine → aggregator → router in one thread. Implement CLI parsing for all flags in §8 (unimplemented ones print "not yet implemented" and exit 2).
   *Done when:* `make e2e` runs `bin/triage --engine posix -w 1 tests/corpus/synthetic_small.log` and compares `(seq, primary, labels)` against `tests/expected/synthetic_small.expected` (create this file by hand from the corpus comments, then review it). Diff is empty.
 
 ## Phase 2 — Regex compiler and DFA engine (core contribution)

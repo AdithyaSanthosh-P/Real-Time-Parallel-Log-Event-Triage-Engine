@@ -1,19 +1,25 @@
 #include <stdio.h>
-#include <string.h>
 
 #include "cli.h"
+#include "pipeline.h"
 
-/* T0.1 stub: only --help is handled. Full CLI parsing and the pipeline
- * wiring arrive in T1.7. */
 int main(int argc, char **argv)
 {
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
-            cli_print_usage(stdout);
-            return 0;
-        }
-    }
+    Options opts;
+    char err[256];
 
-    fprintf(stderr, "triage: not yet implemented (try --help)\n");
-    return 2;
+    if (cli_parse(argc, argv, &opts, err, sizeof err) != 0) {
+        fprintf(stderr, "triage: %s\nTry 'triage --help'.\n", err);
+        return 2;
+    }
+    if (opts.help) {
+        cli_print_usage(stdout);
+        return 0;
+    }
+    const char *todo = cli_unimplemented(&opts);
+    if (todo) {
+        fprintf(stderr, "triage: %s: not yet implemented\n", todo);
+        return 2;
+    }
+    return pipeline_run(&opts);
 }
