@@ -85,12 +85,13 @@ test: $(TEST_BINS)
 	@set -e; for t in $(TEST_BINS); do echo "== $$t"; $$t; done; \
 	echo "all $(words $(TEST_BINS)) test programs passed"
 
-# Created by later tasks; fail loudly rather than pretend to pass.
+# DFA vs per-rule regexec on every corpus line plus generated strings (§3.5).
+DIFFTEST_RANDOM ?= 100000
 difftest: all
 	@if [ -x $(BIN_DIR)/difftest ]; then \
-	    $(BIN_DIR)/difftest tests/corpus/*.log; \
+	    $(BIN_DIR)/difftest --random $(DIFFTEST_RANDOM) tests/corpus/*.log; \
 	else \
-	    echo "difftest: not implemented yet (task T2.5)" >&2; exit 1; \
+	    echo "difftest: tools/difftest.c is missing" >&2; exit 1; \
 	fi
 
 e2e: all

@@ -40,7 +40,7 @@ The order is deliberate: get a correct, single-threaded, end-to-end pipeline on 
   *Done when:* DFA mask == `nfa_simulate` mask on the same test set as T2.2; building the 26 default rules succeeds under the default cap.
 - [x] **T2.4 DFA engine** (`engine_dfa.c/.h`, §3.3). Match loop exactly as §3.3, iterating over all groups. Hook into `--engine dfa`.
   *Done when:* `make e2e` passes with `--engine dfa` (same expected file as T1.7).
-- [ ] **T2.5 Differential test tool** (`tools/difftest.c`, §3.5). For every line in `tests/corpus/*.log` (and optionally a `--random N` mode generating strings biased toward rule fragments), compare DFA mask vs per-rule `regexec` mask. Print rule id, line number and line on mismatch; exit non-zero if any.
+- [x] **T2.5 Differential test tool** (`tools/difftest.c`, §3.5). For every line in `tests/corpus/*.log` (and optionally a `--random N` mode generating strings biased toward rule fragments), compare DFA mask vs per-rule `regexec` mask. Print rule id, line number and line on mismatch; exit non-zero if any.
   *Done when:* `make difftest` reports 0 mismatches on all corpus files and `--random 100000`.
 - [ ] **T2.6 DOT dump** (`dot.c`, §3.2 step 7). `--dump-dot FILE` writes the NFA and DFA (and minimized DFA later) for the loaded rules; collapse byte ranges into labels like `[a-z]` so diagrams are readable.
   *Done when:* `dot -Tpng` renders the DFA for a 2-rule file in `tests/fixtures/tiny.rules` without errors.
