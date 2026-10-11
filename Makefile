@@ -22,7 +22,7 @@ ifeq ($(SAN),)
   VARIANT  := plain
   BIN_DIR  := bin
 else ifeq ($(SAN),address)
-  OPT      := -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer
+  OPT      := -O1 -g -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer
   VARIANT  := address
   BIN_DIR  := bin/address
 else ifeq ($(SAN),thread)
