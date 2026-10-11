@@ -23,6 +23,12 @@ typedef enum {
     SEV_CRITICAL
 } Severity;
 
+/* Classified.flags bits (spec §6): set by the correlator when it escalates. */
+#define FLAG_BRUTE_FORCE       (1u << 0)
+#define FLAG_PASSWORD_SPRAY    (1u << 1)
+#define FLAG_FAIL_THEN_SUCCESS (1u << 2)
+#define FLAG_ERROR_STORM       (1u << 3)
+
 /* Aggregator output for one line (spec §2.4). `primary` is a category INDEX
  * (0 = AUTH ... 4 = PII, see aggregate.h), or PRIMARY_NONE when the line has
  * no label. */
