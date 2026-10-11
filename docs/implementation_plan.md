@@ -32,7 +32,7 @@ The order is deliberate: get a correct, single-threaded, end-to-end pipeline on 
 
 ## Phase 2 — Regex compiler and DFA engine (core contribution)
 
-- [ ] **T2.1 Regex lexer + recursive-descent parser → AST** (`regex_lex.c`, `regex_parse.c`, `ast.c`, §3.1–3.2). Grammar exactly as §3.1. Charsets as 256-bit sets; `.` = all bytes except `\n`; icase folds charsets; `^`/`$` only at ends (recorded as flags by the loader). Reject unsupported syntax with position: `\d`, `\s`, `\w`, `\b`, `\1`, `(?`, `*?`, `+?`, `??`, `{,n}`, `^`/`$` in the middle, unbalanced parens/brackets. Add `ast_print()` for debugging.
+- [x] **T2.1 Regex lexer + recursive-descent parser → AST** (`regex_lex.c`, `regex_parse.c`, `ast.c`, §3.1–3.2). Grammar exactly as §3.1. Charsets as 256-bit sets; `.` = all bytes except `\n`; icase folds charsets; `^`/`$` only at ends (recorded as flags by the loader). Reject unsupported syntax with position: `\d`, `\s`, `\w`, `\b`, `\1`, `(?`, `*?`, `+?`, `??`, `{,n}`, `^`/`$` in the middle, unbalanced parens/brackets. Add `ast_print()` for debugging.
   *Done when:* `tests/test_parse.c` has ≥ 40 cases (valid → expected AST print; invalid → expected error position), and all 26 default rules parse.
 - [ ] **T2.2 Thompson NFA** (`nfa.c/.h`, §3.2 step 2–3). One construction per AST node type; `{n,m}` expanded; accept states tagged with rule id; combined NFA with a fresh start state. Include `nfa_simulate(nfa, line, len) → mask` (set-of-states simulation with the same unanchored/anchored semantics as §3.2 step 4) — this is a second oracle and the reference for the DFA.
   *Done when:* `tests/test_nfa.c`: for each default rule and ~200 strings (corpus lines + synthetic edge strings), `nfa_simulate` mask == per-rule `regexec` mask.
