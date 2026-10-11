@@ -23,7 +23,7 @@ The order is deliberate: get a correct, single-threaded, end-to-end pipeline on 
   *Done when:* `tests/test_reader.c` passes on crafted inputs (CRLF, 1 MB single line, no trailing newline, empty file) and line counts on every corpus file equal `wc -l` (+1 if no trailing newline).
 - [x] **T1.4 POSIX engine** (`engine_posix.c/.h`, §2.1). An `EnginePosix` instance holds its own compiled `regex_t[]` (`REG_EXTENDED|REG_NOSUB`, plus `REG_ICASE` per rule). `uint64_t posix_match(EnginePosix*, line, len)` returns the rule mask. Lines are not NUL-terminated in the batch — copy to a per-instance scratch buffer or use `REG_STARTEND`.
   *Done when:* on `synthetic_small.log`, every positive line's mask includes its rule (test asserts it from the comments added in T0.2).
-- [ ] **T1.5 Aggregator v0** (`aggregate.c/.h`). Rule mask → `label_mask` (any matched rule's category), primary = highest severity with tie order from §5.3, line severity. No confidence, validators or context yet (set confidence = 1.0).
+- [x] **T1.5 Aggregator v0** (`aggregate.c/.h`). Rule mask → `label_mask` (any matched rule's category), primary = highest severity with tie order from §5.3, line severity. No confidence, validators or context yet (set confidence = 1.0).
   *Done when:* unit test with hand-built masks covers ties and multi-label cases.
 - [ ] **T1.6 Router v0** (`route.c/.h`, §7). JSONL writer with correct JSON string escaping; sinks `out/alerts.jsonl` (severity ≥ HIGH), `out/store.jsonl` (all). PII masking comes later (T3.5).
   *Done when:* output of a test run parses with `python3 -m json.tool` line by line (script in `tools/check_jsonl.py`).

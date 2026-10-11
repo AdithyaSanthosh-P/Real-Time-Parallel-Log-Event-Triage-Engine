@@ -23,6 +23,21 @@ typedef enum {
     SEV_CRITICAL
 } Severity;
 
+/* Aggregator output for one line (spec §2.4). `primary` is a category INDEX
+ * (0 = AUTH ... 4 = PII, see aggregate.h), or PRIMARY_NONE when the line has
+ * no label. */
+#define PRIMARY_NONE 0xFF
+
+typedef struct {
+    uint64_t seq;
+    uint32_t label_mask;             /* CAT_* bits, multi-label */
+    uint8_t  primary;                /* CAT index */
+    uint8_t  severity;               /* SEV_* */
+    float    confidence;             /* of primary */
+    uint64_t rule_mask;              /* for explainability */
+    uint32_t flags;                  /* e.g. ESCALATED_BRUTE_FORCE */
+} Classified;
+
 /* Most lines a Batch can hold; `-b` selects the actual batch size (default 256). */
 #define BATCH_MAX 1024
 
