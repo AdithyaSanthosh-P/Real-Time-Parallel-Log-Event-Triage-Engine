@@ -21,5 +21,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "triage: %s: not yet implemented\n", todo);
         return 2;
     }
+    if (opts.dump_dot)
+        return pipeline_dump_dot(&opts);
     return pipeline_run(&opts);
 }

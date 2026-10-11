@@ -13,4 +13,9 @@
  * reason printed on stderr. */
 int pipeline_run(const Options *o);
 
+/* --dump-dot FILE: compile the rules (NFA and DFA, honouring --max-states)
+ * and write them as Graphviz DOT to FILE ("-" = stdout), without reading
+ * any input. Returns the exit status (0 ok, 1 error). */
+int pipeline_dump_dot(const Options *o);
+
 #endif /* PIPELINE_H */

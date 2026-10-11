@@ -240,7 +240,6 @@ const char *cli_unimplemented(const Options *o)
     if (o->drop)                         return "--drop";
     if (o->ordered)                      return "--ordered";
     if (o->given & GIVEN_TAU)            return "--tau";
-    if (o->dump_dot)                     return "--dump-dot";
     if (o->bench)                        return "--bench";
     return NULL;
 }

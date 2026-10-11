@@ -1,0 +1,3 @@
+# Two small rules for DOT figures (T2.6): an unanchored one and a ^...$ one.
+TINY_AB	ERR	LOW	0.5	-	-	-	-	ab+c
+TINY_X	SEC	HIGH	0.5	i	-	-	-	^x[0-9]$

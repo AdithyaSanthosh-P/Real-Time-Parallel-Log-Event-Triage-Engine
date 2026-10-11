@@ -17,7 +17,8 @@ Decisions: anything decided that isn't in the spec (and why)
 
 Spec ambiguities or decisions that need the team's input. Remove an item once answered, and record the answer under the session entry where it was resolved.
 
-- (none yet)
+- **`^`/`$` inside groups.** Spec §3.1 / plan T2.1 say `^`/`$` only at the ends (rule-level flags) and "reject them in the middle", but four default rules (ERR_LEVEL, PII_CARD, PII_AADHAAR, PII_PHONE_IN) use `(^|[^0-9])` / `([^0-9]|$)`, and T2.1 also requires all 26 rules to parse. Implemented as zero-width assertions (`NODE_BOL`/`NODE_EOL`, NFA assertion edges), accepted only where no byte can be consumed before `^` / after `$` on any path; `a^b`, `a*^`, `(^a)*`, `$a` are rejected. Exactly POSIX semantics; difftest agrees. Please confirm this reading of the spec.
+- **DFA state cap vs. one combined DFA.** All 26 default rules in a single DFA need 39,764 states (state explosion from overlapping `+` loops); with the spec's default `--max-states 20000` the builder halves the rule list into 2 groups (7,593 states total), so each line is scanned twice. Whether to raise the default cap (one ~40 MB table) is an experiment question (rule-count / group experiments), not changed.
 
 ---
 
@@ -58,3 +59,19 @@ Decisions: (all small internal choices; none touch the spec's architecture)
   - CLI parses every flag in §8; flags whose features do not exist yet (`--engine dfa|fork`, `-w >1`, `--batch-delay`, `--dispatch`, `--pin/--no-pin`, `--drop`, `--ordered`, `--tau`, `--max-states`, `--dump-dot`, `--bench`) exit 2 with "not yet implemented" (see `cli_unimplemented()`, shrink it as tasks land). `-w` defaults to 1 and `--engine` to `dfa` (so a bare `triage FILE` says dfa is not implemented until T2.4).
   - `tests/expected/synthetic_small.expected` is v0: it still labels the validator-failing PII lines (seq 111, 117, 119, 168) because validators arrive in T3.4; its header lists what must change then. `tools/run_e2e.sh` honours `E2E_ENGINES="posix dfa"`; add dfa when T2.4 lands.
   - Test helper `tests/annot.h` (header-only) loads the annotated corpus; reuse it for the NFA/DFA tests (T2.2, T2.3) and difftest.
+
+## 2026-10-11 — T2.1–T2.6 (Phase 2; T2.6 awaiting the Graphviz check)
+Done:      T2.1 lexer + recursive-descent parser + AST, T2.2 Thompson NFA + `nfa_simulate`, T2.3 subset construction (+ rule groups), T2.4 DFA engine (`--engine dfa`, now the working default; `--max-states` works), T2.5 `tools/difftest.c` + `make difftest`. T2.6 `--dump-dot` is implemented and unit-tested but NOT ticked: its check needs `dot -Tpng`, and Graphviz is not installed on this machine.
+State:     `make` warning-free; `make test` 13 programs pass; `make e2e` passes for posix AND dfa (file, stdin, `-b 7`); `make difftest`: 10,179 corpus lines + 100,000 generated strings, 0 mismatches (also 0 for seeds 2 and 3 at 1,000,000 strings each); ASan/UBSan and TSan builds clean. Each test oracle was checked with a planted bug (EOL handling, dropped ∪U, dropped accept_end) and caught it.
+Broken:    —
+Next:      Install Graphviz (`sudo apt install graphviz`), run `bin/triage -r tests/fixtures/tiny.rules --dump-dot tiny.dot && dot -Tpng tiny.dot -o tiny.png`, tick T2.6. Then T3.1 validators.
+Decisions:
+  - `^`/`$` are assertions (see Open questions). `nfa.rule_anchored[r]` (every path starts with `^`, e.g. JAVA_STACK) replaces the loader flag for excluding a rule from U; the loader's `anchored_start/end` flags are now informational.
+  - Parser rejects, with byte offset: `\d \s \w \b` (+ upper case), `\1`..`\9`, any escape not in §3.1's list (`\n`, `\t`, `\-`, ...; `\)` `\]` `\}` ARE allowed), `(?`, `*?` `+?` `??` and `+`/`?` after any quantifier (lazy/possessive look-alikes; `a**`, `a{2}*` stay legal as in POSIX), `{,n}`, bad/oversized intervals (max 1000), `]`/`}` unescaped outside brackets, backslash inside `[...]` (POSIX would read it literally), `[:class:]`/`[.x.]`/`[=x=]`, `-` not first/last in a class, reversed ranges, empty alternatives/groups, nesting > 100.
+  - `.` excludes only `\n` (spec); glibc's `.` also excludes NUL. Neither byte can reach a matcher (the normalizer drops control bytes), and difftest's generator only emits bytes that survive normalization.
+  - icase: charsets are folded before `[^...]` is complemented (matches glibc).
+  - AST keeps `NODE_REPEAT{min,max}`; the NFA builder expands it (x{n,m} = n copies + nested optionals).
+  - DFA: states keyed by kernel (CHAR/ACCEPT/EOL NFA states) minus U, start state flagged unique (exact `^$` on the empty line); byte classes by partition refinement; groups built from the single combined NFA so masks keep global rule bits; halving on overflow. 26 rules: NFA 1,762 states; per-rule DFAs 8-78 states.
+  - `engine.h` now has two layers: `EnginePrepared` (built once, read-only, holds the shared DFA tables) and per-thread `Engine` (posix compiles its own regex_t set). No `--verbose` flag was added (CLI is fixed by §8); the DFA build summary (groups, states, build time) is printed on stderr unless `--quiet`.
+  - `make SAN=address` now uses `-fno-sanitize-recover=all`, so any UBSan finding fails the run (an empty-kernel memcpy(NULL, 0) was found and fixed this way).
+  - `make difftest` runs `--random $(DIFFTEST_RANDOM)` (default 100000); difftest prints per-rule match counts for the random strings and warns if a rule was never hit. Use `-r` to check other rule files (T6.4).

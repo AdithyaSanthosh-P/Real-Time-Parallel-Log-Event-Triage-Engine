@@ -181,7 +181,6 @@ static void test_unimplemented(void)
         { "--drop", NULL,         "--drop" },
         { "--ordered", NULL,      "--ordered" },
         { "--tau", "0.4",         "--tau" },
-        { "--dump-dot", "x.dot",  "--dump-dot" },
         { "--bench", NULL,        "--bench" },
     };
     for (size_t i = 0; i < sizeof nyi / sizeof nyi[0]; i++) {

@@ -6,7 +6,10 @@
 
 #include "aggregate.h"
 #include "batch.h"
+#include "dfa.h"
+#include "dot.h"
 #include "engine.h"
+#include "nfa.h"
 #include "reader.h"
 #include "route.h"
 #include "rules.h"
@@ -93,6 +96,56 @@ done:
     reader_close(reader);
     engine_free(engine);
     engine_prepared_free(prepared);
+    rules_free(&rs);
+    return status;
+}
+
+int pipeline_dump_dot(const Options *o)
+{
+    char err[512];
+    RuleSet rs;
+    if (rules_load(o->rules_path, &rs, err, sizeof err) != 0) {
+        fprintf(stderr, "triage: %s\n", err);
+        return 1;
+    }
+    int status = 1;
+    Nfa nfa;
+    DfaSet ds;
+    bool have_nfa = false, have_dfa = false;
+    FILE *f = NULL;
+
+    if (nfa_build_rules(&nfa, &rs, err, sizeof err) != 0) {
+        fprintf(stderr, "triage: %s\n", err);
+        goto done;
+    }
+    have_nfa = true;
+    if (dfaset_build(&nfa, (int)o->max_states, &ds, err, sizeof err) != 0) {
+        fprintf(stderr, "triage: %s\n", err);
+        goto done;
+    }
+    have_dfa = true;
+
+    bool to_stdout = strcmp(o->dump_dot, "-") == 0;
+    f = to_stdout ? stdout : fopen(o->dump_dot, "w");
+    if (!f) {
+        fprintf(stderr, "triage: %s: %s\n", o->dump_dot, strerror(errno));
+        goto done;
+    }
+    int rc = dot_write(f, &rs, &nfa, &ds);
+    if ((to_stdout ? fflush(f) : fclose(f)) != 0 || rc != 0) {
+        fprintf(stderr, "triage: %s: write error\n", o->dump_dot);
+        goto done;
+    }
+    if (!o->quiet)
+        fprintf(stderr, "triage: wrote NFA (%d states) and %d DFA group(s) (%lld states) to %s\n",
+                nfa.n, ds.ngroups, (long long)ds.total_states, o->dump_dot);
+    status = 0;
+
+done:
+    if (have_dfa)
+        dfaset_free(&ds);
+    if (have_nfa)
+        nfa_free(&nfa);
     rules_free(&rs);
     return status;
 }
