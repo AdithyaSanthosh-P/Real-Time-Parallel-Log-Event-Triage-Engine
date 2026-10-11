@@ -1,0 +1,3 @@
+# duplicate id
+DUP	AUTH	LOW	0.5	-	-	-	-	foo
+DUP	SEC	LOW	0.5	-	-	-	-	bar

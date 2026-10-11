@@ -1,0 +1,3 @@
+# unknown validator
+OK_RULE	AUTH	LOW	0.5	-	-	-	-	foo
+BAD	PII	LOW	0.5	-	crc32	-	-	foo

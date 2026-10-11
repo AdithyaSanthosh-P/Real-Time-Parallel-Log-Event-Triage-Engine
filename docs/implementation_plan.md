@@ -15,7 +15,7 @@ The order is deliberate: get a correct, single-threaded, end-to-end pipeline on 
 
 ## Phase 1 — Correct single-threaded baseline (POSIX engine)
 
-- [ ] **T1.1 Rule loader** (`rules.c/.h`, §4.1). Parse the TSV format into `Rule` structs (id, category, severity, base, icase, anchored flags, validator, extract list, context keywords, regex string). Reject: wrong column count, unknown category/severity/validator, > 64 rules, duplicate ids — with file:line in the error.
+- [x] **T1.1 Rule loader** (`rules.c/.h`, §4.1). Parse the TSV format into `Rule` structs (id, category, severity, base, icase, anchored flags, validator, extract list, context keywords, regex string). Reject: wrong column count, unknown category/severity/validator, > 64 rules, duplicate ids — with file:line in the error.
   *Done when:* `tests/test_rules.c` loads `rules/default.rules` as 26 rules with correct fields, and each malformed fixture in `tests/fixtures/bad_*.rules` fails with the expected message.
 - [ ] **T1.2 Normalizer** (`normalize.c/.h`, §4.2 notes). Produce the match copy: decode `%xx` (invalid escapes left as-is), `+`→space, strip control chars except `\t`. No lowercasing. Output length ≤ input length.
   *Done when:* `tests/test_normalize.c` covers `%27`, `%2e%2e%2f`, `%zz`, `%`, trailing `%4`, `+`, mixed control chars.
