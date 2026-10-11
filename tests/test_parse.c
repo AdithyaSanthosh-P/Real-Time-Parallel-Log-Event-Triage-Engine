@@ -124,6 +124,7 @@ static const struct {
     { "a\\",          1, "trailing backslash" },
     { "\\n",          0, "unsupported escape \\n" },
     { "\\t",          0, "unsupported escape \\t" },
+    { "a\\-",         1, "unsupported escape \\-" },
 };
 
 static void test_valid(void)
