@@ -17,7 +17,7 @@ The order is deliberate: get a correct, single-threaded, end-to-end pipeline on 
 
 - [x] **T1.1 Rule loader** (`rules.c/.h`, §4.1). Parse the TSV format into `Rule` structs (id, category, severity, base, icase, anchored flags, validator, extract list, context keywords, regex string). Reject: wrong column count, unknown category/severity/validator, > 64 rules, duplicate ids — with file:line in the error.
   *Done when:* `tests/test_rules.c` loads `rules/default.rules` as 26 rules with correct fields, and each malformed fixture in `tests/fixtures/bad_*.rules` fails with the expected message.
-- [ ] **T1.2 Normalizer** (`normalize.c/.h`, §4.2 notes). Produce the match copy: decode `%xx` (invalid escapes left as-is), `+`→space, strip control chars except `\t`. No lowercasing. Output length ≤ input length.
+- [x] **T1.2 Normalizer** (`normalize.c/.h`, §4.2 notes). Produce the match copy: decode `%xx` (invalid escapes left as-is), `+`→space, strip control chars except `\t`. No lowercasing. Output length ≤ input length.
   *Done when:* `tests/test_normalize.c` covers `%27`, `%2e%2e%2f`, `%zz`, `%`, trailing `%4`, `+`, mixed control chars.
 - [ ] **T1.3 Reader** (`reader.c/.h`). Read from file or stdin in large chunks; split on `\n`; handle `\r\n`, final line without newline, empty lines, and lines longer than the chunk size. Assign `seq_id`. Parse timestamp per §6 (syslog `Mon DD HH:MM:SS`, ISO-8601), else ingest time. Fill `Batch` (§2.4) with raw + normalized copies.
   *Done when:* `tests/test_reader.c` passes on crafted inputs (CRLF, 1 MB single line, no trailing newline, empty file) and line counts on every corpus file equal `wc -l` (+1 if no trailing newline).
