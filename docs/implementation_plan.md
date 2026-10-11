@@ -38,7 +38,7 @@ The order is deliberate: get a correct, single-threaded, end-to-end pipeline on 
   *Done when:* `tests/test_nfa.c`: for each default rule and ~200 strings (corpus lines + synthetic edge strings), `nfa_simulate` mask == per-rule `regexec` mask.
 - [x] **T2.3 Subset construction → combined DFA** (`dfa.c/.h`, §3.2 step 4). ε-closure with an explicit stack; NFA-state sets as sorted int arrays (or bitsets) hashed into a state table; `U` set added to every transition for unanchored rules; `accept_mask` and `accept_end_mask`; transition table `int32_t next[n][256]`. Enforce `--max-states`; on overflow, split rules into groups (halve recursively) and build one DFA per group. Report state count and build time (`--verbose`).
   *Done when:* DFA mask == `nfa_simulate` mask on the same test set as T2.2; building the 26 default rules succeeds under the default cap.
-- [ ] **T2.4 DFA engine** (`engine_dfa.c/.h`, §3.3). Match loop exactly as §3.3, iterating over all groups. Hook into `--engine dfa`.
+- [x] **T2.4 DFA engine** (`engine_dfa.c/.h`, §3.3). Match loop exactly as §3.3, iterating over all groups. Hook into `--engine dfa`.
   *Done when:* `make e2e` passes with `--engine dfa` (same expected file as T1.7).
 - [ ] **T2.5 Differential test tool** (`tools/difftest.c`, §3.5). For every line in `tests/corpus/*.log` (and optionally a `--random N` mode generating strings biased toward rule fragments), compare DFA mask vs per-rule `regexec` mask. Print rule id, line number and line on mismatch; exit non-zero if any.
   *Done when:* `make difftest` reports 0 mismatches on all corpus files and `--random 100000`.

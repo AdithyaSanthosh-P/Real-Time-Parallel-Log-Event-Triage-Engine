@@ -67,7 +67,7 @@ static void test_defaults(void)
     CHECK(o.tau == 0.5);
     CHECK_EQ_INT(o.max_states, 0);
     CHECK_EQ_INT(o.given, 0);
-    CHECK(cli_unimplemented(&o) != NULL);              /* the default engine, dfa, is not built yet */
+    CHECK(cli_unimplemented(&o) == NULL);              /* the default engine, dfa, works */
 }
 
 static void test_valid_options(void)
@@ -172,7 +172,6 @@ static void test_unimplemented(void)
     Options o;
     char err[256];
     static const struct { const char *a, *b; const char *name; } nyi[] = {
-        { "--engine", "dfa",      "--engine dfa" },
         { "--engine", "fork",     "--engine fork" },
         { "-w", "2",              "-w N with N > 1" },
         { "--batch-delay", "10",  "--batch-delay" },
@@ -182,7 +181,6 @@ static void test_unimplemented(void)
         { "--drop", NULL,         "--drop" },
         { "--ordered", NULL,      "--ordered" },
         { "--tau", "0.4",         "--tau" },
-        { "--max-states", "100",  "--max-states" },
         { "--dump-dot", "x.dot",  "--dump-dot" },
         { "--bench", NULL,        "--bench" },
     };
@@ -198,8 +196,10 @@ static void test_unimplemented(void)
             CHECK_STR_EQ(got, nyi[i].name);
     }
 
-    /* what does work: posix, -w 1, -b, -r, -o, --quiet, input */
+    /* what does work: dfa, posix, -w 1, -b, -r, -o, --max-states, --quiet, input */
     CHECK_EQ_INT(PARSE(&o, err, "--engine", "posix", "-w", "1", "-b", "8", "--quiet", "x.log"), 0);
+    CHECK(cli_unimplemented(&o) == NULL);
+    CHECK_EQ_INT(PARSE(&o, err, "--engine", "dfa", "--max-states", "5000", "x.log"), 0);
     CHECK(cli_unimplemented(&o) == NULL);
 
     /* --help never reports anything */

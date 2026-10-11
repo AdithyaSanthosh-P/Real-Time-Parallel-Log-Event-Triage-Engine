@@ -16,6 +16,7 @@ int pipeline_run(const Options *o)
     int status = 1;
     char err[512];
     RuleSet rs;
+    EnginePrepared *prepared = NULL;
     Engine *engine = NULL;
     Router *router = NULL;
     Reader *reader = NULL;
@@ -29,7 +30,16 @@ int pipeline_run(const Options *o)
     }
     aggregator_init(&agg, &rs);
 
-    engine = engine_new(o->engine, &rs, err, sizeof err);
+    prepared = engine_prepare(o->engine, &rs, (int)o->max_states, err, sizeof err);
+    if (!prepared) {
+        fprintf(stderr, "triage: %s\n", err);
+        goto done;
+    }
+    if (!o->quiet) {
+        engine_describe(prepared, err, sizeof err);
+        fprintf(stderr, "triage: %s\n", err);
+    }
+    engine = engine_new(prepared, err, sizeof err);
     if (!engine) {
         fprintf(stderr, "triage: %s\n", err);
         goto done;
@@ -82,6 +92,7 @@ done:
         batch_free(&batch);
     reader_close(reader);
     engine_free(engine);
+    engine_prepared_free(prepared);
     rules_free(&rs);
     return status;
 }

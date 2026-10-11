@@ -232,7 +232,7 @@ const char *cli_unimplemented(const Options *o)
 {
     if (o->help)
         return NULL;
-    if (o->engine != ENGINE_POSIX)       return o->engine == ENGINE_DFA ? "--engine dfa" : "--engine fork";
+    if (o->engine == ENGINE_FORK)        return "--engine fork";
     if (o->workers > 1)                  return "-w N with N > 1";
     if (o->given & GIVEN_BATCH_DELAY)    return "--batch-delay";
     if (o->given & GIVEN_DISPATCH)       return "--dispatch";
@@ -240,7 +240,6 @@ const char *cli_unimplemented(const Options *o)
     if (o->drop)                         return "--drop";
     if (o->ordered)                      return "--ordered";
     if (o->given & GIVEN_TAU)            return "--tau";
-    if (o->given & GIVEN_MAX_STATES)     return "--max-states";
     if (o->dump_dot)                     return "--dump-dot";
     if (o->bench)                        return "--bench";
     return NULL;
