@@ -1,0 +1,218 @@
+{
+ "mode": "none",
+ "lines": 1250,
+ "rejected_by_input_module": 0,
+ "note": "deterministic (no timing involved), so a single run; ground truth = what each line is (gen_bp.py), not what the regexes match",
+ "per_category": {
+  "EMAIL": {
+   "tp": 265,
+   "fp": 3,
+   "fn": 0,
+   "tn": 982,
+   "precision": 0.9888059701492538,
+   "recall": 1.0,
+   "f1": 0.9943714821763602,
+   "accuracy": 0.9976
+  },
+  "PHONE": {
+   "tp": 195,
+   "fp": 20,
+   "fn": 30,
+   "tn": 1005,
+   "precision": 0.9069767441860465,
+   "recall": 0.8666666666666667,
+   "f1": 0.8863636363636364,
+   "accuracy": 0.96
+  },
+  "QUESTION": {
+   "tp": 185,
+   "fp": 0,
+   "fn": 55,
+   "tn": 1010,
+   "precision": 1.0,
+   "recall": 0.7708333333333334,
+   "f1": 0.8705882352941177,
+   "accuracy": 0.956
+  },
+  "GREETING": {
+   "tp": 155,
+   "fp": 0,
+   "fn": 65,
+   "tn": 1030,
+   "precision": 1.0,
+   "recall": 0.7045454545454546,
+   "f1": 0.8266666666666667,
+   "accuracy": 0.948
+  },
+  "NAME": {
+   "tp": 100,
+   "fp": 30,
+   "fn": 50,
+   "tn": 1070,
+   "precision": 0.7692307692307693,
+   "recall": 0.6666666666666666,
+   "f1": 0.7142857142857143,
+   "accuracy": 0.936
+  }
+ },
+ "overall": {
+  "exact_match_accuracy": 0.7976,
+  "label_accuracy": 0.95952,
+  "micro_precision": 0.944386149003148,
+  "micro_recall": 0.8181818181818182,
+  "micro_f1": 0.8767657087189479,
+  "macro_f1": 0.858455146957299
+ },
+ "label_accuracy_by_group": {
+  "structured (EMAIL, PHONE)": 0.9788,
+  "natural language (QUESTION, GREETING)": 0.952,
+  "NAME": 0.936
+ },
+ "by_template": {
+  "E1": {
+   "lines": 120,
+   "exact_match": 120,
+   "exact_match_accuracy": 1.0
+  },
+  "E2": {
+   "lines": 40,
+   "exact_match": 40,
+   "exact_match_accuracy": 1.0
+  },
+  "E3": {
+   "lines": 40,
+   "exact_match": 40,
+   "exact_match_accuracy": 1.0
+  },
+  "G1": {
+   "lines": 70,
+   "exact_match": 70,
+   "exact_match_accuracy": 1.0
+  },
+  "G2": {
+   "lines": 50,
+   "exact_match": 0,
+   "exact_match_accuracy": 0.0
+  },
+  "G3": {
+   "lines": 30,
+   "exact_match": 15,
+   "exact_match_accuracy": 0.5
+  },
+  "M1": {
+   "lines": 30,
+   "exact_match": 30,
+   "exact_match_accuracy": 1.0
+  },
+  "M2": {
+   "lines": 30,
+   "exact_match": 30,
+   "exact_match_accuracy": 1.0
+  },
+  "M3": {
+   "lines": 20,
+   "exact_match": 20,
+   "exact_match_accuracy": 1.0
+  },
+  "M4": {
+   "lines": 15,
+   "exact_match": 15,
+   "exact_match_accuracy": 1.0
+  },
+  "M5": {
+   "lines": 15,
+   "exact_match": 15,
+   "exact_match_accuracy": 1.0
+  },
+  "M6": {
+   "lines": 10,
+   "exact_match": 10,
+   "exact_match_accuracy": 1.0
+  },
+  "N1": {
+   "lines": 100,
+   "exact_match": 100,
+   "exact_match_accuracy": 1.0
+  },
+  "N2": {
+   "lines": 25,
+   "exact_match": 0,
+   "exact_match_accuracy": 0.0
+  },
+  "N3": {
+   "lines": 25,
+   "exact_match": 0,
+   "exact_match_accuracy": 0.0
+  },
+  "P1": {
+   "lines": 120,
+   "exact_match": 120,
+   "exact_match_accuracy": 1.0
+  },
+  "P2": {
+   "lines": 30,
+   "exact_match": 0,
+   "exact_match_accuracy": 0.0
+  },
+  "P3": {
+   "lines": 30,
+   "exact_match": 30,
+   "exact_match_accuracy": 1.0
+  },
+  "Q1": {
+   "lines": 110,
+   "exact_match": 110,
+   "exact_match_accuracy": 1.0
+  },
+  "Q2": {
+   "lines": 40,
+   "exact_match": 0,
+   "exact_match_accuracy": 0.0
+  },
+  "Q3": {
+   "lines": 15,
+   "exact_match": 0,
+   "exact_match_accuracy": 0.0
+  },
+  "Q4": {
+   "lines": 15,
+   "exact_match": 15,
+   "exact_match_accuracy": 1.0
+  },
+  "X1": {
+   "lines": 70,
+   "exact_match": 70,
+   "exact_match_accuracy": 1.0
+  },
+  "X2": {
+   "lines": 40,
+   "exact_match": 37,
+   "exact_match_accuracy": 0.925
+  },
+  "X3": {
+   "lines": 55,
+   "exact_match": 35,
+   "exact_match_accuracy": 0.6363636363636364
+  },
+  "X4": {
+   "lines": 30,
+   "exact_match": 30,
+   "exact_match_accuracy": 1.0
+  },
+  "X5": {
+   "lines": 25,
+   "exact_match": 25,
+   "exact_match_accuracy": 1.0
+  },
+  "X6": {
+   "lines": 30,
+   "exact_match": 0,
+   "exact_match_accuracy": 0.0
+  },
+  "X7": {
+   "lines": 20,
+   "exact_match": 20,
+   "exact_match_accuracy": 1.0
+  }
+ }
+}

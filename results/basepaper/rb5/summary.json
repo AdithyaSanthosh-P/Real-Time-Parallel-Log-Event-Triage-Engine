@@ -1,0 +1,181 @@
+[
+ {
+  "variant": "fork",
+  "inputs": 10000,
+  "total_seconds": {
+   "median": 2.165532976,
+   "min": 2.112320273,
+   "max": 2.758623811,
+   "runs": 5
+  },
+  "rusage_user_s": {
+   "median": 0.039499,
+   "min": 0.027368,
+   "max": 0.065269,
+   "runs": 5
+  },
+  "rusage_sys_s": {
+   "median": 1.373643,
+   "min": 1.346974,
+   "max": 1.555632,
+   "runs": 5
+  },
+  "rusage_children_user_s": {
+   "median": 4.111704,
+   "min": 4.074626,
+   "max": 4.84261,
+   "runs": 5
+  },
+  "rusage_children_sys_s": {
+   "median": 0.381293,
+   "min": 0.36768,
+   "max": 0.524197,
+   "runs": 5
+  },
+  "rusage_voluntary_ctxt_switches": {
+   "median": 86182,
+   "min": 83232,
+   "max": 86671,
+   "runs": 5
+  },
+  "rusage_involuntary_ctxt_switches": {
+   "median": 51120,
+   "min": 51005,
+   "max": 51148,
+   "runs": 5
+  },
+  "rusage_minor_faults": {
+   "median": 1754484,
+   "min": 1740846,
+   "max": 1782030,
+   "runs": 5
+  },
+  "time_v_user_s": {
+   "median": 4.19,
+   "min": 4.14,
+   "max": 4.95,
+   "runs": 5
+  },
+  "time_v_sys_s": {
+   "median": 1.77,
+   "min": 1.73,
+   "max": 2.1,
+   "runs": 5
+  },
+  "time_v_max_rss_kb": {
+   "median": 1952,
+   "min": 1948,
+   "max": 1952,
+   "runs": 5
+  },
+  "time_v_minor_faults": {
+   "median": 1772548,
+   "min": 1758780,
+   "max": 1800382,
+   "runs": 5
+  },
+  "time_v_voluntary_ctxt_switches": {
+   "median": 87041,
+   "min": 84055,
+   "max": 87502,
+   "runs": 5
+  },
+  "time_v_involuntary_ctxt_switches": {
+   "median": 51628,
+   "min": 51517,
+   "max": 51658,
+   "runs": 5
+  }
+ },
+ {
+  "variant": "seq-recompile",
+  "inputs": 10000,
+  "total_seconds": {
+   "median": 0.170214476,
+   "min": 0.169609699,
+   "max": 0.192332968,
+   "runs": 5
+  },
+  "rusage_user_s": {
+   "median": 0.170188,
+   "min": 0.169585,
+   "max": 0.192233,
+   "runs": 5
+  },
+  "rusage_sys_s": {
+   "median": 0.0,
+   "min": 0.0,
+   "max": 0.000132,
+   "runs": 5
+  },
+  "rusage_children_user_s": {
+   "median": 0.0,
+   "min": 0.0,
+   "max": 0.0,
+   "runs": 5
+  },
+  "rusage_children_sys_s": {
+   "median": 0.0,
+   "min": 0.0,
+   "max": 0.0,
+   "runs": 5
+  },
+  "rusage_voluntary_ctxt_switches": {
+   "median": 0,
+   "min": 0,
+   "max": 0,
+   "runs": 5
+  },
+  "rusage_involuntary_ctxt_switches": {
+   "median": 4,
+   "min": 1,
+   "max": 4,
+   "runs": 5
+  },
+  "rusage_minor_faults": {
+   "median": 4,
+   "min": 4,
+   "max": 4,
+   "runs": 5
+  },
+  "time_v_user_s": {
+   "median": 0.17,
+   "min": 0.17,
+   "max": 0.19,
+   "runs": 5
+  },
+  "time_v_sys_s": {
+   "median": 0.0,
+   "min": 0.0,
+   "max": 0.0,
+   "runs": 5
+  },
+  "time_v_max_rss_kb": {
+   "median": 2112,
+   "min": 1952,
+   "max": 2112,
+   "runs": 5
+  },
+  "time_v_minor_faults": {
+   "median": 144,
+   "min": 141,
+   "max": 146,
+   "runs": 5
+  },
+  "time_v_voluntary_ctxt_switches": {
+   "median": 1,
+   "min": 1,
+   "max": 1,
+   "runs": 5
+  },
+  "time_v_involuntary_ctxt_switches": {
+   "median": 4,
+   "min": 2,
+   "max": 5,
+   "runs": 5
+  }
+ },
+ {
+  "note": "perf stat unavailable (see perf_unavailable.txt); user/sys time and context switches come from /usr/bin/time -v and getrusage"
+ }
+]

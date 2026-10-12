@@ -1,0 +1,602 @@
+[
+ {
+  "input_index": 1,
+  "input": "john@example.com",
+  "variant": "dfa_t1",
+  "p50_ns": {
+   "median": 45,
+   "min": 45,
+   "max": 55,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 285,
+   "min": 51,
+   "max": 334,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 1,
+  "input": "john@example.com",
+  "variant": "fork",
+  "p50_ns": {
+   "median": 193253,
+   "min": 191470,
+   "max": 193852,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 388242,
+   "min": 357734,
+   "max": 395488,
+   "runs": 5
+  },
+  "mean_fork_to_collect_ns": {
+   "median": 202511,
+   "min": 201881,
+   "max": 205606,
+   "runs": 5
+  },
+  "mean_child_regcomp_ns": {
+   "median": 20319,
+   "min": 19424,
+   "max": 21138,
+   "runs": 5
+  },
+  "mean_child_regexec_ns": {
+   "median": 3293,
+   "min": 3216,
+   "max": 4296,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 1,
+  "input": "john@example.com",
+  "variant": "seq-precompiled",
+  "p50_ns": {
+   "median": 364,
+   "min": 361,
+   "max": 365,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 368,
+   "min": 367,
+   "max": 372,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 1,
+  "input": "john@example.com",
+  "variant": "seq-recompile",
+  "p50_ns": {
+   "median": 15377,
+   "min": 15131,
+   "max": 15674,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 17434,
+   "min": 17127,
+   "max": 22462,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 1,
+  "input": "john@example.com",
+  "variant": "threads-data_t1",
+  "p50_ns": {
+   "median": 206,
+   "min": 205,
+   "max": 207,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 213,
+   "min": 209,
+   "max": 221,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 1,
+  "input": "john@example.com",
+  "variant": "threads-pattern",
+  "p50_ns": {
+   "median": 5233,
+   "min": 4829,
+   "max": 5380,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 7649,
+   "min": 7427,
+   "max": 8476,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 2,
+  "input": "9876543210",
+  "variant": "dfa_t1",
+  "p50_ns": {
+   "median": 34,
+   "min": 34,
+   "max": 35,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 219,
+   "min": 44,
+   "max": 246,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 2,
+  "input": "9876543210",
+  "variant": "fork",
+  "p50_ns": {
+   "median": 196535,
+   "min": 192093,
+   "max": 202382,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 394636,
+   "min": 383798,
+   "max": 430200,
+   "runs": 5
+  },
+  "mean_fork_to_collect_ns": {
+   "median": 206307,
+   "min": 202832,
+   "max": 214844,
+   "runs": 5
+  },
+  "mean_child_regcomp_ns": {
+   "median": 19559,
+   "min": 19265,
+   "max": 20378,
+   "runs": 5
+  },
+  "mean_child_regexec_ns": {
+   "median": 5109,
+   "min": 5017,
+   "max": 5702,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 2,
+  "input": "9876543210",
+  "variant": "seq-precompiled",
+  "p50_ns": {
+   "median": 321,
+   "min": 316,
+   "max": 619,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 360,
+   "min": 345,
+   "max": 1944,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 2,
+  "input": "9876543210",
+  "variant": "seq-recompile",
+  "p50_ns": {
+   "median": 15730,
+   "min": 15705,
+   "max": 17051,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 18258,
+   "min": 17798,
+   "max": 21232,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 2,
+  "input": "9876543210",
+  "variant": "threads-data_t1",
+  "p50_ns": {
+   "median": 333,
+   "min": 328,
+   "max": 351,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 359,
+   "min": 332,
+   "max": 373,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 2,
+  "input": "9876543210",
+  "variant": "threads-pattern",
+  "p50_ns": {
+   "median": 5183,
+   "min": 4939,
+   "max": 5331,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 7930,
+   "min": 7459,
+   "max": 8350,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 3,
+  "input": "What is your name?",
+  "variant": "dfa_t1",
+  "p50_ns": {
+   "median": 50,
+   "min": 50,
+   "max": 50,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 308,
+   "min": 54,
+   "max": 345,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 3,
+  "input": "What is your name?",
+  "variant": "fork",
+  "p50_ns": {
+   "median": 201491,
+   "min": 198832,
+   "max": 201884,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 395369,
+   "min": 360103,
+   "max": 444036,
+   "runs": 5
+  },
+  "mean_fork_to_collect_ns": {
+   "median": 210467,
+   "min": 207464,
+   "max": 215399,
+   "runs": 5
+  },
+  "mean_child_regcomp_ns": {
+   "median": 19348,
+   "min": 19217,
+   "max": 20092,
+   "runs": 5
+  },
+  "mean_child_regexec_ns": {
+   "median": 3965,
+   "min": 3606,
+   "max": 4108,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 3,
+  "input": "What is your name?",
+  "variant": "seq-precompiled",
+  "p50_ns": {
+   "median": 673,
+   "min": 360,
+   "max": 697,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 682,
+   "min": 364,
+   "max": 725,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 3,
+  "input": "What is your name?",
+  "variant": "seq-recompile",
+  "p50_ns": {
+   "median": 15139,
+   "min": 15080,
+   "max": 15550,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 18187,
+   "min": 17245,
+   "max": 18997,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 3,
+  "input": "What is your name?",
+  "variant": "threads-data_t1",
+  "p50_ns": {
+   "median": 362,
+   "min": 348,
+   "max": 366,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 366,
+   "min": 357,
+   "max": 377,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 3,
+  "input": "What is your name?",
+  "variant": "threads-pattern",
+  "p50_ns": {
+   "median": 4972,
+   "min": 4889,
+   "max": 5258,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 7978,
+   "min": 7544,
+   "max": 8765,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 4,
+  "input": "hello everyone",
+  "variant": "dfa_t1",
+  "p50_ns": {
+   "median": 42,
+   "min": 41,
+   "max": 42,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 261,
+   "min": 46,
+   "max": 265,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 4,
+  "input": "hello everyone",
+  "variant": "fork",
+  "p50_ns": {
+   "median": 192808,
+   "min": 190778,
+   "max": 196658,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 429863,
+   "min": 388999,
+   "max": 454421,
+   "runs": 5
+  },
+  "mean_fork_to_collect_ns": {
+   "median": 207679,
+   "min": 203622,
+   "max": 214611,
+   "runs": 5
+  },
+  "mean_child_regcomp_ns": {
+   "median": 19676,
+   "min": 19342,
+   "max": 20323,
+   "runs": 5
+  },
+  "mean_child_regexec_ns": {
+   "median": 4221,
+   "min": 3893,
+   "max": 4321,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 4,
+  "input": "hello everyone",
+  "variant": "seq-precompiled",
+  "p50_ns": {
+   "median": 660,
+   "min": 343,
+   "max": 672,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 671,
+   "min": 349,
+   "max": 701,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 4,
+  "input": "hello everyone",
+  "variant": "seq-recompile",
+  "p50_ns": {
+   "median": 15697,
+   "min": 15641,
+   "max": 15806,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 18074,
+   "min": 18008,
+   "max": 18540,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 4,
+  "input": "hello everyone",
+  "variant": "threads-data_t1",
+  "p50_ns": {
+   "median": 348,
+   "min": 344,
+   "max": 359,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 361,
+   "min": 348,
+   "max": 2021,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 4,
+  "input": "hello everyone",
+  "variant": "threads-pattern",
+  "p50_ns": {
+   "median": 5309,
+   "min": 4873,
+   "max": 5365,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 7744,
+   "min": 7092,
+   "max": 8560,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 5,
+  "input": "John Smith",
+  "variant": "dfa_t1",
+  "p50_ns": {
+   "median": 34,
+   "min": 33,
+   "max": 34,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 38,
+   "min": 38,
+   "max": 223,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 5,
+  "input": "John Smith",
+  "variant": "fork",
+  "p50_ns": {
+   "median": 204609,
+   "min": 200635,
+   "max": 207683,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 368996,
+   "min": 362383,
+   "max": 480241,
+   "runs": 5
+  },
+  "mean_fork_to_collect_ns": {
+   "median": 214844,
+   "min": 212528,
+   "max": 221405,
+   "runs": 5
+  },
+  "mean_child_regcomp_ns": {
+   "median": 19253,
+   "min": 19152,
+   "max": 19982,
+   "runs": 5
+  },
+  "mean_child_regexec_ns": {
+   "median": 4233,
+   "min": 3718,
+   "max": 4329,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 5,
+  "input": "John Smith",
+  "variant": "seq-precompiled",
+  "p50_ns": {
+   "median": 308,
+   "min": 294,
+   "max": 573,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 310,
+   "min": 306,
+   "max": 588,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 5,
+  "input": "John Smith",
+  "variant": "seq-recompile",
+  "p50_ns": {
+   "median": 15815,
+   "min": 15707,
+   "max": 16859,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 17602,
+   "min": 17472,
+   "max": 18925,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 5,
+  "input": "John Smith",
+  "variant": "threads-data_t1",
+  "p50_ns": {
+   "median": 300,
+   "min": 287,
+   "max": 306,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 310,
+   "min": 302,
+   "max": 347,
+   "runs": 5
+  }
+ },
+ {
+  "input_index": 5,
+  "input": "John Smith",
+  "variant": "threads-pattern",
+  "p50_ns": {
+   "median": 5120,
+   "min": 5051,
+   "max": 5231,
+   "runs": 5
+  },
+  "p99_ns": {
+   "median": 7700,
+   "min": 7571,
+   "max": 8623,
+   "runs": 5
+  }
+ }
+]

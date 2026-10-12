@@ -89,7 +89,7 @@ Keep them in `tools/basepaper/patterns.h` (one shared definition used by every v
   *Done when:* a smoke run at small sizes produces valid JSON for every experiment and one figure per experiment.
 - [ ] **R5 (optional — ask before starting) Conflict-resolution reproduction.** Implement base paper §3.4 `resolve_conflicts` and `calculate_confidence` with a written interpretation of each undefined function (specificity, completeness, historical accuracy, base confidence), then compare with the §4.4 Output Generation table. No tuning to make the table match.
   *Done when:* a table lists each row of §4.4's output table as reproduced / not reproduced with the reason.
-- [ ] **R6 Full runs and write-up.** Run RB1–RB5 at full size. Write `results/basepaper/SUMMARY.md`: for each claim in `docs/research/literature_review.md` §3, the paper's figure, our measurement (median with min/max), a verdict (reproduced / qualitatively supported / not reproduced) and a one-line explanation; then exact commands and machine info. Numbers only from the saved JSON.
+- [x] **R6 Full runs and write-up.** Run RB1–RB5 at full size. Write `results/basepaper/SUMMARY.md`: for each claim in `docs/research/literature_review.md` §3, the paper's figure, our measurement (median with min/max), a verdict (reproduced / qualitatively supported / not reproduced) and a one-line explanation; then exact commands and machine info. Numbers only from the saved JSON.
   *Done when:* every claim row has a measured entry, and each number in `SUMMARY.md` can be traced to a JSON file under `results/basepaper/`.
 
 ## Phase 3 — Classification logic
