@@ -139,3 +139,9 @@ State:     `make test` passes. Claim 5 (conflict resolution) is "not tested": **
 Broken:    T2.6 still waits for Graphviz. `perf stat` not permitted here (`perf_event_paranoid=4`; `sudo sysctl kernel.perf_event_paranoid=1` would allow it), so RB5 uses `/usr/bin/time -v` and getrusage; cpu-migrations and cache misses are not available.
 Next:      Phase 3 (T3.1 validators …). Optional: R5, and re-run RB5 with perf if the sysctl is changed.
 Decisions: `make_summary.py` asserts its claims; if a re-run changes a result enough to break a sentence the script fails instead of printing it.
+
+## 2026-10-12 — T3.1 validators
+Done:      T3.1. `src/validators.c/.h`: `luhn_ok` (also enforces 13–19 digits), `verhoeff_ok`, `pan_ok`, `strip_separators`, and `validate_span(Validator, span, n)` which trims the regex's boundary characters, strips spaces/hyphens and runs the rule's validator (Aadhaar additionally needs exactly 12 digits starting 2–9). Tables copied from spec §4.3. `tests/test_validators.c` (5,488 checks): the §4.3 known values, 10 valid / 13 invalid Luhn cases, 5 known Verhoeff values, 11 valid / 13 invalid PANs, and properties that do not rely on remembered values (exactly one valid check digit per prefix; every single-digit error detected by Luhn and Verhoeff; every adjacent transposition detected by Verhoeff).
+State:     `make test` passes (14 programs + bp-test).
+Next:      T3.2 spans and extraction.
+Decisions: both checksums return false on non-digits (the spec's snippet would index the tables with garbage); `validate_span` treats the leading/trailing non-alphanumerics of a span as the regex's boundary group.
