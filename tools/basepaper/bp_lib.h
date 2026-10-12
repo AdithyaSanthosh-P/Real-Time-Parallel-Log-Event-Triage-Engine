@@ -39,6 +39,12 @@ int bp_classify_fork(const char *text, BpRecordFn on_record, void *arg,
 #define BP_MAX_INPUT_LENGTH 256
 int bp_normalize_paper(const char *in, char *out, const char **err);
 
+/* CPUs this process may run on (honours taskset), ascending; returns how many
+ * were stored (at most `cap`). bp_pin_to_cpu() pins the calling thread/process
+ * to one CPU (best effort). The variants pin "worker i" to list[i % n]. */
+int  bp_allowed_cpus(int *list, int cap);
+void bp_pin_to_cpu(int cpu);
+
 /* Monotonic clock in nanoseconds. */
 int64_t bp_now_ns(void);
 

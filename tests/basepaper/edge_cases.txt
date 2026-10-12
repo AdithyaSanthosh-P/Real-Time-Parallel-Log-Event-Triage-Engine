@@ -1,0 +1,34 @@
+
+?
+ ?
+a?
+hello
+Hello
+hello?
+hi there?
+hey
+good morning
+good afternoon team
+good evening
+John Smith
+John  Smith
+john smith
+John Smith Jr
+John Smith?
+JOHN SMITH
+9876543210
+5876543210
+98765432101
+987654321
+call 9876543210 now
+a@b.co
+a@b.c
+a@b
+@b.com
+john@example.com?
+hello john@test.com
+x.y+z@sub.example.org
+trailing space 
+ leading space
+Question mark in the ? middle
+café cafÃ© 9876543210

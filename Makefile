@@ -96,7 +96,10 @@ BP_TEST_BIN  := $(BIN_DIR)/tests/test_bp
 
 $(BUILD)/basepaper/%.o: tools/basepaper/%.c
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -Itools/basepaper -c -o $@ $<
+	$(CC) $(CFLAGS) -Itools/basepaper -Isrc -c -o $@ $<
+
+# bp_bench's `dfa` variant uses our compiler (Phase 2), so it links the core objects.
+$(BIN_DIR)/bp_bench: $(CORE_OBJS)
 
 $(BP_BINS): $(BIN_DIR)/%: $(BUILD)/basepaper/%.o $(BP_LIB_OBJ)
 	@mkdir -p $(@D)
@@ -114,6 +117,7 @@ bp: $(BP_BINS)
 
 bp-test: $(BP_BINS) $(BP_TEST_BIN)
 	@echo "== $(BP_TEST_BIN)"; $(BP_TEST_BIN) $(BIN_DIR)/bp_fork
+	@echo "== tests/basepaper/test_variants.sh"; tests/basepaper/test_variants.sh $(BIN_DIR)
 
 # DFA vs per-rule regexec on every corpus line plus generated strings (§3.5).
 DIFFTEST_RANDOM ?= 100000

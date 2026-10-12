@@ -88,7 +88,7 @@ int bp_normalize_paper(const char *in, char *out, const char **err)
 /* Allowed CPUs of this process (honours taskset). The paper's
  * "i % available_cores" is read as an index into this list so that pinning
  * stays inside the cpuset the experiment was given (RB3). */
-static int allowed_cpus(int *list, int cap)
+int bp_allowed_cpus(int *list, int cap)
 {
     cpu_set_t set;
     int n = 0;
@@ -100,7 +100,7 @@ static int allowed_cpus(int *list, int cap)
     return n;
 }
 
-static void pin_to_cpu(int cpu)
+void bp_pin_to_cpu(int cpu)
 {
     cpu_set_t set;
     CPU_ZERO(&set);
@@ -146,7 +146,7 @@ int bp_classify_fork(const char *text, BpRecordFn on_record, void *arg,
                      unsigned *mask, int64_t *total_ns)
 {
     int cpus[CPU_SETSIZE];
-    int ncpu = allowed_cpus(cpus, CPU_SETSIZE);
+    int ncpu = bp_allowed_cpus(cpus, CPU_SETSIZE);
     pid_t child[BP_NPAT];
     int nchild = 0, nrec = 0;
     int fds[2];
@@ -164,7 +164,7 @@ int bp_classify_fork(const char *text, BpRecordFn on_record, void *arg,
         if (pid == 0) {
             close(fds[0]);
             if (ncpu > 0)
-                pin_to_cpu(cpus[i % ncpu]);
+                bp_pin_to_cpu(cpus[i % ncpu]);
             BpRecord r = execute_pattern_match(text, i);
             ssize_t w = write(fds[1], &r, sizeof r);    /* < PIPE_BUF: atomic */
             _exit(w == (ssize_t)sizeof r ? 0 : 1);
