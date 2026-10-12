@@ -17,9 +17,7 @@ Decisions: anything decided that isn't in the spec (and why)
 
 Spec ambiguities or decisions that need the team's input. Remove an item once answered, and record the answer under the session entry where it was resolved.
 
-- **`^`/`$` inside groups.** Spec §3.1 / plan T2.1 say `^`/`$` only at the ends (rule-level flags) and "reject them in the middle", but four default rules (ERR_LEVEL, PII_CARD, PII_AADHAAR, PII_PHONE_IN) use `(^|[^0-9])` / `([^0-9]|$)`, and T2.1 also requires all 26 rules to parse. Implemented as zero-width assertions (`NODE_BOL`/`NODE_EOL`, NFA assertion edges), accepted only where no byte can be consumed before `^` / after `$` on any path; `a^b`, `a*^`, `(^a)*`, `$a` are rejected. Exactly POSIX semantics; difftest agrees. Please confirm this reading of the spec.
-- **DFA state cap vs. one combined DFA.** All 26 default rules in a single DFA need 39,764 states (state explosion from overlapping `+` loops); with the spec's default `--max-states 20000` the builder halves the rule list into 2 groups (7,593 states total), so each line is scanned twice. Whether to raise the default cap (one ~40 MB table) is an experiment question (rule-count / group experiments), not changed.
-
+- (none open)
 ---
 
 ## 2026-10-11 — Project docs set up
@@ -75,3 +73,13 @@ Decisions:
   - `engine.h` now has two layers: `EnginePrepared` (built once, read-only, holds the shared DFA tables) and per-thread `Engine` (posix compiles its own regex_t set). No `--verbose` flag was added (CLI is fixed by §8); the DFA build summary (groups, states, build time) is printed on stderr unless `--quiet`.
   - `make SAN=address` now uses `-fno-sanitize-recover=all`, so any UBSan finding fails the run (an empty-kernel memcpy(NULL, 0) was found and fixed this way).
   - `make difftest` runs `--random $(DIFFTEST_RANDOM)` (default 100000); difftest prints per-rule match counts for the random strings and warns if a rule was never hit. Use `-r` to check other rule files (T6.4).
+
+## 2026-10-12 — Planning update (no code changes)
+Done:      Docs only. Professor's direction: the base paper is an unverified student project; benchmark its approach first, review journal papers, then continue our design. Added Phase R (R1–R6) to the plan after Phase 2; spec gained §10.4 (base-paper reproduction study), the §3.1 anchor clarification, §9 layout entries and an Appendix A pointer; added `docs/research/literature_review.md` (merged Claude + Gemini journal review, verified entries only).
+State:     Unchanged from the previous entry: Phases 0–2 done except T2.6 (needs Graphviz for its check).
+Broken:    —
+Next:      R1 faithful reproduction of the base paper (`tools/basepaper/bp_fork.c`). T2.6 can be ticked whenever Graphviz is installed.
+Decisions: Both open questions answered by the team:
+  - `^`/`$` as zero-width assertions (allowed only where nothing can be consumed before `^` / after `$`): accepted as implemented; spec §3.1 now says this.
+  - DFA state cap: keep the default `--max-states 20000` (default rules build as 2 groups); raising it or regrouping is studied in E3/E11, not changed now.
+

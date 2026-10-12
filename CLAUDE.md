@@ -8,7 +8,7 @@ Compiler Design course project (VIT, Team 1). A C11 engine that classifies strea
 2. `docs/implementation_plan.md` — ordered tasks with "done when" checks. Work on the first unchecked task unless told otherwise.
 3. `docs/progress.md` — what previous sessions did, what's broken, what's next. Read the latest entry before starting.
 
-Background only (read when relevant, not by default): `docs/base_paper.md` (what we're extending), `docs/review1_submission.md` (our Review 1). Don't read `docs/research/` unless asked — it's input for the written report, and everything needed for code is already in the spec.
+Background only (read when relevant, not by default): `docs/base_paper.md` (what we're extending — **read it for Phase R**), `docs/review1_submission.md` (our Review 1). Don't read `docs/research/` unless asked or a task names a file in it (R6 uses `docs/research/literature_review.md` §3) — it's input for the written report, and everything needed for code is already in the spec.
 
 ## Build and test
 
@@ -17,6 +17,7 @@ make                  # bin/triage and tools
 make test             # unit tests (tests/test_*.c)
 make difftest         # DFA engine vs POSIX regexec on tests/corpus — must report 0 mismatches
 make e2e              # end-to-end: triage on tests/corpus/synthetic_small.log vs tests/expected/
+make bp / bp-test      # Phase R: build and test tools/basepaper/ (bp-test also runs under make test)
 make SAN=address      # ASan/UBSan build;  make SAN=thread  for TSan
 make clean
 ```
@@ -30,6 +31,7 @@ make clean
 - One binary, three engines: `--engine dfa|posix|fork` (spec §2.1). Don't remove `posix` or `fork`; they are experiment baselines.
 - DFA tables are read-only after build and shared across workers without locks. Each worker using the POSIX engine compiles its **own** `regex_t` set.
 - Never fabricate benchmark numbers or results in any doc. Numbers only come from runs saved under `results/`.
+- **Phase R (base-paper reproduction, `tools/basepaper/`) must be faithful, not fixed.** Reproduce the paper's design as described, including its inefficiencies (fork per pattern per input, `regcomp`/`regfree` in every child, its normalisation pseudocode). Never optimise it, and never tune anything to make our numbers match the paper's. Where the paper contradicts itself or our measurements, record the difference in `results/basepaper/` — that is the finding.
 
 ## Working rules
 

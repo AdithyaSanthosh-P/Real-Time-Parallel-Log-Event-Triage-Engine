@@ -4,6 +4,8 @@ Spec: `docs/project_design.md` (§ numbers below refer to it). Work top to botto
 
 The order is deliberate: get a correct, single-threaded, end-to-end pipeline on the POSIX engine first (Phase 1), then replace the engine with our compiler (Phase 2), then add classification logic (Phase 3), and only then parallelize (Phase 4). Every later phase is checked against the output of the earlier, simpler version.
 
+**Update (2026-10-12, professor's direction):** the base paper was written by students and is not verified, so before continuing our own design we first reproduce and benchmark the base paper's approach (**Phase R**, inserted after Phase 2), then build the rest of our design. Phase R reuses our compiler (Phase 2) for one comparison variant. The supporting literature review is `docs/research/literature_review.md` (read it only for R6). Phases 3–8 are unchanged except T6.1, which now reuses R1's fork/collect code.
+
 ---
 
 ## Phase 0 — Setup
@@ -45,6 +47,51 @@ The order is deliberate: get a correct, single-threaded, end-to-end pipeline on 
 - [ ] **T2.6 DOT dump** (`dot.c`, §3.2 step 7). `--dump-dot FILE` writes the NFA and DFA (and minimized DFA later) for the loaded rules; collapse byte ranges into labels like `[a-z]` so diagrams are readable.
   *Done when:* `dot -Tpng` renders the DFA for a 2-rule file in `tests/fixtures/tiny.rules` without errors.
 
+## Phase R — Base-paper reproduction and benchmark (spec §10.4)
+
+Goal: rebuild the base paper's program as described, measure each of its claims on our machine, and compare it against fairer baselines and our design on the **same five-pattern task**. All code lives in `tools/basepaper/` and `tests/basepaper/`; nothing in `src/` changes except where noted. Two rules apply to every R task (also in CLAUDE.md):
+
+- **Faithful, not fixed.** Reproduce the paper's design including its inefficiencies (fork per pattern per input, `regcomp`/`regfree` inside every child). Don't optimise or correct it; differences from the paper are findings to record, not bugs to fix.
+- **No fitting.** Never tune anything so our numbers match the paper's. Report what we measure.
+
+The five patterns, verbatim from base paper §3.3, as C string literals (compile with `REG_EXTENDED`; index = core number in the paper's screenshots):
+
+```c
+/* 0 EMAIL    */ "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
+/* 1 PHONE    */ "[6-9][0-9]{9}"
+/* 2 QUESTION */ ".*\\?$"
+/* 3 GREETING */ "^(hello|hi|hey|good morning|good afternoon)"
+/* 4 NAME     */ "^[A-Z][a-z]+ [A-Z][a-z]+$"
+```
+
+Keep them in `tools/basepaper/patterns.h` (one shared definition used by every variant).
+
+- [ ] **R1 Faithful reproduction** (`tools/basepaper/bp_fork.c`). Per input: one pipe; `fork()` one child per pattern; child calls `sched_setaffinity` to core `i % ncores`, then `regcomp` → `regexec` → `regfree`, writes a fixed-size record `{idx, matched, t_regcomp_ns, t_regexec_ns}` to the pipe and `_exit(0)`; parent reads 5 records, then `waitpid`s each child. Modes: interactive (prompt and per-core ✅/❌ lines in arrival order, like base paper §6), and batch (`-f FILE`, one input per line, `--quiet`). Normalisation switch `--normalize=none|paper`: `paper` follows the §3.2 pseudocode exactly (length ≤ 256, `ALLOWED_CHARS` check, lowercase, trim, collapse spaces/tabs, drop newlines, with its error messages); default `none`, which is what the §6 screenshots imply. Add Makefile targets `bp` (build everything in `tools/basepaper/`) and `bp-test` (run the R tests); make `make test` run `bp-test` too.
+  *Done when:* (a) the 4 inputs in `tests/basepaper/screenshots.txt` give exactly the matched sets shown in base paper §6 under `--normalize=none` (compare as sets — arrival order varies); (b) `tests/basepaper/input_module.txt` runs the §4.4 Input Processing inputs under `--normalize=paper`, and the test output lists which rows the pseudocode contradicts (e.g. the apostrophe in `What's your name?` is not in `ALLOWED_CHARS`; the pseudocode has no empty-input check) — recorded, not fixed; (c) a 10,000-input batch run leaves no zombie processes and is clean under `make SAN=address`.
+- [ ] **R2 Comparison variants** (`tools/basepaper/bp_bench.c`, one binary, `--variant V`). Same 5 patterns, same inputs, same output mask:
+  - `fork` — R1's mechanics in timing mode;
+  - `seq-recompile` — one process; per input, loop the 5 patterns with `regcomp`/`regexec`/`regfree` (the children's work without `fork`);
+  - `seq-precompiled` — compile once; per input, 5 `regexec` calls (the fair sequential baseline);
+  - `threads-pattern` — persistent pool of 5 pthreads, one pattern each, own precompiled `regex_t`, a barrier per input (the paper's pattern parallelism without `fork`);
+  - `threads-data` — `-t N` pthreads, each with its own 5 precompiled `regex_t`, inputs split into contiguous chunks (data parallelism);
+  - `dfa` — the 5 patterns compiled by our compiler (Phase 2) into one combined DFA; `-t N` splits inputs across threads. Use the existing compiler API (build `Rule` structs in code or call the builder directly); don't change the rule-file format to admit these categories.
+  Each run prints one JSON object: variant, inputs, threads, CPU list (from `sched_getaffinity`), total seconds, inputs/s, per-input latency p50/p90/p99 (ns), and for `fork` also mean fork-to-collect time and mean child `regcomp` and `regexec` times.
+  *Done when:* all variants give identical masks on every file in `tests/basepaper/` and on the R3 labeled set (a test asserts it); JSON validates; thread variants clean under `make SAN=thread`.
+- [ ] **R3 Inputs and labeled set.** `tests/basepaper/table41.txt` (the 5 inputs of base paper §4.1) and `matching_module.txt` (§4.4 matching-module inputs, including `hello john@test.com`); `screenshots.txt` and `input_module.txt` already exist from R1. `tools/basepaper/gen_bp.py`: fixed-seed generator writing `tests/basepaper/labeled.tsv` with about 1,250 lines (the paper's stated sample count) balanced across EMAIL, PHONE, QUESTION, GREETING, NAME, plus NONE lines, multi-category lines and near-misses (malformed emails, 11-digit numbers, numbers starting 1–5, lowercase names, greetings mid-sentence, questions without `?`). Ground truth describes what each line **is** (by construction from its template), not what the regexes match. Document every template in the script header. The paper's own dataset isn't available, so absolute accuracy won't be comparable — only trends (structured vs natural-language categories).
+  *Done when:* two runs with the same seed give identical files (same hash); the script prints per-category counts; the file is committed (it is small).
+- [ ] **R4 Benchmark runner** (`tools/basepaper/run_bp.sh`, `tools/basepaper/bp_eval.py`). Each point ≥ 5 runs; raw JSON to `results/basepaper/<exp>/`; machine info (`lscpu`, physical core count, `uname -a`, `gcc --version`, flags) to `results/basepaper/machine.txt`. Experiments (spec §10.4):
+  - **RB1 single-input latency** (paper §4.1): the 5 `table41` inputs, 1,000 repetitions each, every variant; median and p99 per input; `fork` breakdown.
+  - **RB2 batch size** (paper §5.3): batches of 1, 10, 100, 1,000, 10,000 inputs from the labeled set; inputs/s per variant.
+  - **RB3 core scaling** (paper §4.3): `taskset -c 0..k-1` for k = 1, 2, 4, 6, 8 (stop at the physical core count and record it); variants `fork`, `threads-pattern`, `threads-data -t k`, `dfa -t k`; speedup vs the same variant at k = 1 **and** vs `seq-precompiled`. Record whether any variant's speedup exceeds 5 (the pattern count).
+  - **RB4 accuracy** (paper §4.2): labeled set under `--normalize=none` and `--normalize=paper`; per-category precision, recall, F1 and overall accuracy (`bp_eval.py`). Expect the NAME pattern to fail after lowercasing — report it, don't fix it.
+  - **RB5 kernel vs user time**: `fork` vs `seq-recompile` on 10,000 inputs with `perf stat -e task-clock,context-switches,cpu-migrations,page-faults` and user/sys time (`/usr/bin/time -v`; fall back to `getrusage` if `perf` is unavailable).
+  Create a minimal `tools/plot.py` (median with min/max bars) for these figures; T6.5 extends it later.
+  *Done when:* a smoke run at small sizes produces valid JSON for every experiment and one figure per experiment.
+- [ ] **R5 (optional — ask before starting) Conflict-resolution reproduction.** Implement base paper §3.4 `resolve_conflicts` and `calculate_confidence` with a written interpretation of each undefined function (specificity, completeness, historical accuracy, base confidence), then compare with the §4.4 Output Generation table. No tuning to make the table match.
+  *Done when:* a table lists each row of §4.4's output table as reproduced / not reproduced with the reason.
+- [ ] **R6 Full runs and write-up.** Run RB1–RB5 at full size. Write `results/basepaper/SUMMARY.md`: for each claim in `docs/research/literature_review.md` §3, the paper's figure, our measurement (median with min/max), a verdict (reproduced / qualitatively supported / not reproduced) and a one-line explanation; then exact commands and machine info. Numbers only from the saved JSON.
+  *Done when:* every claim row has a measured entry, and each number in `SUMMARY.md` can be traced to a JSON file under `results/basepaper/`.
+
 ## Phase 3 — Classification logic
 
 - [ ] **T3.1 Validators** (`validators.c/.h`, §4.3). `luhn_ok`, `verhoeff_ok`, `pan_ok`, plus a helper that strips spaces/hyphens from a span. Use the tables in §4.3 exactly.
@@ -77,7 +124,7 @@ The order is deliberate: get a correct, single-threaded, end-to-end pipeline on 
 
 ## Phase 6 — Baselines and benchmarking infrastructure
 
-- [ ] **T6.1 Fork engine** (`engine_fork.c/.h`, §2.1). Reproduce the base paper: per line, `fork()` one child per rule; child runs `regcomp` + `regexec` and writes the result to a pipe; parent collects and `waitpid`s. Single-threaded only (`-w` ignored with a warning).
+- [ ] **T6.1 Fork engine** (`engine_fork.c/.h`, §2.1). Reproduce the base paper: per line, `fork()` one child per rule; child runs `regcomp` + `regexec` and writes the result to a pipe; parent collects and `waitpid`s. Single-threaded only (`-w` ignored with a warning). Reuse the fork/pipe/collect code from R1 (move the shared part into `src/` if needed); here it runs our log rules instead of the paper's five patterns.
   *Done when:* masks equal `posix -w 1` on `synthetic_small.log`.
 - [ ] **T6.2 `--bench` mode** (§8, §10.2). Preload the whole input into memory before timing; disable sinks; record per-line latency (ingest → aggregated) into a log-scale histogram; print one JSON object: engine, workers, batch, lines, seconds, lines/s, MB/s, p50/p90/p99/p99.9, DFA states, build time.
   *Done when:* output validates as JSON and line counts match the input.

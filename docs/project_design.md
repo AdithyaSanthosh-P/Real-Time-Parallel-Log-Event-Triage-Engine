@@ -2,6 +2,7 @@
 
 *Compiler Design course project, Team 1 (24BCI0099 Adithya Santhosh P, 24BCT0055 Anvesha Tripathi).*
 *Single source of truth for implementation. Merged from `research_claude.md` and `research_gemini.docx`; see Appendix B for what came from where and what was corrected. Background: `base_paper.md` (professor's base paper), `review1_submission.md` (our Review 1).*
+*Update 2026-10-12: the professor said the base paper is an unverified student project and may be changed freely; we are to (1) benchmark its approach, (2) review journal literature, (3) continue our design. Added §10.4 (base-paper reproduction), clarified `^`/`$` in §3.1, updated §9, and pointed Appendix A to `docs/research/literature_review.md`.*
 
 ---
 
@@ -129,7 +130,7 @@ typedef enum { SEV_INFO, SEV_LOW, SEV_MEDIUM, SEV_HIGH, SEV_CRITICAL } Severity;
 
 Rules use a **POSIX-ERE-compatible subset**, so the exact same rule string runs in our compiler and in `regcomp(REG_EXTENDED | (icase ? REG_ICASE : 0))`. That makes differential testing trivial.
 
-Supported: literals; `.`; bracket expressions `[abc]`, `[a-z]`, `[^...]`; `*`, `+`, `?`, `{n}`, `{n,}`, `{n,m}`; `|`; `( )`; `^` only at rule start; `$` only at rule end; backslash escapes of metacharacters (`\.`, `\(`, `\[`, `\\`, `\+`, `\?`, `\*`, `\|`, `\{`, `\$`, `\^`); case-insensitive per-rule flag.
+Supported: literals; `.`; bracket expressions `[abc]`, `[a-z]`, `[^...]`; `*`, `+`, `?`, `{n}`, `{n,}`, `{n,m}`; `|`; `( )`; `^` and `$` as zero-width line anchors (see below); backslash escapes of metacharacters (`\.`, `\(`, `\[`, `\\`, `\+`, `\?`, `\*`, `\|`, `\{`, `\$`, `\^`); case-insensitive per-rule flag.
 
 **Not supported, by design:** backreferences, lookaround, lazy quantifiers, `\d \s \w \b` shorthands (write `[0-9]`, `[ \t]`, explicit boundaries). These are either non-regular or non-ERE; excluding them is what guarantees linear time.
 
@@ -144,7 +145,7 @@ atom    := CHAR | '.' | class | '(' alt ')' | ESCAPE
 class   := '[' '^'? ']'? item+ ']'          // leading ']' is literal
 item    := CHAR ( '-' CHAR )?
 ```
-`^`/`$` are stripped by the rule loader and recorded as flags (`anchored_start`, `anchored_end`).
+`^`/`$` are zero-width assertions (start/end of line). They are allowed anywhere no byte can be consumed before `^` (or after `$`) on any path through the regex — e.g. the digit boundaries `(^|[^0-9])` and `([^0-9]|$)` used by the default rules — and rejected otherwise (`a^b`, `a*^`, `(^a)*`, `$a`). This is exactly POSIX ERE behaviour, so difftest still applies. A rule is treated as start-anchored (excluded from the restart set `U` in §3.2 step 4) when every path begins with `^`. *(Resolved 2026-10-12: replaces the earlier "only at the ends, stripped by the loader" wording, which four default rules could not satisfy.)*
 
 ### 3.2 Pipeline
 
@@ -377,10 +378,12 @@ triage/
     reader.c normalize.c dispatch.c worker.c spsc.c
     aggregate.c correlate.c route.c validators.c extract.c stats.c
   tools/ gen.c difftest.c label_eval.py plot.py run_bench.sh
+  tools/basepaper/ bp_fork.c bp_bench.c patterns.h gen_bp.py bp_eval.py run_bp.sh   # §10.4
   rules/ default.rules
   tests/ test_parse.c test_nfa_dfa.c test_validators.c test_spsc.c corpus/
+  tests/basepaper/ screenshots.txt table41.txt input_module.txt matching_module.txt labeled.tsv
   data/ (gitignored: downloaded datasets)
-  results/ (benchmark JSON + plots)
+  results/ (benchmark JSON + plots; results/basepaper/ for §10.4)
 ```
 
 ---
@@ -426,6 +429,37 @@ Tools: `perf stat` (IPC, cache/branch misses), `perf record -g` (hot spots), `hy
 
 ---
 
+### 10.4 Base-paper reproduction study (Phase R)
+
+Requested by the professor before the rest of our design: rebuild the base paper's program as described and test its claims, so our extension is grounded in measured evidence rather than in the paper's unverified numbers. The study also supports the paper where the evidence allows (claim-by-claim literature mapping in `docs/research/literature_review.md` §3).
+
+**Task:** the paper's five patterns (EMAIL, PHONE, QUESTION, GREETING, NAME; verbatim from its §3.3) on short text inputs.
+
+**Variants (same patterns, same inputs, identical match masks):**
+
+| Variant | What it isolates |
+|---|---|
+| `fork` | The paper's design: fork one process per pattern per input; `regcomp`/`regexec`/`regfree` in each child; pipe; `waitpid`. |
+| `seq-recompile` | The children's work without `fork` — separates process cost from recompilation cost. |
+| `seq-precompiled` | Fair sequential baseline: compile once, 5 `regexec` calls per input. |
+| `threads-pattern` | The paper's idea (one matcher per pattern) with persistent threads instead of `fork`. |
+| `threads-data` | Data parallelism: threads split the inputs, each runs all 5 patterns. |
+| `dfa` | Our compiler: one combined DFA for all 5 patterns, optionally data-parallel. |
+
+**Experiments:**
+
+| # | Paper claim tested | Varies | Metrics |
+|---|---|---|---|
+| RB1 | §4.1 single-input timings (8.9 ms vs 3.7 ms) | the 5 inputs of its table | per-input latency (median, p99); `fork` breakdown into fork/collect, `regcomp`, `regexec` |
+| RB2 | §5.3 speedup needs batches of ~10+ | batch size 1 → 10,000 | inputs/s |
+| RB3 | §4.3 near-linear scaling to 6 cores, 5.62× at 8 | cores 1 → physical count (`taskset`) | speedup vs same variant at 1 core and vs `seq-precompiled`; whether speedup exceeds the pattern count (5) |
+| RB4 | §4.2 structured formats more accurate than natural-language ones | normalisation none vs the paper's §3.2 pseudocode | per-category precision/recall/F1 on a generated labeled set (~1,250 lines, fixed seed) |
+| RB5 | §5.3 overhead explanation | `fork` vs `seq-recompile` | user vs kernel time, context switches, page faults (`perf stat`, `time -v`) |
+
+**Methodology** (Hoefler & Belli, SC 2015, and §10.2): speedup against the fastest sequential baseline; compile and match timed separately; warm-up runs discarded; ≥ 5 runs per point with median and min/max; inputs taken from a preloaded pool rather than one buffer in a tight loop; machine details recorded.
+
+**Rules:** the reproduction is faithful to the paper, inefficiencies included; nothing is tuned to match the paper's figures; the paper's dataset is not available, so accuracy is compared by trend, not by absolute value. Output: `results/basepaper/SUMMARY.md` with a verdict per claim (reproduced / qualitatively supported / not reproduced).
+
 ## 11. Roadmap (2 people, ~5–6 weeks; adjust to real review dates)
 
 | Week | A — compiler & rules | B — runtime & evaluation |
@@ -437,7 +471,7 @@ Tools: `perf stat` (IPC, cache/branch misses), `perf record -g` (hot spots), `hy
 | 5 | Hopcroft minimization (if time); E3, E11 | E1, E2, E4–E8 runs; plots |
 | 6 | Report: compiler sections (grammar, constructions, DOT figures, difftest) | Report: architecture, scaling, latency, accuracy, calibration; slides |
 
-**Must have:** compiler for the subset → combined DFA; difftest = 0 mismatches; three engines; pinned worker pool with batching and bounded queues; full rule set; validators; multi-label + confidence; brute-force correlator; JSONL routing with masking; E1–E3, E6, E7.
+**Must have:** base-paper reproduction study (§10.4); compiler for the subset → combined DFA; difftest = 0 mismatches; three engines; pinned worker pool with batching and bounded queues; full rule set; validators; multi-label + confidence; brute-force correlator; JSONL routing with masking; E1–E3, E6, E7.
 
 **Stretch:** Hopcroft minimization; byte equivalence classes; least-loaded dispatch (E9); latency study (E5); calibration (E8); ordered output; ReDoS demo (E10); process-based worker variant; Aho-Corasick literal prefilter in front of the DFA; SIGHUP rule reload; small live dashboard.
 
@@ -446,6 +480,8 @@ Tools: `perf stat` (IPC, cache/branch misses), `perf record -g` (hot spots), `hy
 ---
 
 ## Appendix A — Related work for the report (verified)
+
+*Superseded for the report by `docs/research/literature_review.md` (journal-first, merged from two independent searches, with verification status per entry). The list below is kept for history.*
 
 1. K. Thompson, "Regular Expression Search Algorithm," CACM 11(6), 1968 — Thompson construction.
 2. A. Aho, M. Corasick, "Efficient String Matching: An Aid to Bibliographic Search," CACM 18(6), 1975 — multi-literal matching.
