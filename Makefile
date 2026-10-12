@@ -52,7 +52,7 @@ TEST_BINS := $(TEST_SRCS:tests/%.c=$(BIN_DIR)/tests/%)
 TOOL_SRCS := $(wildcard tools/gen.c tools/difftest.c)
 TOOL_BINS := $(TOOL_SRCS:tools/%.c=$(BIN_DIR)/%)
 
-.PHONY: all test difftest e2e bp bp-test clean
+.PHONY: all test difftest e2e bp bp-test print-flags clean
 .SECONDARY:
 
 all: $(BIN_DIR)/triage $(TOOL_BINS)
@@ -115,10 +115,15 @@ $(BP_TEST_BIN): $(BUILD)/basepaper/test_bp.o $(BP_LIB_OBJ)
 
 bp: $(BP_BINS)
 
+# For results/basepaper/machine.txt: the exact compiler and flags used.
+print-flags:
+	@echo "$(CC) $(CFLAGS) $(LDFLAGS)"
+
 bp-test: $(BP_BINS) $(BP_TEST_BIN)
 	@echo "== $(BP_TEST_BIN)"; $(BP_TEST_BIN) $(BIN_DIR)/bp_fork
 	@echo "== tests/basepaper/test_gen.sh"; tests/basepaper/test_gen.sh
 	@echo "== tests/basepaper/test_variants.sh"; tests/basepaper/test_variants.sh $(BIN_DIR)
+	@echo "== tests/basepaper/test_smoke.sh"; tests/basepaper/test_smoke.sh $(BIN_DIR)
 
 # DFA vs per-rule regexec on every corpus line plus generated strings (§3.5).
 DIFFTEST_RANDOM ?= 100000

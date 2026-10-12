@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
 
 #include "bp_lib.h"
 #include "dfa.h"
@@ -49,6 +50,9 @@ typedef struct {
     size_t incomplete;                 /* fork: inputs where fewer than 5 records arrived */
     int64_t dfa_states;
     int ok;
+    /* getrusage deltas over the timed run (self = all threads; children = reaped children) */
+    double user_s, sys_s, child_user_s, child_sys_s;
+    long vol_ctxt, invol_ctxt, minflt, majflt;
 } RunOut;
 
 static int g_cpus[CPU_SETSIZE];
@@ -349,8 +353,16 @@ static void run_data(Variant v, const Inputs *in, int threads, RunOut *o)
     }
 }
 
+static double tv_s(struct timeval tv)
+{
+    return (double)tv.tv_sec + (double)tv.tv_usec / 1e6;
+}
+
 static void run_variant(Variant v, const Inputs *in, int threads, RunOut *o)
 {
+    struct rusage s0, s1, c0, c1;
+    getrusage(RUSAGE_SELF, &s0);
+    getrusage(RUSAGE_CHILDREN, &c0);
     switch (v) {
     case V_FORK:             run_fork(in, threads, o); break;
     case V_SEQ_RECOMPILE:    run_seq(in, 1, o); break;
@@ -359,6 +371,16 @@ static void run_variant(Variant v, const Inputs *in, int threads, RunOut *o)
     case V_THREADS_DATA:
     case V_DFA:              run_data(v, in, threads, o); break;
     }
+    getrusage(RUSAGE_SELF, &s1);
+    getrusage(RUSAGE_CHILDREN, &c1);
+    o->user_s = tv_s(s1.ru_utime) - tv_s(s0.ru_utime);
+    o->sys_s = tv_s(s1.ru_stime) - tv_s(s0.ru_stime);
+    o->child_user_s = tv_s(c1.ru_utime) - tv_s(c0.ru_utime);
+    o->child_sys_s = tv_s(c1.ru_stime) - tv_s(c0.ru_stime);
+    o->vol_ctxt = (s1.ru_nvcsw - s0.ru_nvcsw) + (c1.ru_nvcsw - c0.ru_nvcsw);
+    o->invol_ctxt = (s1.ru_nivcsw - s0.ru_nivcsw) + (c1.ru_nivcsw - c0.ru_nivcsw);
+    o->minflt = (s1.ru_minflt - s0.ru_minflt) + (c1.ru_minflt - c0.ru_minflt);
+    o->majflt = (s1.ru_majflt - s0.ru_majflt) + (c1.ru_majflt - c0.ru_majflt);
 }
 
 /* ---- statistics, input loading, JSON ------------------------------------------- */
@@ -517,6 +539,10 @@ int main(int argc, char **argv)
                (double)o.sum_regexec_ns / (double)(n * BP_NPAT), o.incomplete);
     if (v == V_DFA)
         printf(",\"dfa_states\":%lld", (long long)o.dfa_states);
+    printf(",\"rusage\":{\"user_s\":%.6f,\"sys_s\":%.6f,\"children_user_s\":%.6f,\"children_sys_s\":%.6f,"
+           "\"voluntary_ctxt_switches\":%ld,\"involuntary_ctxt_switches\":%ld,"
+           "\"minor_faults\":%ld,\"major_faults\":%ld}",
+           o.user_s, o.sys_s, o.child_user_s, o.child_sys_s, o.vol_ctxt, o.invol_ctxt, o.minflt, o.majflt);
     printf("}\n");
 
     for (size_t i = 0; i < pool_n; i++)

@@ -38,6 +38,11 @@ def check(obj):
             errs.append("latency_ns needs integer p50/p90/p99/min/max")
         elif not (lat["min"] <= lat["p50"] <= lat["p90"] <= lat["p99"] <= lat["max"]):
             errs.append("latency percentiles are not ordered")
+    ru = obj.get("rusage")
+    if not isinstance(ru, dict) or not all(isinstance(ru.get(k), (int, float)) for k in (
+            "user_s", "sys_s", "children_user_s", "children_sys_s", "voluntary_ctxt_switches",
+            "involuntary_ctxt_switches", "minor_faults", "major_faults")):
+        errs.append("rusage object missing or incomplete")
     if obj.get("variant") == "fork":
         fk = obj.get("fork")
         if not isinstance(fk, dict) or not all(
