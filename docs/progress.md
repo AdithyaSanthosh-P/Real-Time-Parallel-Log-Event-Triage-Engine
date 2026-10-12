@@ -83,3 +83,24 @@ Decisions: Both open questions answered by the team:
   - `^`/`$` as zero-width assertions (allowed only where nothing can be consumed before `^` / after `$`): accepted as implemented; spec §3.1 now says this.
   - DFA state cap: keep the default `--max-states 20000` (default rules build as 2 groups); raising it or regrouping is studied in E3/E11, not changed now.
 
+
+## 2026-10-12 — R1 faithful reproduction of the base paper
+Done:      R1. `tools/basepaper/`: `patterns.h` (the paper's 5 patterns, verbatim), `bp_lib.c/.h` (`bp_classify_fork` = paper §3.3 parallel_classify: pipe, fork per pattern, child pins to a CPU then regcomp/regexec/regfree, fixed-size record over the pipe, parent reads one record then waitpid per child; `bp_normalize_paper` = §3.2 process_input), `bp_fork.c` (interactive mode like §6, and `-f FILE [--quiet]` batch; `--normalize=none|paper`). Makefile: `make bp`, `make bp-test` (also run by `make test`, works with `SAN=`). Tests in `tests/basepaper/test_bp.c` with fixtures `screenshots.txt`, `input_module.txt`.
+State:     `make test` (13 programs + bp-test) passes; `make SAN=address bp-test` clean; zombie test over 10,000 inputs: no zombie persists between /proc polls (momentary ones between a child's exit and the parent's waitpid are normal). Core code untouched, so difftest not re-run for this task.
+Broken:    T2.6 still waits for Graphviz (`sudo apt install graphviz`).
+Next:      R2 comparison variants (`bp_bench.c`), then R3 inputs/labeled set, R4 runner.
+Decisions (not in the spec):
+  - Pinning: child i pins to the (i % n)-th CPU of `sched_getaffinity`, not of the whole machine, so `taskset` in RB3 is respected. Same idea as the paper's `i % available_cores`.
+  - `ALLOWED_CHARS = "a-zA-Z0-9@.-_?! "` is read as a character list (`.`, `-`, `_` separately). Read as a regex class `.-_` would be a range admitting `/ : ; < = > [ \ ] ^` too. The apostrophe is rejected either way.
+  - Collect loop follows the paper's pseudocode: receive one record, then waitpid, per child; records are reported in arrival order.
+  - The timings in the pipe record (regcomp/regexec ns) are our instrumentation, not in the paper.
+  - The exact wording of the per-core lines in the interactive mode isn't visible in the transcribed screenshots; we print `Core i (NAME): ✅/❌`.
+  - Shared fork code lives in `tools/basepaper/bp_lib.c`; T6.1 will move what it needs into `src/`.
+Findings (recorded, not fixed), from `tests/basepaper/test_bp.c` output for the §4.4 input-module table vs the §3.2 pseudocode:
+  - `"What's your name?"`: paper says PASS and keeps it; pseudocode rejects it ('  is not in ALLOWED_CHARS).
+  - `""`: paper says "Error: Empty input"; pseudocode has no empty check and accepts it.
+  - 300 characters: both reject, but the pseudocode says "Input exceeds maximum length", not "Input too long".
+  - The tab and newline replacement steps can never run (tabs/newlines are rejected by the character check first).
+  - Lowercasing makes the NAME pattern `^[A-Z][a-z]+ [A-Z][a-z]+$` unmatchable under `--normalize=paper`.
+  - §6 screenshots are reproduced under `--normalize=none` (the 4 inputs give exactly the paper's matched sets), including `Hello what is your name?` not matching GREETING.
+Note for RB3: this machine is an i7-13650HX (6 P-cores with SMT + 8 E-cores = 20 CPUs); record which CPUs each taskset run uses.

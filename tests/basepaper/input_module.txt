@@ -1,0 +1,8 @@
+# Base paper §4.4 'Input Processing Module tests': input <TAB> paper's normalized output <TAB> paper's status.
+# The 300-character row is 300 x 'a' (the paper does not say which characters).
+# Run under --normalize=paper; the test reports where the §3.2 pseudocode disagrees with this table.
+  Hello   World  	hello world	PASS
+TEST@EXAMPLE.COM	test@example.com	PASS
+What's your name?	what's your name?	PASS
+	Error: Empty input	PASS
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	Error: Input too long	PASS

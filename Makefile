@@ -4,6 +4,7 @@
 #   make test            unit tests (tests/test_*.c)
 #   make difftest        DFA engine vs POSIX regexec on tests/corpus
 #   make e2e             triage on tests/corpus/synthetic_small.log vs tests/expected/
+#   make bp / bp-test    Phase R: tools/basepaper/ and its tests (bp-test also runs under make test)
 #   make SAN=address     ASan/UBSan build;  make SAN=thread  for TSan
 #   make clean
 #
@@ -51,7 +52,7 @@ TEST_BINS := $(TEST_SRCS:tests/%.c=$(BIN_DIR)/tests/%)
 TOOL_SRCS := $(wildcard tools/gen.c tools/difftest.c)
 TOOL_BINS := $(TOOL_SRCS:tools/%.c=$(BIN_DIR)/%)
 
-.PHONY: all test difftest e2e clean
+.PHONY: all test difftest e2e bp bp-test clean
 .SECONDARY:
 
 all: $(BIN_DIR)/triage $(TOOL_BINS)
@@ -84,6 +85,35 @@ $(BIN_DIR)/tests/%: $(BUILD)/tests/%.o $(CORE_OBJS)
 test: $(TEST_BINS)
 	@set -e; for t in $(TEST_BINS); do echo "== $$t"; $$t; done; \
 	echo "all $(words $(TEST_BINS)) test programs passed"
+	@$(MAKE) --no-print-directory bp-test
+
+# ---- Phase R: base-paper reproduction (spec §10.4). Independent of src/ ----
+# Programs are tools/basepaper/bp_*.c except bp_lib.c, which they all link.
+BP_LIB_OBJ   := $(BUILD)/basepaper/bp_lib.o
+BP_PROG_SRCS := $(filter-out tools/basepaper/bp_lib.c,$(wildcard tools/basepaper/bp_*.c))
+BP_BINS      := $(BP_PROG_SRCS:tools/basepaper/%.c=$(BIN_DIR)/%)
+BP_TEST_BIN  := $(BIN_DIR)/tests/test_bp
+
+$(BUILD)/basepaper/%.o: tools/basepaper/%.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -Itools/basepaper -c -o $@ $<
+
+$(BP_BINS): $(BIN_DIR)/%: $(BUILD)/basepaper/%.o $(BP_LIB_OBJ)
+	@mkdir -p $(@D)
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+$(BUILD)/basepaper/test_bp.o: tests/basepaper/test_bp.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -Itools/basepaper -c -o $@ $<
+
+$(BP_TEST_BIN): $(BUILD)/basepaper/test_bp.o $(BP_LIB_OBJ)
+	@mkdir -p $(@D)
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+bp: $(BP_BINS)
+
+bp-test: $(BP_BINS) $(BP_TEST_BIN)
+	@echo "== $(BP_TEST_BIN)"; $(BP_TEST_BIN) $(BIN_DIR)/bp_fork
 
 # DFA vs per-rule regexec on every corpus line plus generated strings (§3.5).
 DIFFTEST_RANDOM ?= 100000
@@ -104,4 +134,5 @@ e2e: all
 clean:
 	rm -rf bin build
 
+-include $(wildcard $(BUILD)/basepaper/*.d)
 -include $(CORE_OBJS:.o=.d) $(MAIN_OBJ:.o=.d) $(TEST_SRCS:tests/%.c=$(BUILD)/tests/%.d) $(TOOL_SRCS:tools/%.c=$(BUILD)/tools/%.d)

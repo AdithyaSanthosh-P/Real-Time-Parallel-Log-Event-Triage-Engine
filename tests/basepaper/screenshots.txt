@@ -1,0 +1,6 @@
+# Base paper §6 screenshots: input <TAB> pattern names matched (comma-separated, '-' = none).
+# Compared as sets (children report in varying order). Run under --normalize=none.
+karuna@example.com	EMAIL
+9471763833	PHONE
+Hello what is your name?	QUESTION
+invalid-email	-
