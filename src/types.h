@@ -29,6 +29,18 @@ typedef enum {
 #define FLAG_FAIL_THEN_SUCCESS (1u << 2)
 #define FLAG_ERROR_STORM       (1u << 3)
 
+/* What the post-match steps (spec §3.4) learn about one matched line: which
+ * matched rules survive their validator, which have a context keyword nearby,
+ * and the extracted entities the correlator keys on. */
+typedef struct {
+    uint64_t seq;
+    uint64_t rule_mask;              /* bit r: rule r matched */
+    uint64_t valid_mask;             /* bit r: rule r's validator passed (or it has none) */
+    uint64_t ctx_mask;               /* bit r: a context keyword of rule r is present */
+    uint32_t src_ip;                 /* extracted if any matched rule requests it, else 0 */
+    char     user[32];               /* extracted username if requested, else "" */
+} MatchResult;
+
 /* Aggregator output for one line (spec §2.4). `primary` is a category INDEX
  * (0 = AUTH ... 4 = PII, see aggregate.h), or PRIMARY_NONE when the line has
  * no label. */

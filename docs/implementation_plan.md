@@ -96,9 +96,9 @@ Keep them in `tools/basepaper/patterns.h` (one shared definition used by every v
 
 - [x] **T3.1 Validators** (`validators.c/.h`, §4.3). `luhn_ok`, `verhoeff_ok`, `pan_ok`, plus a helper that strips spaces/hyphens from a span. Use the tables in §4.3 exactly.
   *Done when:* `tests/test_validators.c` passes the known values in §4.3 plus ≥ 5 more valid/invalid cases each.
-- [ ] **T3.2 Spans and extraction** (`extract.c/.h`, §3.4). For matched rules that need a validator or extraction, run that rule's `regexec` with `pmatch` on the normalized line to get spans (iterate for multiple occurrences). Extract IPv4 (dotted quad → `uint32_t`) and username tokens from the span for rules flagged `ip`/`user`. Each worker owns its own capture `regex_t` set.
+- [x] **T3.2 Spans and extraction** (`extract.c/.h`, §3.4). For matched rules that need a validator or extraction, run that rule's `regexec` with `pmatch` on the normalized line to get spans (iterate for multiple occurrences). Extract IPv4 (dotted quad → `uint32_t`) and username tokens from the span for rules flagged `ip`/`user`. Each worker owns its own capture `regex_t` set.
   *Done when:* unit tests extract the right IP/user from every AUTH example line in the corpus, and spans for PII lines contain exactly the number (plus boundary chars).
-- [ ] **T3.3 Context keywords.** Case-insensitive substring check per rule's context list → `ctx_mask`.
+- [x] **T3.3 Context keywords.** Case-insensitive substring check per rule's context list → `ctx_mask`.
   *Done when:* unit test.
 - [ ] **T3.4 Confidence + multi-label** (`aggregate.c`, §5.1–5.3). Discard rules whose validator fails on all spans; per-rule score; noisy-OR per category; `--tau`; correlator escalations hook (stub until T5.1); subsumption only affects the explanation list.
   *Done when:* `tests/test_aggregate.c` checks worked examples: card line gives PII_CARD kept + PII_AADHAAR discarded (spec §4.2 overlap note); SQLi + email line gives labels SEC|PII, primary SEC; a validator-failing Aadhaar yields no PII label. `tests/expected/synthetic_small.expected` updated and `make e2e` passes for both engines.
