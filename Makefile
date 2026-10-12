@@ -117,6 +117,7 @@ bp: $(BP_BINS)
 
 bp-test: $(BP_BINS) $(BP_TEST_BIN)
 	@echo "== $(BP_TEST_BIN)"; $(BP_TEST_BIN) $(BIN_DIR)/bp_fork
+	@echo "== tests/basepaper/test_gen.sh"; tests/basepaper/test_gen.sh
 	@echo "== tests/basepaper/test_variants.sh"; tests/basepaper/test_variants.sh $(BIN_DIR)
 
 # DFA vs per-rule regexec on every corpus line plus generated strings (§3.5).
