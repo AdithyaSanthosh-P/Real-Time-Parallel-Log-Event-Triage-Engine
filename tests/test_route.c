@@ -120,7 +120,7 @@ static void test_format(void)
 
     /* SQLi + e-mail: primary SEC, PII second; ts 2026-10-11 10:14:22 UTC */
     Classified c = classify(0, "SQLI", "PII_EMAIL", NULL);
-    route_format(&rs, &batch, 0, &c, &sb);
+    route_format(&rs, &batch, 0, &c, NULL, 0, &sb);
     CHECK_STR_EQ(sb.data,
         "{\"seq\":100,\"ts\":\"2026-10-11T10:14:22\",\"primary\":\"SECURITY_THREAT\","
         "\"severity\":\"CRITICAL\",\"confidence\":0.60,"
@@ -130,7 +130,7 @@ static void test_format(void)
     /* no label: primary null, empty labels; SSH_ACCEPTED still listed in rules */
     sb_clear(&sb);
     c = classify(1, "SSH_ACCEPTED", NULL);
-    route_format(&rs, &batch, 1, &c, &sb);
+    route_format(&rs, &batch, 1, &c, NULL, 0, &sb);
     CHECK_STR_EQ(sb.data,
         "{\"seq\":101,\"ts\":\"2026-10-11T10:14:23\",\"primary\":null,"
         "\"severity\":\"INFO\",\"confidence\":0.00,\"labels\":[],"
@@ -140,7 +140,7 @@ static void test_format(void)
     sb_clear(&sb);
     c = classify(2, "SSH_FAIL_PW", NULL);
     c.flags = FLAG_BRUTE_FORCE | FLAG_ERROR_STORM;
-    route_format(&rs, &batch, 2, &c, &sb);
+    route_format(&rs, &batch, 2, &c, NULL, 0, &sb);
     CHECK(strstr(sb.data, "\"flags\":[\"ESCALATED_BRUTE_FORCE\",\"ERROR_STORM\"]") != NULL);
     CHECK(strstr(sb.data, "\"primary\":\"AUTH_FAILURE\"") != NULL);
     CHECK(strstr(sb.data, "\"line\":\"\"}") != NULL);          /* empty line */
@@ -218,15 +218,20 @@ static void test_sinks(void)
         Classified c0 = classify(0, "SQLI", "PII_EMAIL", NULL);   /* CRITICAL -> alert */
         Classified c1 = classify(1, "SSH_ACCEPTED", NULL);        /* INFO */
         Classified c2 = classify(2, "SSH_FAIL_PW", NULL);         /* MEDIUM */
-        CHECK_EQ_INT(router_emit(r, &batch, 0, &c0), 0);
-        CHECK_EQ_INT(router_emit(r, &batch, 1, &c1), 0);
-        CHECK_EQ_INT(router_emit(r, &batch, 2, &c2), 0);
+        CHECK_EQ_INT(router_emit(r, &batch, 0, &c0, NULL, 0), 0);
+        CHECK_EQ_INT(router_emit(r, &batch, 1, &c1, NULL, 0), 0);
+        CHECK_EQ_INT(router_emit(r, &batch, 2, &c2, NULL, 0), 0);
         CHECK_EQ_INT(router_records(r), 3);
         CHECK_EQ_INT(router_alerts(r), 1);
+        CHECK_EQ_INT(router_quarantined(r), 1);                  /* only c0 has the PII label */
         CHECK_EQ_INT(router_close(r), 0);
 
         char path[600];
         char *content = NULL;
+        snprintf(path, sizeof path, "%s/pii_quarantine.jsonl", out);
+        CHECK_EQ_INT(count_lines(path, &content), 1);
+        CHECK(content && strstr(content, "\"seq\":100,") != NULL);
+        free(content);
         snprintf(path, sizeof path, "%s/store.jsonl", out);
         CHECK_EQ_INT(count_lines(path, &content), 3);
         free(content);

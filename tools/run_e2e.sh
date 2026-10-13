@@ -29,6 +29,10 @@ if ! diff -u "$tmp/expected.tsv" <(cut -f1-3 "$tmp/ref.tsv") > "$tmp/diff.txt"; 
     head -40 "$tmp/diff.txt"; echo "e2e FAIL: $expected is stale (tools/ref_classify.py disagrees)"; exit 1
 fi
 cut -f1,4 "$tmp/ref.tsv" > "$tmp/ref_sev.tsv"
+python3 -I tools/ref_classify.py --pii-values "$corpus" > "$tmp/pii_values.txt"
+if [ "$(wc -l < "$tmp/pii_values.txt")" -lt 10 ]; then
+    echo "e2e FAIL: reference classifier found fewer than 10 PII values in the corpus"; exit 1
+fi
 
 check() {   # check LABEL OUTDIR
     local label="$1" out="$2"
@@ -46,6 +50,18 @@ check() {   # check LABEL OUTDIR
     awk -F'\t' '$4=="HIGH" || $4=="CRITICAL" {print $1}' "$tmp/store.tsv" > "$tmp/want_alerts.txt"
     if ! diff -u "$tmp/want_alerts.txt" "$tmp/alert_seqs.txt" > "$tmp/diff.txt"; then
         head -40 "$tmp/diff.txt"; echo "e2e FAIL [$label]: alerts.jsonl is not the HIGH/CRITICAL subset"; fail=1; return
+    fi
+    # spec 7 / T3.5: no PII value found by the reference classifier may appear in ANY output file
+    if grep -r -F -f "$tmp/pii_values.txt" "$out" > "$tmp/leaks.txt"; then
+        head -5 "$tmp/leaks.txt"; echo "e2e FAIL [$label]: unmasked PII value in the output"; fail=1; return
+    fi
+    for f in store.jsonl alerts.jsonl pii_quarantine.jsonl; do
+        [ -f "$out/$f" ] || { echo "e2e FAIL [$label]: $f missing"; fail=1; return; }
+    done
+    python3 -I tools/jsonl_summary.py "$out/pii_quarantine.jsonl" | cut -f1 > "$tmp/q_seqs.txt"
+    awk -F'\t' '$3 ~ /PII/ {print $1}' "$tmp/store.tsv" > "$tmp/want_q.txt"
+    if ! diff -u "$tmp/want_q.txt" "$tmp/q_seqs.txt" > "$tmp/diff.txt"; then
+        head -40 "$tmp/diff.txt"; echo "e2e FAIL [$label]: pii_quarantine.jsonl is not the PII-labelled lines"; fail=1; return
     fi
     echo "e2e ok   [$label]: $(wc -l < "$tmp/store.tsv") records, $(wc -l < "$tmp/alert_seqs.txt") alerts"
 }

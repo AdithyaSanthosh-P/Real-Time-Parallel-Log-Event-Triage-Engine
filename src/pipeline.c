@@ -10,6 +10,7 @@
 #include "dot.h"
 #include "engine.h"
 #include "extract.h"
+#include "mask.h"
 #include "nfa.h"
 #include "reader.h"
 #include "route.h"
@@ -28,6 +29,8 @@ int pipeline_run(const Options *o)
     Batch batch;
     bool batch_ready = false;
     Aggregator agg;
+    StrBuf masked;
+    sb_init(&masked);
 
     if (rules_load(o->rules_path, &rs, err, sizeof err) != 0) {
         fprintf(stderr, "triage: %s\n", err);
@@ -86,7 +89,15 @@ int pipeline_run(const Options *o)
             }
             Classified c;
             aggregator_classify(&agg, &m, subsumed, &c);
-            if (router_emit(router, &batch, i, &c) != 0) {
+            /* spec §7: PII values are masked in every sink (spans from the normalized text) */
+            const char *out_line = NULL;
+            size_t out_len = 0;
+            if (m.valid_mask && mask_needed(&rs, m.valid_mask) &&
+                mask_pii(extractor, &rs, norm, len, m.valid_mask, &masked) > 0) {
+                out_line = masked.data;
+                out_len = masked.len;
+            }
+            if (router_emit(router, &batch, i, &c, out_line, out_len) != 0) {
                 fprintf(stderr, "triage: write error in %s: %s\n", o->out_dir, strerror(errno));
                 goto done;
             }
@@ -98,9 +109,10 @@ int pipeline_run(const Options *o)
     }
 
     if (!o->quiet)
-        fprintf(stderr, "triage: %llu lines, %llu alerts -> %s\n",
+        fprintf(stderr, "triage: %llu lines, %llu alerts, %llu PII -> %s\n",
                 (unsigned long long)router_records(router),
-                (unsigned long long)router_alerts(router), o->out_dir);
+                (unsigned long long)router_alerts(router),
+                (unsigned long long)router_quarantined(router), o->out_dir);
     status = 0;
 
 done:
@@ -111,6 +123,7 @@ done:
     if (batch_ready)
         batch_free(&batch);
     reader_close(reader);
+    sb_free(&masked);
     extractor_free(extractor);
     engine_free(engine);
     engine_prepared_free(prepared);

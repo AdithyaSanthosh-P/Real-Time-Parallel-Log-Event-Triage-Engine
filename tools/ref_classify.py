@@ -145,11 +145,36 @@ def classify(rules, line, tau):
     return labels, primary, (SEVS[sev[primary]] if primary else "INFO"), (conf[primary] if primary else 0.0), survivors
 
 
+def pii_values(rules, line):
+    """Values the PII rules found on a line (valid spans only), in every form that must not
+    survive in any output sink: the span as written, with separators stripped, an e-mail's
+    local part, and a key=value secret's value."""
+    vals = set()
+    for r in rules:
+        if r["cat"] != "PII" or not r["re"].search(line):
+            continue
+        for sp in spans(r["re"], line):
+            if r["validator"] != "-" and not validate(r["validator"], sp):
+                continue
+            t = sp.decode("latin-1")
+            t = re.sub(r"^[^0-9A-Za-z]+|[^0-9A-Za-z]+$", "", t)
+            if "=" in t:
+                vals.add(t.split("=", 1)[1])
+            elif "@" in t:
+                vals.add(t.split("@", 1)[0])
+            else:
+                vals.add(t)
+                vals.add(t.replace(" ", "").replace("-", ""))
+    return {v for v in vals if len(v) >= 4}
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("-r", default="rules/default.rules")
     ap.add_argument("--tau", type=float, default=0.5)
     ap.add_argument("--explain", action="store_true")
+    ap.add_argument("--pii-values", action="store_true",
+                    help="print the PII values found in the log, one per line, instead of the classification")
     ap.add_argument("log")
     a = ap.parse_args()
     rules = load_rules(a.r)
@@ -157,6 +182,13 @@ def main():
     lines = data.split(b"\n")
     if lines and lines[-1] == b"":
         lines.pop()
+    if a.pii_values:
+        found = set()
+        for raw in lines:
+            found |= pii_values(rules, normalize(raw.rstrip(b"\r")))
+        for v in sorted(found):
+            print(v)
+        return
     for seq, raw in enumerate(lines):
         labels, primary, sev, conf, surv = classify(rules, normalize(raw.rstrip(b"\r")), a.tau)
         row = f"{seq}\t{LABEL[primary] if primary else '-'}\t{','.join(sorted(LABEL[c] for c in labels)) or '-'}"

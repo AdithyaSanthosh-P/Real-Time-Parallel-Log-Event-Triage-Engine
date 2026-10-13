@@ -13,9 +13,11 @@ struct Router {
     const RuleSet *rs;
     FILE          *alerts;
     FILE          *store;
+    FILE          *pii;
     StrBuf         buf;
     uint64_t       n_records;
     uint64_t       n_alerts;
+    uint64_t       n_pii;
     bool           failed;
 };
 
@@ -64,7 +66,8 @@ static void put_name(StrBuf *sb, const char *name)
     json_put_string(sb, name, strlen(name));
 }
 
-void route_format(const RuleSet *rs, const Batch *b, uint32_t i, const Classified *c, StrBuf *out)
+void route_format(const RuleSet *rs, const Batch *b, uint32_t i, const Classified *c,
+                  const char *line, size_t line_len, StrBuf *out)
 {
     sb_printf(out, "{\"seq\":%llu,", (unsigned long long)c->seq);
 
@@ -111,7 +114,10 @@ void route_format(const RuleSet *rs, const Batch *b, uint32_t i, const Classifie
     sb_puts(out, "],\"flags\":");
     put_flags(out, c->flags);
     sb_puts(out, ",\"line\":");
-    json_put_string(out, batch_raw(b, i), batch_raw_len(b, i));
+    if (line)
+        json_put_string(out, line, line_len);
+    else
+        json_put_string(out, batch_raw(b, i), batch_raw_len(b, i));
     sb_putc(out, '}');
 }
 
@@ -172,9 +178,12 @@ Router *router_open(const char *out_dir, const RuleSet *rs, char *err, size_t er
     sb_init(&r->buf);
     r->alerts = open_sink(out_dir, "alerts.jsonl", err, err_len);
     r->store = r->alerts ? open_sink(out_dir, "store.jsonl", err, err_len) : NULL;
-    if (!r->alerts || !r->store) {
+    r->pii = r->store ? open_sink(out_dir, "pii_quarantine.jsonl", err, err_len) : NULL;
+    if (!r->alerts || !r->store || !r->pii) {
         if (r->alerts)
             fclose(r->alerts);
+        if (r->store)
+            fclose(r->store);
         sb_free(&r->buf);
         free(r);
         return NULL;
@@ -182,10 +191,11 @@ Router *router_open(const char *out_dir, const RuleSet *rs, char *err, size_t er
     return r;
 }
 
-int router_emit(Router *r, const Batch *b, uint32_t i, const Classified *c)
+int router_emit(Router *r, const Batch *b, uint32_t i, const Classified *c,
+                const char *line, size_t line_len)
 {
     sb_clear(&r->buf);
-    route_format(r->rs, b, i, c, &r->buf);
+    route_format(r->rs, b, i, c, line, line_len, &r->buf);
     sb_putc(&r->buf, '\n');
     if (r->buf.oom) {
         r->failed = true;
@@ -200,11 +210,17 @@ int router_emit(Router *r, const Batch *b, uint32_t i, const Classified *c)
             r->failed = true;
         r->n_alerts++;
     }
+    if (c->label_mask & CAT_PII) {
+        if (fwrite(r->buf.data, 1, r->buf.len, r->pii) != r->buf.len)
+            r->failed = true;
+        r->n_pii++;
+    }
     return r->failed ? -1 : 0;
 }
 
 uint64_t router_records(const Router *r) { return r->n_records; }
 uint64_t router_alerts(const Router *r)  { return r->n_alerts; }
+uint64_t router_quarantined(const Router *r) { return r->n_pii; }
 
 int router_close(Router *r)
 {
@@ -213,6 +229,8 @@ int router_close(Router *r)
     if (fclose(r->alerts) != 0)
         r->failed = true;
     if (fclose(r->store) != 0)
+        r->failed = true;
+    if (fclose(r->pii) != 0)
         r->failed = true;
     int rc = r->failed ? -1 : 0;
     sb_free(&r->buf);

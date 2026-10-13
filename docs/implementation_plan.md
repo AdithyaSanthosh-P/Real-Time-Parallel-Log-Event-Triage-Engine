@@ -102,7 +102,7 @@ Keep them in `tools/basepaper/patterns.h` (one shared definition used by every v
   *Done when:* unit test.
 - [x] **T3.4 Confidence + multi-label** (`aggregate.c`, §5.1–5.3). Discard rules whose validator fails on all spans; per-rule score; noisy-OR per category; `--tau`; correlator escalations hook (stub until T5.1); subsumption only affects the explanation list.
   *Done when:* `tests/test_aggregate.c` checks worked examples: card line gives PII_CARD kept + PII_AADHAAR discarded (spec §4.2 overlap note); SQLi + email line gives labels SEC|PII, primary SEC; a validator-failing Aadhaar yields no PII label. `tests/expected/synthetic_small.expected` updated and `make e2e` passes for both engines.
-- [ ] **T3.5 Masking + PII sink** (`route.c`, §7). Mask Aadhaar/card/PAN/secret spans in `pii_quarantine.jsonl` and in `store.jsonl` for PII lines; add `confidence`, `rules`, `flags` fields.
+- [x] **T3.5 Masking + PII sink** (`route.c`, §7). Mask Aadhaar/card/PAN/secret spans in `pii_quarantine.jsonl` and in `store.jsonl` for PII lines; add `confidence`, `rules`, `flags` fields.
   *Done when:* e2e check script asserts no unmasked PII value from the corpus appears anywhere under `out/`.
 
 ## Phase 4 — Parallel runtime
