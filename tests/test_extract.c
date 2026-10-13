@@ -94,6 +94,16 @@ static const AuthCase auth_cases[] = {
     { "Accepted password for alice from 198.51.100.7",               "SSH_ACCEPTED",    0xC6336407u, "alice" },
     { "Accepted publickey for deploy from 198.51.100.8",             "SSH_ACCEPTED",    0xC6336408u, "deploy" },
     { "Failed password for jane@example.com from 203.0.113.9",       "SSH_FAIL_PW",     0xCB007109u, "jane@example.com" },
+    /* the correlator section (T5.1) */
+    { "Failed password for root from 192.0.2.66",                    "SSH_FAIL_PW",     0xC0000242u, "root" },
+    { "Accepted password for root from 192.0.2.66",                  "SSH_ACCEPTED",    0xC0000242u, "root" },
+    { "Invalid user alice from 192.0.2.77",                          "SSH_INVALID_USER", 0xC000024Du, "alice" },
+    { "Invalid user bob from 192.0.2.77",                            "SSH_INVALID_USER", 0xC000024Du, "bob" },
+    { "Invalid user carol from 192.0.2.77",                          "SSH_INVALID_USER", 0xC000024Du, "carol" },
+    { "Invalid user dave from 192.0.2.77",                           "SSH_INVALID_USER", 0xC000024Du, "dave" },
+    { "Invalid user erin from 192.0.2.77",                           "SSH_INVALID_USER", 0xC000024Du, "erin" },
+    { "Failed password for test from 192.0.2.88",                    "SSH_FAIL_PW",     0xC0000258u, "test" },
+    { "Accepted password for test from 192.0.2.88",                  "SSH_ACCEPTED",    0xC0000258u, "test" },
 };
 
 static void test_auth_corpus(void)

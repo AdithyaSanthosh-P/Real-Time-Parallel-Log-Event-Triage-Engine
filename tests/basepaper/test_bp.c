@@ -395,7 +395,12 @@ static void test_no_zombies(void)
     CHECK(WIFEXITED(status) && WEXITSTATUS(status) == 0);
     CHECK_EQ_INT(lines, BATCH_INPUTS);
     CHECK(readable);                    /* /proc/PID/task/PID/children was usable */
-    CHECK_EQ_INT(zombies, 0);
+    /* No accumulation: the paper's parent reads all 5 records before it reaps,
+     * so a finished child is briefly a zombie (and, with a slow parent such as
+     * a TSan build, may still be one at the next poll). A child that is never
+     * reaped stays in the children list, so the list would outgrow one input's
+     * 5 children. */
+    CHECK(max_children <= BP_NPAT);
     /* every child was reaped: none of ours is left over either */
     CHECK(waitpid(-1, NULL, WNOHANG) < 0);
     /* inputs cycle through 8 strings, so each distinct mask count is a multiple of 1250 */

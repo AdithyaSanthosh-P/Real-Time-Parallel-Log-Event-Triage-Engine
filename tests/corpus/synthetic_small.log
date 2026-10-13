@@ -177,3 +177,42 @@ at com.example.Foo.bar(Foo.java:1)
 
 #@ rules: none
 Oct 11 11:01:00 srv1 CRON[3300]: (root) CMD (run-parts /etc/cron.hourly)
+#
+# ---- correlator sequences (spec 6, task T5.1) ----
+# Five failures from 192.0.2.66 within a minute: the fifth is escalated (BRUTE_FORCE),
+# and the successful login from the same address right after is FAIL_THEN_SUCCESS.
+#@ rules: SSH_FAIL_PW
+Oct 11 12:00:01 srv1 sshd[4001]: Failed password for root from 192.0.2.66 port 41001 ssh2
+#@ rules: SSH_FAIL_PW
+Oct 11 12:00:08 srv1 sshd[4002]: Failed password for root from 192.0.2.66 port 41002 ssh2
+#@ rules: SSH_FAIL_PW
+Oct 11 12:00:15 srv1 sshd[4003]: Failed password for root from 192.0.2.66 port 41003 ssh2
+#@ rules: SSH_FAIL_PW
+Oct 11 12:00:22 srv1 sshd[4004]: Failed password for root from 192.0.2.66 port 41004 ssh2
+#@ rules: SSH_FAIL_PW -- fifth failure in 28 s: BRUTE_FORCE
+Oct 11 12:00:29 srv1 sshd[4005]: Failed password for root from 192.0.2.66 port 41005 ssh2
+#@ rules: SSH_ACCEPTED -- success right after the burst: FAIL_THEN_SUCCESS (severity critical)
+Oct 11 12:00:40 srv1 sshd[4006]: Accepted password for root from 192.0.2.66 port 41006 ssh2
+# Five different user names from 192.0.2.77, 61 s apart (never 5 in a minute):
+# PASSWORD_SPRAY on the fifth.
+#@ rules: SSH_INVALID_USER
+Oct 11 12:01:00 srv1 sshd[4010]: Invalid user alice from 192.0.2.77 port 42001
+#@ rules: SSH_INVALID_USER
+Oct 11 12:02:01 srv1 sshd[4011]: Invalid user bob from 192.0.2.77 port 42002
+#@ rules: SSH_INVALID_USER
+Oct 11 12:03:02 srv1 sshd[4012]: Invalid user carol from 192.0.2.77 port 42003
+#@ rules: SSH_INVALID_USER
+Oct 11 12:04:03 srv1 sshd[4013]: Invalid user dave from 192.0.2.77 port 42004
+#@ rules: SSH_INVALID_USER -- fifth distinct user in 244 s: PASSWORD_SPRAY
+Oct 11 12:05:04 srv1 sshd[4014]: Invalid user erin from 192.0.2.77 port 42005
+# Four failures from 192.0.2.88, then a success: under the threshold, no escalation.
+#@ rules: SSH_FAIL_PW
+Oct 11 12:06:01 srv1 sshd[4020]: Failed password for test from 192.0.2.88 port 43001 ssh2
+#@ rules: SSH_FAIL_PW
+Oct 11 12:06:02 srv1 sshd[4021]: Failed password for test from 192.0.2.88 port 43002 ssh2
+#@ rules: SSH_FAIL_PW
+Oct 11 12:06:03 srv1 sshd[4022]: Failed password for test from 192.0.2.88 port 43003 ssh2
+#@ rules: SSH_FAIL_PW
+Oct 11 12:06:04 srv1 sshd[4023]: Failed password for test from 192.0.2.88 port 43004 ssh2
+#@ rules: SSH_ACCEPTED
+Oct 11 12:06:05 srv1 sshd[4024]: Accepted password for test from 192.0.2.88 port 43005 ssh2

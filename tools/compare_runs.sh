@@ -3,16 +3,20 @@
 #
 # For every corpus file, engines posix and dfa, and -w 1,2,4,8 (plus a few
 # dispatch / batch / input variations), the three sinks of the parallel
-# pipeline must hold exactly the records of the single-threaded Phase 3
-# pipeline: same lines, byte for byte, in any order. Records are compared
+# pipeline must hold exactly the records of the reference run: same lines,
+# byte for byte, in any order. Records are compared
 # whole (seq, ts, primary, severity, confidence, labels, rules, flags, masked
 # line), which covers the plan's (seq, primary, labels, confidence). The one
 # exception is "ts": a line without a parseable timestamp gets the ingest time
 # (spec §6), which differs between any two runs, so ts is blanked on both sides.
 #
-# The reference is the last single-threaded commit (REF_COMMIT, default
-# 4f2e1ca = T3.5), built once into build/ref-<commit>/; set REF_BIN to use
-# another binary instead.
+# The reference run is the same binary with -w 1, and that run is itself
+# checked against tools/ref_classify.py (an independent implementation of
+# spec 3.4, 5 and 6) on every field the reference models: primary, labels,
+# severity, confidence and escalation flags. Alternatively REF_BIN, or
+# REF_COMMIT (built once into build/ref-<commit>/), gives a reference binary:
+# T4.6 was checked against the single-threaded Phase 3 pipeline with
+# REF_COMMIT=4f2e1ca (valid until T5.1 added the correlator).
 #
 # usage: tools/compare_runs.sh [path/to/triage]        (default: bin/triage)
 # env:   WORKERS="1 2 4 8"  ENGINES="posix dfa"  REF_COMMIT=...  REF_BIN=...
@@ -23,9 +27,9 @@ cd "$root"
 bin="${1:-bin/triage}"
 workers="${WORKERS:-1 2 4 8}"
 engines="${ENGINES:-posix dfa}"
-ref_commit="${REF_COMMIT:-4f2e1ca}"
+ref_commit="${REF_COMMIT:-}"
 
-if [ -z "${REF_BIN:-}" ]; then
+if [ -z "${REF_BIN:-}" ] && [ -n "$ref_commit" ]; then
     refdir="build/ref-$ref_commit"
     if [ ! -x "$refdir/bin/triage" ]; then
         echo "compare_runs: building the reference binary from commit $ref_commit in $refdir"
@@ -58,9 +62,22 @@ compare() {   # compare LABEL REF_OUT OUT
 
 for log in tests/corpus/*.log; do
     name="$(basename "$log" .log)"
+    if [ -z "${REF_BIN:-}" ]; then
+        python3 -I tools/ref_classify.py --explain "$log" \
+            | awk -F'\t' '{printf "%s\t%s\t%s\t%s\t%.2f\t%s\n", $1, $2, $3, $4, $5, $7}' > "$tmp/oracle.tsv"
+    fi
     for engine in $engines; do
         ref="$tmp/ref-$name-$engine"
-        "$REF_BIN" --quiet --engine "$engine" -o "$ref" "$log"
+        if [ -n "${REF_BIN:-}" ]; then
+            "$REF_BIN" --quiet --engine "$engine" -o "$ref" "$log"
+        else
+            "$bin" --quiet --engine "$engine" -w 1 -o "$ref" "$log"
+            if ! diff <(python3 -I tools/jsonl_summary.py "$ref/store.jsonl") "$tmp/oracle.tsv" > "$tmp/diff.txt"; then
+                head -6 "$tmp/diff.txt"
+                echo "compare_runs FAIL [$name $engine -w 1]: differs from tools/ref_classify.py"
+                fail=1
+            fi
+        fi
         lines="$(wc -l < "$ref/store.jsonl")"
         for w in $workers; do
             out="$tmp/$name-$engine-w$w"
@@ -84,5 +101,5 @@ for log in tests/corpus/*.log; do
     done
 done
 
-[ "$fail" -eq 0 ] && echo "compare_runs: $runs runs equal to the single-threaded reference"
+[ "$fail" -eq 0 ] && echo "compare_runs: $runs runs equal to the reference run${REF_BIN:+ ($REF_BIN)}${REF_BIN:- (-w 1, itself equal to tools/ref_classify.py)}"
 exit $fail

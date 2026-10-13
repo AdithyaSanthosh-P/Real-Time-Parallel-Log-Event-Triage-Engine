@@ -119,7 +119,7 @@ Keep them in `tools/basepaper/patterns.h` (one shared definition used by every v
 
 ## Phase 5 — Correlator
 
-- [ ] **T5.1 Correlator** (`correlate.c/.h`, §6). Single thread between aggregator and router. Open-addressing hash maps keyed by source IP; ring of timestamps per key; distinct-user tracking for spraying; BRUTE_FORCE, PASSWORD_SPRAY, FAIL_THEN_SUCCESS, ERROR_STORM with parameters from CLI/config (`maxretry`, `findtime`, etc.). Escalations add CAT_SEC with confidence 0.95 and a flag; emit each escalation once per window.
+- [x] **T5.1 Correlator** (`correlate.c/.h`, §6). Single thread between aggregator and router. Open-addressing hash maps keyed by source IP; ring of timestamps per key; distinct-user tracking for spraying; BRUTE_FORCE, PASSWORD_SPRAY, FAIL_THEN_SUCCESS, ERROR_STORM with parameters from CLI/config (`maxretry`, `findtime`, etc.). Escalations add CAT_SEC with confidence 0.95 and a flag; emit each escalation once per window.
   *Done when:* `tests/test_correlate.c` replays crafted sequences (4 failures → nothing; 5 within window → one escalation; 5 spread over > window → nothing; burst then Accepted → CRITICAL). Running on the Loghub OpenSSH 2k sample produces escalations, and the e2e check confirms they appear in `alerts.jsonl`.
 
 ## Phase 6 — Baselines and benchmarking infrastructure

@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "aggregate.h"
+#include "correlate.h"
 #include "dfa.h"
 #include "dispatch.h"
 #include "dot.h"
@@ -28,14 +29,24 @@
  *                    hands them to the workers' input rings, then EOF sentinels
  *   worker 0..N-1    worker.c: match + post-match steps
  *   aggregator       polls every worker's output ring, classifies (§5)
+ *   correlator       puts batches back in input order, runs the sliding
+ *                    windows of §6 and re-decides escalated lines
  *   router           writes the sinks, counts stats, returns jobs to the pool
  *   stats            1 Hz line on stderr (not with --quiet)
  *
  * Every hand-off is an SPSC ring (spec §2.3), so each ring has exactly one
  * producer and one consumer thread. Shutdown: the reader pushes WORKER_EOF to
  * every worker, each worker forwards it, the aggregator forwards one to the
- * router after it has seen all N, and the router stops. If any stage fails it
- * raises `stop`, which makes every blocked ring operation give up. */
+ * correlator after it has seen all N, the correlator forwards it to the
+ * router once every batch is through, and the router stops. If any stage
+ * fails it raises `stop`, which makes every blocked ring operation give up.
+ *
+ * Order: workers finish batches out of order, but the correlator's windows
+ * need lines in input order (spec §6: log time, replayable), so it holds
+ * early batches until the batch with the next expected seq arrives. Batches
+ * dropped by --drop never reach a worker; the reader sends them straight to
+ * the correlator on the `dropped` ring so their seq range is not awaited.
+ * A side effect is that the sinks are written in input order. */
 
 /* Jobs per worker input ring (and output ring). */
 #define QUEUE_DEPTH 4
@@ -47,12 +58,17 @@ typedef struct {
     Worker         *workers;
     int             nw;
     SpscRing      **in_rings;
-    SpscRing       *to_router;
+    SpscRing       *to_corr;          /* aggregator -> correlator */
+    SpscRing       *dropped;          /* reader -> correlator (--drop) */
+    SpscRing       *to_router;        /* correlator -> router */
+    Job           **pending;          /* correlator's reorder buffer (pool.n slots) */
+    Correlator     *corr;
     Pool            pool;
     Router         *router;
     Stats           stats;
     atomic_bool     stop;
     int             router_errno;     /* written by the router thread, read after join */
+    bool            seq_gap;          /* written by the correlator, read after join */
 } Pipeline;
 
 static void *aggregator_main(void *arg)
@@ -77,9 +93,13 @@ static void *aggregator_main(void *arg)
                 break;
             }
             ResultBatch *res = &job->res;
-            for (uint32_t l = 0; l < job->batch.count; l++)
-                aggregator_classify(&p->agg, &res->m[l], res->subsumed[l], &res->c[l]);
-            if (!spsc_push(p->to_router, job, &p->stop))
+            for (uint32_t l = 0; l < job->batch.count; l++) {
+                /* aggregator_classify, keeping the evidence for the correlator */
+                aggregator_evidence(&p->agg, &res->m[l], &res->ev[l]);
+                aggregator_decide(&p->agg, &res->ev[l], res->m[l].seq,
+                                  res->ev[l].kept & ~res->subsumed[l], 0, &res->c[l]);
+            }
+            if (!spsc_push(p->to_corr, job, &p->stop))
                 return NULL;
             break;
         }
@@ -91,8 +111,77 @@ static void *aggregator_main(void *arg)
             spsc_backoff_wait(&bo);
         }
     }
-    spsc_push(p->to_router, WORKER_EOF, &p->stop);
+    spsc_push(p->to_corr, WORKER_EOF, &p->stop);
     return NULL;
+}
+
+/* §6 on one batch, in order; escalated lines are decided again. */
+static void correlate_job(Pipeline *p, Job *job)
+{
+    ResultBatch *res = &job->res;
+    for (uint32_t l = 0; l < job->batch.count; l++) {
+        Classified *c = &res->c[l];
+        uint32_t flags = correlator_observe(p->corr, job->batch.ts[l], &res->m[l],
+                                            c->label_mask, &res->ev[l]);
+        if (flags)
+            aggregator_decide(&p->agg, &res->ev[l], c->seq, c->rule_mask, flags, c);
+    }
+}
+
+static void *correlator_main(void *arg)
+{
+    Pipeline *p = arg;
+    size_t npending = 0;
+    uint64_t expect = 0;                         /* seq of the next line to correlate */
+    bool agg_eof = false;
+    SpscBackoff bo = { 0, 0 };
+    for (;;) {
+        bool got = false;
+        void *item;
+        if (!agg_eof && spsc_try_pop(p->to_corr, &item)) {
+            got = true;
+            if (item == WORKER_EOF)
+                agg_eof = true;                  /* every dropped batch is on `dropped` by now */
+            else
+                p->pending[npending++] = item;
+        }
+        while (spsc_try_pop(p->dropped, &item)) {
+            got = true;
+            p->pending[npending++] = item;
+        }
+        /* release every batch that is next in order */
+        for (size_t i = 0; i < npending;) {
+            Job *job = p->pending[i];
+            if (job->batch.seq_start != expect) {
+                i++;
+                continue;
+            }
+            p->pending[i] = p->pending[--npending];
+            expect += job->batch.count;
+            if (!job->dropped)
+                correlate_job(p, job);
+            if (!spsc_push(p->to_router, job, &p->stop))
+                return NULL;
+            i = 0;                               /* the next one may be earlier in the array */
+        }
+        if (agg_eof) {
+            /* nothing more can arrive; with every batch accounted for the
+             * buffer is empty (a non-empty one would be a seq gap: a bug) */
+            if (npending != 0) {
+                p->seq_gap = true;
+                atomic_store_explicit(&p->stop, true, memory_order_release);
+            }
+            spsc_push(p->to_router, WORKER_EOF, &p->stop);
+            return NULL;
+        }
+        if (got) {
+            bo = (SpscBackoff){ 0, 0 };
+        } else {
+            if (atomic_load_explicit(&p->stop, memory_order_acquire))
+                return NULL;
+            spsc_backoff_wait(&bo);
+        }
+    }
 }
 
 static void *router_main(void *arg)
@@ -104,7 +193,8 @@ static void *router_main(void *arg)
             return NULL;
         Job *job = item;
         const ResultBatch *res = &job->res;
-        for (uint32_t i = 0; i < job->batch.count; i++) {
+        uint32_t count = job->dropped ? 0 : job->batch.count;
+        for (uint32_t i = 0; i < count; i++) {
             const char *line = NULL;
             size_t len = 0;
             if (res->mask_len[i] != MASK_NONE) {
@@ -127,16 +217,12 @@ static void *router_main(void *arg)
  * for a read error. */
 static int read_and_dispatch(Pipeline *p, Reader *reader, Dispatcher *d)
 {
-    Job *spare = NULL;              /* a job we still own (after --drop) */
     for (;;) {
-        Job *job = spare;
-        spare = NULL;
-        if (!job) {
-            void *item;
-            if (!spsc_pop(p->pool.free_ring, &item, &p->stop))
-                return 0;           /* another stage failed; it reports */
-            job = item;
-        }
+        void *item;
+        if (!spsc_pop(p->pool.free_ring, &item, &p->stop))
+            return 0;               /* another stage failed; it reports */
+        Job *job = item;
+        job->dropped = false;
         int n = reader_next_batch(reader, &job->batch, (uint32_t)p->o->batch);
         if (n < 0)
             return errno ? errno : EIO;
@@ -145,8 +231,12 @@ static int read_and_dispatch(Pipeline *p, Reader *reader, Dispatcher *d)
         DispatchResult r = dispatch_job(d, job);
         if (r == DISPATCH_STOPPED)
             return 0;
-        if (r == DISPATCH_DROPPED)
-            spare = job;
+        if (r == DISPATCH_DROPPED) {
+            /* its seq range must still reach the correlator; the ring holds
+             * every job, so this never waits */
+            job->dropped = true;
+            spsc_push(p->dropped, job, &p->stop);
+        }
     }
     dispatch_eof(d, WORKER_EOF);
     return 0;
@@ -191,8 +281,8 @@ int pipeline_run(const Options *o)
     atomic_init(&p.stop, false);
     stats_init(&p.stats);
     int nw_init = 0, nw_started = 0;
-    pthread_t agg_thread, router_thread;
-    bool agg_started = false, router_started = false;
+    pthread_t agg_thread, corr_thread, router_thread;
+    bool agg_started = false, corr_started = false, router_started = false;
     StatsReporter rep = { 0 };
 
     if (rules_load(o->rules_path, &rs, err, sizeof err) != 0) {
@@ -228,8 +318,13 @@ int pipeline_run(const Options *o)
         }
         p.in_rings[nw_init] = p.workers[nw_init].in;
     }
+    CorrelatorConfig ccfg;
+    correlator_default_config(&ccfg);
     if (pool_init(&p.pool, pool_size_for(p.nw, QUEUE_DEPTH)) != 0 ||
-        !(p.to_router = spsc_new(p.pool.n))) {
+        !(p.to_corr = spsc_new(p.pool.n)) || !(p.dropped = spsc_new(p.pool.n)) ||
+        !(p.to_router = spsc_new(p.pool.n)) ||
+        !(p.pending = calloc(p.pool.n, sizeof *p.pending)) ||
+        !(p.corr = correlator_new(&ccfg, &rs))) {
         fprintf(stderr, "triage: out of memory\n");
         goto done;
     }
@@ -252,6 +347,9 @@ int pipeline_run(const Options *o)
     if ((trc = pthread_create(&router_thread, NULL, router_main, &p)) != 0)
         goto start_failed;
     router_started = true;
+    if ((trc = pthread_create(&corr_thread, NULL, correlator_main, &p)) != 0)
+        goto start_failed;
+    corr_started = true;
     if ((trc = pthread_create(&agg_thread, NULL, aggregator_main, &p)) != 0)
         goto start_failed;
     agg_started = true;
@@ -281,6 +379,8 @@ join:
         worker_join(&p.workers[i]);
     if (agg_started)
         pthread_join(agg_thread, NULL);
+    if (corr_started)
+        pthread_join(corr_thread, NULL);
     if (router_started)
         pthread_join(router_thread, NULL);
     stats_reporter_stop(&rep);
@@ -289,17 +389,22 @@ join:
         fprintf(stderr, "triage: read error: %s\n", strerror(read_errno));
     if (p.router_errno)
         fprintf(stderr, "triage: write error in %s: %s\n", o->out_dir, strerror(p.router_errno));
+    if (p.seq_gap)
+        fprintf(stderr, "triage: internal error: batches missing at end of input\n");
     for (int i = 0; i < nw_started; i++)
         if (p.workers[i].pin_failed && !o->quiet)
             fprintf(stderr, "triage: warning: could not pin worker %d to CPU %d\n", i, p.workers[i].cpu);
-    if (read_errno == 0 && !p.router_errno) {
+    if (read_errno == 0 && !p.router_errno && !p.seq_gap) {
         uint64_t dropped = atomic_load(&disp.dropped_lines);
+        uint64_t esc = 0;
+        for (int b = 0; b < 4; b++)
+            esc += correlator_count(p.corr, b);
         if (!o->quiet)
-            fprintf(stderr, "triage: %llu lines, %llu alerts, %llu PII, %llu dropped -> %s\n",
+            fprintf(stderr, "triage: %llu lines, %llu alerts, %llu PII, %llu escalations, %llu dropped -> %s\n",
                     (unsigned long long)router_records(p.router),
                     (unsigned long long)router_alerts(p.router),
                     (unsigned long long)router_quarantined(p.router),
-                    (unsigned long long)dropped, o->out_dir);
+                    (unsigned long long)esc, (unsigned long long)dropped, o->out_dir);
         status = 0;
     }
 
@@ -309,6 +414,10 @@ done:
         status = 1;
     }
     reader_close(reader);
+    correlator_free(p.corr);
+    free(p.pending);
+    spsc_free(p.to_corr);
+    spsc_free(p.dropped);
     spsc_free(p.to_router);
     pool_free(&p.pool);
     for (int i = 0; i < nw_init; i++)

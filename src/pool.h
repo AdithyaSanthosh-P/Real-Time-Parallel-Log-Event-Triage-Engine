@@ -15,20 +15,24 @@
  * and moving it through an SpscRing is what transfers it (the ring's
  * release/acquire pairing makes the previous owner's writes visible). */
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+#include "aggregate.h"
 #include "json.h"
 #include "spsc.h"
 #include "types.h"
 
-/* Per-line results, filled by the worker (m, subsumed, masked text) and the
- * aggregator (c). mask_len[i] == MASK_NONE means line i is written as is. */
+/* Per-line results, filled by the worker (m, subsumed, masked text), the
+ * aggregator (ev, c) and the correlator (c again, for escalated lines).
+ * mask_len[i] == MASK_NONE means line i is written as is. */
 #define MASK_NONE UINT32_MAX
 
 typedef struct {
     MatchResult m[BATCH_MAX];
     uint64_t    subsumed[BATCH_MAX];     /* rules to drop from the explanation (§5.3) */
+    Evidence    ev[BATCH_MAX];           /* §5.1/5.2, kept for correlator escalations */
     Classified  c[BATCH_MAX];
     uint32_t    mask_off[BATCH_MAX];     /* masked line i = masked.data[mask_off .. +mask_len) */
     uint32_t    mask_len[BATCH_MAX];
@@ -38,6 +42,7 @@ typedef struct {
 typedef struct {
     Batch       batch;
     ResultBatch res;
+    bool        dropped;     /* --drop: not processed; only its seq range travels on */
 } Job;
 
 typedef struct {

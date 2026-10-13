@@ -2,9 +2,10 @@
 """Reduce triage JSONL (store.jsonl or alerts.jsonl) to comparable rows.
 
 Prints one tab-separated row per record, sorted by seq:
-    seq  primary  labels  severity
-where primary is '-' for a line without labels and labels are the label names
-sorted alphabetically and joined by ',' ('-' if none). Used by the end-to-end
+    seq  primary  labels  severity  confidence  flags
+where primary is '-' for a line without labels, labels are the label names
+sorted alphabetically and joined by ',' ('-' if none), confidence is the
+record's (two decimals) and flags the escalation flags joined by ',' ('-'). Used by the end-to-end
 check (tools/run_e2e.sh) and by the run-equivalence check (T4.6).
 
 usage: jsonl_summary.py FILE
@@ -23,12 +24,13 @@ def main(argv):
             try:
                 rec = json.loads(text)
                 rows.append((rec["seq"], rec["primary"] or "-",
-                             ",".join(sorted(rec["labels"])) or "-", rec["severity"]))
+                             ",".join(sorted(rec["labels"])) or "-", rec["severity"],
+                             f'{rec["confidence"]:.2f}', ",".join(rec["flags"]) or "-"))
             except (ValueError, KeyError, TypeError) as e:
                 print(f"{argv[1]}:{lineno}: {e}", file=sys.stderr)
                 return 1
-    for seq, primary, labels, severity in sorted(rows):
-        print(f"{seq}\t{primary}\t{labels}\t{severity}")
+    for row in sorted(rows):
+        print("\t".join(str(x) for x in row))
     return 0
 
 

@@ -31,6 +31,10 @@ if ! diff -u "$tmp/expected.tsv" <(cut -f1-3 "$tmp/ref.tsv") > "$tmp/diff.txt"; 
     head -40 "$tmp/diff.txt"; echo "e2e FAIL: $expected is stale (tools/ref_classify.py disagrees)"; exit 1
 fi
 cut -f1,4 "$tmp/ref.tsv" > "$tmp/ref_sev.tsv"
+cut -f1,7 "$tmp/ref.tsv" > "$tmp/ref_flags.tsv"
+if [ "$(awk -F'\t' '$7 != "-"' "$tmp/ref.tsv" | wc -l)" -lt 3 ]; then
+    echo "e2e FAIL: the reference finds fewer than 3 correlator escalations in $corpus"; exit 1
+fi
 python3 -I tools/ref_classify.py --pii-values "$corpus" > "$tmp/pii_values.txt"
 if [ "$(wc -l < "$tmp/pii_values.txt")" -lt 10 ]; then
     echo "e2e FAIL: reference classifier found fewer than 10 PII values in the corpus"; exit 1
@@ -48,6 +52,9 @@ check() {   # check LABEL OUTDIR
     fi
     if ! diff -u "$tmp/ref_sev.tsv" <(cut -f1,4 "$tmp/store.tsv") > "$tmp/diff.txt"; then
         head -40 "$tmp/diff.txt"; echo "e2e FAIL [$label]: severity differs from tools/ref_classify.py"; fail=1; return
+    fi
+    if ! diff -u "$tmp/ref_flags.tsv" <(cut -f1,6 "$tmp/store.tsv") > "$tmp/diff.txt"; then
+        head -40 "$tmp/diff.txt"; echo "e2e FAIL [$label]: escalation flags differ from tools/ref_classify.py"; fail=1; return
     fi
     awk -F'\t' '$4=="HIGH" || $4=="CRITICAL" {print $1}' "$tmp/store.tsv" > "$tmp/want_alerts.txt"
     if ! diff -u "$tmp/want_alerts.txt" "$tmp/alert_seqs.txt" > "$tmp/diff.txt"; then
@@ -78,6 +85,29 @@ for engine in $engines; do
     out="$tmp/$engine-w4";    "$bin" --quiet --engine "$engine" -w 4 -b 5 -o "$out" "$corpus"
     check "$engine -w 4 -b 5" "$out"
 done
+
+# ---- T5.1: correlator escalations on a real log ----
+# Every field of every record (primary, labels, severity, confidence, flags) must
+# match the reference classifier, the sample must produce escalations, and every
+# escalated record must be in alerts.jsonl.
+ssh=tests/corpus/OpenSSH_2k.log
+python3 -I tools/ref_classify.py --explain "$ssh" \
+    | awk -F'\t' '{printf "%s\t%s\t%s\t%s\t%.2f\t%s\n", $1, $2, $3, $4, $5, $7}' > "$tmp/ssh_ref.tsv"
+out="$tmp/ssh"
+"$bin" --quiet --engine dfa -w 4 -o "$out" "$ssh"
+python3 -I tools/jsonl_summary.py "$out/store.jsonl" > "$tmp/ssh.tsv"
+python3 -I tools/jsonl_summary.py "$out/alerts.jsonl" | cut -f1 > "$tmp/ssh_alerts.txt"
+awk -F'\t' '$6 != "-" {print $1}' "$tmp/ssh.tsv" > "$tmp/ssh_esc.txt"
+nesc="$(wc -l < "$tmp/ssh_esc.txt")"
+if ! diff -u "$tmp/ssh_ref.tsv" "$tmp/ssh.tsv" > "$tmp/diff.txt"; then
+    head -20 "$tmp/diff.txt"; echo "e2e FAIL [OpenSSH_2k]: differs from tools/ref_classify.py"; fail=1
+elif [ "$nesc" -lt 1 ]; then
+    echo "e2e FAIL [OpenSSH_2k]: no correlator escalations"; fail=1
+elif [ -n "$(comm -23 <(sort "$tmp/ssh_esc.txt") <(sort "$tmp/ssh_alerts.txt"))" ]; then
+    echo "e2e FAIL [OpenSSH_2k]: escalated records missing from alerts.jsonl"; fail=1
+else
+    echo "e2e ok   [OpenSSH_2k]: $nesc escalations ($(awk -F'\t' '$6 != "-" {print $6}' "$tmp/ssh.tsv" | sort | uniq -c | awk '{printf "%s%s %s", sep, $1, $2; sep=", "}')), all in alerts.jsonl, every field equal to the reference"
+fi
 
 # ---- Phase 4 runtime ----
 big="$tmp/big.log"

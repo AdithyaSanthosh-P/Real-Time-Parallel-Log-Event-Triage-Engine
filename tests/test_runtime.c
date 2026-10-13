@@ -12,6 +12,7 @@
 #include "test_main.h"
 #include "aggregate.h"
 #include "batch.h"
+#include "correlate.h"
 #include "dispatch.h"
 #include "engine.h"
 #include "pool.h"
@@ -174,8 +175,9 @@ static int load_expected(Expect *e, int max)
     return n;
 }
 
-/* worker_process + aggregator_classify reproduce the expected file, for both
- * engines and odd batch sizes (results must not depend on the batching). */
+/* worker_process + classification + correlator reproduce the expected file,
+ * for both engines and odd batch sizes (results must not depend on the
+ * batching). */
 static void test_worker_process(EngineKind kind, uint32_t batch_lines)
 {
     char err[256];
@@ -195,6 +197,10 @@ static void test_worker_process(EngineKind kind, uint32_t batch_lines)
     Pool p;
     CHECK_EQ_INT(pool_init(&p, 1), 0);
     Job *job = p.jobs;
+    CorrelatorConfig cfg;
+    correlator_default_config(&cfg);
+    Correlator *corr = correlator_new(&cfg, &rs);
+    int escalated = 0;
 
     Reader *r = reader_open_path("tests/corpus/synthetic_small.log", 0);
     int seen = 0, wrong = 0, masked = 0;
@@ -205,7 +211,14 @@ static void test_worker_process(EngineKind kind, uint32_t batch_lines)
             const MatchResult *m = &job->res.m[i];
             CHECK_EQ_INT(m->seq, job->batch.seq_start + i);
             Classified c;
-            aggregator_classify(&agg, m, job->res.subsumed[i], &c);
+            Evidence ev;
+            aggregator_evidence(&agg, m, &ev);
+            aggregator_decide(&agg, &ev, m->seq, ev.kept & ~job->res.subsumed[i], 0, &c);
+            uint32_t flags = correlator_observe(corr, job->batch.ts[i], m, c.label_mask, &ev);
+            if (flags) {
+                aggregator_decide(&agg, &ev, m->seq, c.rule_mask, flags, &c);
+                escalated++;
+            }
             int s = (int)m->seq;
             if (s >= nexp)
                 continue;
@@ -227,6 +240,8 @@ static void test_worker_process(EngineKind kind, uint32_t batch_lines)
     CHECK_EQ_INT(seen, nexp);
     CHECK_EQ_INT(wrong, 0);
     CHECK(masked >= 10);                         /* the corpus has PII lines */
+    CHECK_EQ_INT(escalated, 3);                  /* its correlator section */
+    correlator_free(corr);
 
     reader_close(r);
     pool_free(&p);

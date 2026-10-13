@@ -1,8 +1,8 @@
 # Expected classification of tests/corpus/synthetic_small.log (one row per stream line).
 # Columns: seq <TAB> primary <TAB> labels (comma-separated, alphabetical; '-' = none).
 #
-# STATE: T3.4 - validators, context keywords and the confidence model of spec 5.1-5.3
-# with tau = 0.5; no correlator escalations yet (T5.1).
+# STATE: T5.1 - validators, context keywords and the confidence model of spec 5.1-5.3
+# with tau = 0.5, plus the correlator of spec 6.
 # Derived with tools/ref_classify.py, an independent Python implementation of spec 3.4
 # and 5.1-5.3 (run_e2e.sh re-derives it and fails if this file is stale). Differences
 # from the v0 file (no confidence model) were reviewed line by line:
@@ -14,6 +14,11 @@
 #   - seq 89-92 lose PERF_WARNING: TIMEOUT has base 0.35 and no context keywords, so a
 #     timeout line alone is below tau (this includes the annotation lines 89 and 91,
 #     which name the rule, and the configuration line 92 the corpus marks as weak).
+# T5.1 appended the correlator section (seq 179-217); rows 0-178 are unchanged:
+#   - seq 192, the fifth failure from 192.0.2.66 in 28 s, gains SECURITY_THREAT (BRUTE_FORCE);
+#   - seq 194, the login from that address right after, is SECURITY_THREAT (FAIL_THEN_SUCCESS);
+#   - seq 206, the fifth distinct user from 192.0.2.77 in 244 s, gains SECURITY_THREAT (SPRAY);
+#   - seq 209-217 (four failures, then a login) stay below the threshold.
 0	-	-
 1	-	-
 2	-	-
@@ -193,3 +198,42 @@
 176	-	-
 177	-	-
 178	-	-
+179	-	-
+180	-	-
+181	-	-
+182	-	-
+183	-	-
+184	AUTH_FAILURE	AUTH_FAILURE
+185	-	-
+186	AUTH_FAILURE	AUTH_FAILURE
+187	-	-
+188	AUTH_FAILURE	AUTH_FAILURE
+189	-	-
+190	AUTH_FAILURE	AUTH_FAILURE
+191	-	-
+192	SECURITY_THREAT	AUTH_FAILURE,SECURITY_THREAT
+193	-	-
+194	SECURITY_THREAT	SECURITY_THREAT
+195	-	-
+196	-	-
+197	-	-
+198	AUTH_FAILURE	AUTH_FAILURE
+199	-	-
+200	AUTH_FAILURE	AUTH_FAILURE
+201	-	-
+202	AUTH_FAILURE	AUTH_FAILURE
+203	-	-
+204	AUTH_FAILURE	AUTH_FAILURE
+205	-	-
+206	SECURITY_THREAT	AUTH_FAILURE,SECURITY_THREAT
+207	-	-
+208	-	-
+209	AUTH_FAILURE	AUTH_FAILURE
+210	-	-
+211	AUTH_FAILURE	AUTH_FAILURE
+212	-	-
+213	AUTH_FAILURE	AUTH_FAILURE
+214	-	-
+215	AUTH_FAILURE	AUTH_FAILURE
+216	-	-
+217	-	-
