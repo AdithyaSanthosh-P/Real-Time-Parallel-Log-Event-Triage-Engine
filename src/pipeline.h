@@ -5,8 +5,8 @@
 
 /* Run the whole pipeline for the parsed options: rules -> reader -> engine ->
  * aggregator -> router, then print a one-line summary on stderr (unless
- * --quiet). T1.7: everything runs in the calling thread; the parallel runtime
- * (Phase 4) replaces the body, not the interface.
+ * --quiet). The calling thread reads and dispatches; workers, aggregator,
+ * router and the stats line run on their own threads (see pipeline.c).
  *
  * Returns the process exit status: 0 on success, 1 on a runtime error (bad
  * rule file, unreadable input, unwritable output directory, ...), with the

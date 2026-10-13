@@ -81,11 +81,6 @@ size_t spsc_size(const SpscRing *r)
 #define SPIN_ROUNDS  64
 #define YIELD_ROUNDS 16
 
-typedef struct {
-    unsigned rounds;
-    long     sleep_ns;
-} Backoff;
-
 static inline void cpu_relax(void)
 {
 #if defined(__x86_64__) || defined(__i386__)
@@ -95,7 +90,7 @@ static inline void cpu_relax(void)
 #endif
 }
 
-static void backoff_wait(Backoff *b)
+void spsc_backoff_wait(SpscBackoff *b)
 {
     if (b->rounds < SPIN_ROUNDS) {
         cpu_relax();
@@ -118,22 +113,22 @@ static inline bool stopped(const atomic_bool *stop)
 
 bool spsc_push(SpscRing *r, void *item, const atomic_bool *stop)
 {
-    Backoff b = { 0, 0 };
+    SpscBackoff b = { 0, 0 };
     while (!spsc_try_push(r, item)) {
         if (stopped(stop))
             return false;
-        backoff_wait(&b);
+        spsc_backoff_wait(&b);
     }
     return true;
 }
 
 bool spsc_pop(SpscRing *r, void **out, const atomic_bool *stop)
 {
-    Backoff b = { 0, 0 };
+    SpscBackoff b = { 0, 0 };
     while (!spsc_try_pop(r, out)) {
         if (stopped(stop))
             return false;
-        backoff_wait(&b);
+        spsc_backoff_wait(&b);
     }
     return true;
 }

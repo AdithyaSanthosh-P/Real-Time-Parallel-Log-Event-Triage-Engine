@@ -17,6 +17,7 @@ typedef struct {
 void sb_init(StrBuf *sb);
 void sb_free(StrBuf *sb);
 void sb_clear(StrBuf *sb);                       /* keep the allocation */
+bool sb_reserve(StrBuf *sb, size_t extra);       /* room for `extra` more bytes; false on OOM */
 void sb_append(StrBuf *sb, const char *s, size_t n);
 void sb_puts(StrBuf *sb, const char *s);
 void sb_putc(StrBuf *sb, char c);

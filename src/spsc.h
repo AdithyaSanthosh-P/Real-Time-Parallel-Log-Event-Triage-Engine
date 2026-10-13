@@ -53,6 +53,15 @@ bool spsc_try_pop(SpscRing *r, void **out);
 bool spsc_push(SpscRing *r, void *item, const atomic_bool *stop);
 bool spsc_pop(SpscRing *r, void **out, const atomic_bool *stop);
 
+/* The waiting strategy of the blocking calls, for a consumer that polls
+ * several rings (the aggregator): call spsc_backoff_wait after a pass that
+ * found nothing, and reset the state to {0, 0} after a pass that did. */
+typedef struct {
+    unsigned rounds;
+    long     sleep_ns;
+} SpscBackoff;
+void spsc_backoff_wait(SpscBackoff *b);
+
 /* Number of items in the ring. Exact when called by the producer or the
  * consumer for its own side's decisions; from any other thread (dispatch
  * policy `least` reads worker rings it does not consume, the stats line reads

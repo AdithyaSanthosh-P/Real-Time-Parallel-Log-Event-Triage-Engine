@@ -319,6 +319,67 @@ static void test_pipe_and_open_errors(void)
     CHECK_EQ_INT(errno, ENOENT);
 }
 
+static double mono_ms(void)
+{
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    return (double)t.tv_sec * 1e3 + (double)t.tv_nsec / 1e6;
+}
+
+/* --batch-delay (spec §2.3): on a pipe that goes quiet, a partial batch is
+ * returned about flush_ms after its first line; regular files never wait. */
+static void test_batch_delay(void)
+{
+    int p[2];
+    CHECK_EQ_INT(pipe(p), 0);
+    Reader *r = reader_open_fd(p[0], true, 0);
+    reader_set_flush_ms(r, 30);
+    Batch b;
+    CHECK_EQ_INT(batch_init(&b), 0);
+
+    static const char part1[] = "a\nb\nc";           /* "c" is not complete yet */
+    CHECK_EQ_INT(write(p[1], part1, sizeof part1 - 1), sizeof part1 - 1);
+    double t0 = mono_ms();
+    CHECK_EQ_INT(reader_next_batch(r, &b, 256), 2);  /* writer still open: flushed */
+    double waited = mono_ms() - t0;
+    CHECK(waited >= 25 && waited < 2000);
+    CHECK_EQ_INT(b.seq_start, 0);
+
+    static const char part2[] = "\nd\n";
+    CHECK_EQ_INT(write(p[1], part2, sizeof part2 - 1), sizeof part2 - 1);
+    close(p[1]);
+    CHECK_EQ_INT(reader_next_batch(r, &b, 256), 2);  /* "c", "d", then EOF */
+    CHECK_EQ_INT(b.seq_start, 2);
+    CHECK_EQ_INT(batch_raw_len(&b, 0), 1);
+    CHECK(batch_raw(&b, 0)[0] == 'c');
+    CHECK_EQ_INT(reader_next_batch(r, &b, 256), 0);
+    reader_close(r);
+
+    /* delay 0: return whatever is complete as soon as the pipe is empty */
+    CHECK_EQ_INT(pipe(p), 0);
+    r = reader_open_fd(p[0], true, 0);
+    reader_set_flush_ms(r, 0);
+    CHECK_EQ_INT(write(p[1], "x\ny\n", 4), 4);
+    CHECK_EQ_INT(reader_next_batch(r, &b, 256), 2);
+    close(p[1]);
+    CHECK_EQ_INT(reader_next_batch(r, &b, 256), 0);
+    reader_close(r);
+
+    /* regular file: the delay never shortens a batch */
+    FILE *f = tmpfile();
+    for (int i = 0; i < 100; i++)
+        fprintf(f, "line %d\n", i);
+    fflush(f);
+    rewind(f);
+    r = reader_open_fd(fileno(f), false, 16);
+    reader_set_flush_ms(r, 0);
+    CHECK_EQ_INT(reader_next_batch(r, &b, 64), 64);
+    CHECK_EQ_INT(reader_next_batch(r, &b, 64), 36);
+    reader_close(r);
+    fclose(f);
+    batch_free(&b);
+}
+
 /* Independent splitter over a whole file: expected line list. */
 static void split_whole(const char *data, size_t len, Lines *out)
 {
@@ -400,6 +461,7 @@ int main(void)
     test_batches_and_seq();
     test_batch_contents();
     test_pipe_and_open_errors();
+    test_batch_delay();
     test_corpus_files();
     return TEST_DONE();
 }

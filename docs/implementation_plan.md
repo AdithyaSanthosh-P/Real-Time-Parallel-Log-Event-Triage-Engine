@@ -109,12 +109,12 @@ Keep them in `tools/basepaper/patterns.h` (one shared definition used by every v
 
 - [x] **T4.1 SPSC ring** (`spsc.c/.h`, §2.3). Power-of-two capacity, cache-line-separated head/tail, release/acquire ordering; `try_push`, `try_pop`, blocking variants with short spin then `nanosleep`/futex-free backoff (or condvar fallback behind a compile flag).
   *Done when:* `tests/test_spsc.c` stress test (10M items, producer/consumer threads, checks order and checksum) passes under `make SAN=thread`.
-- [ ] **T4.2 Batch pool.** Fixed pool of preallocated `Batch` and result-batch objects recycled through a return ring (router → reader), so steady state does no `malloc`. Pool size = workers × queue depth + slack.
+- [x] **T4.2 Batch pool.** Fixed pool of preallocated `Batch` and result-batch objects recycled through a return ring (router → reader), so steady state does no `malloc`. Pool size = workers × queue depth + slack.
   *Done when:* valgrind/ASan run on a 100k-line file shows no leaks and allocation count does not grow with input size (count allocations with a debug counter).
-- [ ] **T4.3 Workers** (`worker.c/.h`, §2.2). N pthreads, optional pinning (`pthread_setaffinity_np`, `--pin`/`--no-pin`), each with its own engine instance (DFA: shared tables; POSIX: own `regex_t` set) and own capture regexes. Produces `MatchResult` batches.
-- [ ] **T4.4 Dispatcher** (`dispatch.c/.h`, §2.3). `rr` and `least`; batch-delay flush of partial batches; blocking backpressure; `--drop` with a dropped counter.
-- [ ] **T4.5 Aggregator + router threads, stats** (`pipeline.c`, `stats.c`). Aggregator consumes result rings from all workers; router writes sinks; 1 Hz stderr stats line (lines/s, per-worker queue depth, per-category counts, dropped).
-- [ ] **T4.6 Shutdown and equivalence.** EOF propagates as a sentinel batch; all threads join; sinks flushed.
+- [x] **T4.3 Workers** (`worker.c/.h`, §2.2). N pthreads, optional pinning (`pthread_setaffinity_np`, `--pin`/`--no-pin`), each with its own engine instance (DFA: shared tables; POSIX: own `regex_t` set) and own capture regexes. Produces `MatchResult` batches.
+- [x] **T4.4 Dispatcher** (`dispatch.c/.h`, §2.3). `rr` and `least`; batch-delay flush of partial batches; blocking backpressure; `--drop` with a dropped counter.
+- [x] **T4.5 Aggregator + router threads, stats** (`pipeline.c`, `stats.c`). Aggregator consumes result rings from all workers; router writes sinks; 1 Hz stderr stats line (lines/s, per-worker queue depth, per-category counts, dropped).
+- [x] **T4.6 Shutdown and equivalence.** EOF propagates as a sentinel batch; all threads join; sinks flushed.
   *Done when (covers T4.3–T4.6):* for every corpus file, engines `posix` and `dfa`, and `-w 1,2,4,8`, the set of `(seq, primary, labels, confidence)` records equals the single-thread result from Phase 3 (`tools/compare_runs.sh`, sorts by seq). Clean under `make SAN=thread` and `make SAN=address`.
 
 ## Phase 5 — Correlator

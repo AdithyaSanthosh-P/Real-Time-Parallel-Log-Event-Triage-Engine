@@ -2,8 +2,10 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -14,6 +16,8 @@ struct Reader {
     int      fd;
     bool     own_fd;
     bool     eof;
+    bool     can_wait;   /* not a regular file: a read may block (pipe, tty, socket) */
+    long     flush_ms;   /* batch delay, < 0 = never return a partial batch early */
     char    *buf;
     size_t   cap;
     size_t   start;      /* first unconsumed byte */
@@ -52,6 +56,9 @@ Reader *reader_open_fd(int fd, bool own_fd, size_t chunk)
     r->fd = fd;
     r->own_fd = own_fd;
     r->max_line = READER_DEFAULT_MAX_LINE;
+    r->flush_ms = -1;
+    struct stat st;
+    r->can_wait = !(fstat(fd, &st) == 0 && S_ISREG(st.st_mode));
     stamp_now(r);
     r->year = ts_year_of(r->now_s);
     return r;
@@ -75,6 +82,7 @@ Reader *reader_open_path(const char *path, size_t chunk)
 
 void reader_set_year(Reader *r, int year)        { r->year = year; }
 void reader_set_max_line(Reader *r, size_t max)  { r->max_line = max ? max : 1; }
+void reader_set_flush_ms(Reader *r, long ms)     { r->flush_ms = ms; }
 
 void reader_close(Reader *r)
 {
@@ -88,9 +96,39 @@ void reader_close(Reader *r)
 
 uint64_t reader_lines_read(const Reader *r) { return r->next_seq; }
 
+static uint64_t mono_ns(void)
+{
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    return (uint64_t)t.tv_sec * 1000000000ull + (uint64_t)t.tv_nsec;
+}
+
+/* With a deadline (CLOCK_MONOTONIC ns, 0 = none) on an input that can block:
+ * wait for data until then. Returns 1 if a read will not block, 0 on timeout,
+ * -1 on error. */
+static int wait_readable(Reader *r, uint64_t deadline_ns)
+{
+    if (deadline_ns == 0 || !r->can_wait)
+        return 1;
+    for (;;) {
+        uint64_t now = mono_ns();
+        uint64_t left = deadline_ns > now ? deadline_ns - now : 0;
+        struct timespec ts = { (time_t)(left / 1000000000ull), (long)(left % 1000000000ull) };
+        struct pollfd pfd = { .fd = r->fd, .events = POLLIN };
+        int rc = ppoll(&pfd, 1, &ts, NULL);
+        if (rc > 0)
+            return 1;               /* data, EOF or an error condition: read() reports it */
+        if (rc == 0)
+            return 0;
+        if (errno != EINTR)
+            return -1;
+    }
+}
+
 /* Read more bytes after `end`. Compacts or grows the buffer first. Returns 1
- * if data arrived, 0 at end of input, -1 on error. */
-static int refill(Reader *r)
+ * if data arrived, 0 at end of input, 2 if `deadline_ns` (see wait_readable)
+ * passed with no data, -1 on error. */
+static int refill(Reader *r, uint64_t deadline_ns)
 {
     if (r->start > 0 && r->start == r->end) {
         r->start = r->end = r->scan = 0;
@@ -110,6 +148,9 @@ static int refill(Reader *r)
         r->buf = nb;
         r->cap = ncap;
     }
+    int w = wait_readable(r, deadline_ns);
+    if (w <= 0)
+        return w < 0 ? -1 : 2;
     for (;;) {
         ssize_t got = read(r->fd, r->buf + r->end, r->cap - r->end);
         if (got < 0) {
@@ -129,9 +170,10 @@ static int refill(Reader *r)
 
 /* Locate the next line without consuming it. On success returns 1 and sets
  * *line, *len (CR removed) and *consume (bytes to advance, newline included).
- * Returns 0 at end of input, -1 on error. The pointer is valid until the next
- * call that reads. */
-static int peek_line(Reader *r, const char **line, size_t *len, size_t *consume)
+ * Returns 0 at end of input, 2 if no complete line arrived before
+ * `deadline_ns` (0 = wait as long as needed), -1 on error. The pointer is
+ * valid until the next call that reads. */
+static int peek_line(Reader *r, uint64_t deadline_ns, const char **line, size_t *len, size_t *consume)
 {
     for (;;) {
         const char *base = r->buf + r->start;
@@ -166,9 +208,9 @@ static int peek_line(Reader *r, const char **line, size_t *len, size_t *consume)
             *consume = avail;
             return 1;
         }
-        int rc = refill(r);
-        if (rc < 0)
-            return -1;
+        int rc = refill(r, deadline_ns);
+        if (rc < 0 || rc == 2)
+            return rc;
     }
 }
 
@@ -186,13 +228,18 @@ int reader_next_batch(Reader *r, Batch *b, uint32_t max_lines)
     batch_reset(b);
     b->seq_start = r->next_seq;
 
+    uint64_t deadline = 0;
     while (b->count < max_lines) {
-        const char *line;
-        size_t len, adv;
-        int rc = peek_line(r, &line, &len, &adv);
+        const char *line = NULL;
+        size_t len = 0, adv = 0;
+        /* Batch delay (spec §2.3): once the batch has a line, wait at most
+         * flush_ms after that line arrived for the rest. */
+        if (b->count == 1 && r->flush_ms >= 0)
+            deadline = b->ingest_ns[0] + (uint64_t)r->flush_ms * 1000000ull;
+        int rc = peek_line(r, deadline, &line, &len, &adv);
         if (rc < 0)
             return -1;
-        if (rc == 0)
+        if (rc == 0 || rc == 2)
             break;
         if (b->count > 0 && (size_t)b->off[b->count] + len > READER_BATCH_BYTES_SOFT)
             break;                               /* leave the line for the next batch */

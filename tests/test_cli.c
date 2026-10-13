@@ -173,12 +173,6 @@ static void test_unimplemented(void)
     char err[256];
     static const struct { const char *a, *b; const char *name; } nyi[] = {
         { "--engine", "fork",     "--engine fork" },
-        { "-w", "2",              "-w N with N > 1" },
-        { "--batch-delay", "10",  "--batch-delay" },
-        { "--dispatch", "least",  "--dispatch" },
-        { "--pin", NULL,          "--pin" },
-        { "--no-pin", NULL,       "--no-pin" },
-        { "--drop", NULL,         "--drop" },
         { "--ordered", NULL,      "--ordered" },
         { "--bench", NULL,        "--bench" },
     };
@@ -194,7 +188,13 @@ static void test_unimplemented(void)
             CHECK_STR_EQ(got, nyi[i].name);
     }
 
-    /* what does work: dfa, posix, -w 1, -b, -r, -o, --max-states, --tau, --quiet, input */
+    /* what does work: dfa, posix, -w, -b, -r, -o, --max-states, --tau, --quiet, input,
+     * and the Phase 4 runtime options */
+    CHECK_EQ_INT(PARSE(&o, err, "-w", "8", "--batch-delay", "10", "--dispatch", "least",
+                       "--no-pin", "--drop", "x.log"), 0);
+    CHECK(cli_unimplemented(&o) == NULL);
+    CHECK_EQ_INT(PARSE(&o, err, "--pin", "x.log"), 0);
+    CHECK(cli_unimplemented(&o) == NULL);
     CHECK_EQ_INT(PARSE(&o, err, "--tau", "0.4", "x.log"), 0);
     CHECK(cli_unimplemented(&o) == NULL);
     CHECK_EQ_INT(PARSE(&o, err, "--engine", "posix", "-w", "1", "-b", "8", "--quiet", "x.log"), 0);

@@ -41,11 +41,18 @@ Reader *reader_open_fd(int fd, bool own_fd, size_t chunk);
 void reader_set_year(Reader *r, int year);
 void reader_set_max_line(Reader *r, size_t max_line);
 
+/* Batch delay (spec §2.3, `--batch-delay`): when reading from a pipe, tty or
+ * socket, reader_next_batch returns a partial batch once `ms` milliseconds
+ * have passed since its first line arrived and no further line is complete.
+ * Default -1: never (wait for a full batch or end of input). Regular files
+ * never wait, so this has no effect on them. */
+void reader_set_flush_ms(Reader *r, long ms);
+
 /* Fill `b` (reset first) with up to `max_lines` (<= BATCH_MAX) lines.
  * b->seq_start is the sequence id of its first line; ids are consecutive from
  * 0 across the whole input. Returns the number of lines, 0 at end of input,
  * or -1 on a read error (errno set). A short batch is returned when the input
- * ends; the next call then returns 0. */
+ * ends (the next call then returns 0) or the batch delay expires. */
 int reader_next_batch(Reader *r, Batch *b, uint32_t max_lines);
 
 /* Total lines handed out so far. */

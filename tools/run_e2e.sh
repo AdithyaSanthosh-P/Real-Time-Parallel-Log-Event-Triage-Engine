@@ -5,9 +5,11 @@
 # usage: tools/run_e2e.sh [path/to/triage]        (default: bin/triage)
 # env:   E2E_ENGINES="posix dfa"                  engines to run (default: both)
 #
-# Per engine it runs three ways - file input, stdin, and file input with a tiny
-# batch size (-b 7) - and also checks that the output files are valid JSONL and
-# that alerts.jsonl holds exactly the HIGH/CRITICAL records of store.jsonl.
+# Per engine it runs four ways - file input, stdin, file input with a tiny
+# batch size (-b 7), and 4 workers with -b 5 - and also checks that the output
+# files are valid JSONL and that alerts.jsonl holds exactly the HIGH/CRITICAL
+# records of store.jsonl. Then the Phase 4 runtime: --drop accounting, clean
+# shutdown on a write error, and the 1 Hz stats line.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -73,6 +75,47 @@ for engine in $engines; do
     check "$engine stdin" "$out"
     out="$tmp/$engine-b7";    "$bin" --quiet --engine "$engine" -w 1 -b 7 -o "$out" "$corpus"
     check "$engine -b 7" "$out"
+    out="$tmp/$engine-w4";    "$bin" --quiet --engine "$engine" -w 4 -b 5 -o "$out" "$corpus"
+    check "$engine -w 4 -b 5" "$out"
 done
+
+# ---- Phase 4 runtime ----
+big="$tmp/big.log"
+for _ in 1 2 3 4 5 6 7 8 9 10; do cat tests/corpus/*.log; done > "$big"
+big_lines="$(wc -l < "$big")"
+
+# --drop: every line is either written or counted as dropped
+out="$tmp/drop"
+"$bin" --engine posix -w 1 -b 1 --drop -o "$out" "$big" 2> "$tmp/drop.err"
+dropped="$(sed -n 's/.* \([0-9]*\) dropped -> .*/\1/p' "$tmp/drop.err")"
+written="$(wc -l < "$out/store.jsonl")"
+uniq_seqs="$(python3 -I tools/jsonl_summary.py "$out/store.jsonl" | cut -f1 | sort -u | wc -l)"
+if [ -z "$dropped" ] || [ $((written + dropped)) -ne "$big_lines" ] || [ "$uniq_seqs" -ne "$written" ]; then
+    cat "$tmp/drop.err"; echo "e2e FAIL [--drop]: $written written + ${dropped:-?} dropped != $big_lines lines"; fail=1
+else
+    echo "e2e ok   [--drop]: $written written + $dropped dropped = $big_lines lines"
+fi
+
+# a write error stops every thread: exit status 1, an error message, no hang
+out="$tmp/full"; mkdir -p "$out"; ln -s /dev/full "$out/store.jsonl"
+set +e
+timeout 60 "$bin" --quiet --engine dfa -w 4 -o "$out" "$big" 2> "$tmp/full.err"
+rc=$?
+set -e
+if [ "$rc" -ne 1 ] || ! grep -q "write error" "$tmp/full.err"; then
+    cat "$tmp/full.err"; echo "e2e FAIL [write error]: exit status $rc (124 = hung)"; fail=1
+else
+    echo "e2e ok   [write error]: exit 1 with \"$(head -1 "$tmp/full.err")\""
+fi
+
+# the stats line appears about once a second while input is flowing
+out="$tmp/stats"
+{ head -1000 "$corpus"; sleep 3.5; } | "$bin" --engine posix -w 2 -o "$out" - 2> "$tmp/stats.err"
+nstats="$(grep -c ' lines/s | queues .* | AUTH .* | dropped ' "$tmp/stats.err" || true)"
+if [ "$nstats" -lt 2 ]; then
+    cat "$tmp/stats.err"; echo "e2e FAIL [stats]: expected >= 2 stats lines, got $nstats"; fail=1
+else
+    echo "e2e ok   [stats]: $nstats stats lines, e.g. \"$(grep -m1 'lines/s' "$tmp/stats.err")\""
+fi
 
 exit $fail

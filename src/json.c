@@ -43,6 +43,11 @@ static bool reserve(StrBuf *sb, size_t extra)
     return true;
 }
 
+bool sb_reserve(StrBuf *sb, size_t extra)
+{
+    return reserve(sb, extra);
+}
+
 void sb_append(StrBuf *sb, const char *s, size_t n)
 {
     if (!reserve(sb, n))

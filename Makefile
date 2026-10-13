@@ -5,6 +5,8 @@
 #   make difftest        DFA engine vs POSIX regexec on tests/corpus
 #   make e2e             triage on tests/corpus/synthetic_small.log vs tests/expected/
 #   make bp / bp-test    Phase R: tools/basepaper/ and its tests (bp-test also runs under make test)
+#   make alloc-test      T4.2: no allocation growth with input size (also run by make test)
+#   make compare         T4.6: parallel runs == single-threaded reference on tests/corpus
 #   make SAN=address     ASan/UBSan build;  make SAN=thread  for TSan
 #   make clean
 #
@@ -52,7 +54,7 @@ TEST_BINS := $(TEST_SRCS:tests/%.c=$(BIN_DIR)/tests/%)
 TOOL_SRCS := $(wildcard tools/gen.c tools/difftest.c)
 TOOL_BINS := $(TOOL_SRCS:tools/%.c=$(BIN_DIR)/%)
 
-.PHONY: all test difftest e2e bp bp-test print-flags clean
+.PHONY: all test difftest e2e bp bp-test alloc-test compare print-flags clean
 .SECONDARY:
 
 all: $(BIN_DIR)/triage $(TOOL_BINS)
@@ -86,6 +88,19 @@ test: $(TEST_BINS)
 	@set -e; for t in $(TEST_BINS); do echo "== $$t"; $$t; done; \
 	echo "all $(words $(TEST_BINS)) test programs passed"
 	@$(MAKE) --no-print-directory bp-test
+	@$(MAKE) --no-print-directory alloc-test
+
+# LD_PRELOAD allocation counter (plain builds only: the sanitizers own malloc).
+ALLOC_SHIM := $(BIN_DIR)/tests/alloc_count.so
+$(ALLOC_SHIM): tests/alloc_count.c
+	@mkdir -p $(@D)
+	$(CC) $(CSTD) -O2 $(WARN) -fPIC -shared -o $@ $< -ldl
+
+alloc-test: $(BIN_DIR)/triage $(if $(SAN),,$(ALLOC_SHIM))
+	@echo "== tests/test_alloc.sh"; tests/test_alloc.sh $(BIN_DIR) $(SAN)
+
+compare: all
+	@tools/compare_runs.sh $(BIN_DIR)/triage
 
 # ---- Phase R: base-paper reproduction (spec §10.4). Independent of src/ ----
 # Programs are tools/basepaper/bp_*.c except bp_lib.c, which they all link.
