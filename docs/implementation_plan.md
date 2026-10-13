@@ -107,7 +107,7 @@ Keep them in `tools/basepaper/patterns.h` (one shared definition used by every v
 
 ## Phase 4 — Parallel runtime
 
-- [ ] **T4.1 SPSC ring** (`spsc.c/.h`, §2.3). Power-of-two capacity, cache-line-separated head/tail, release/acquire ordering; `try_push`, `try_pop`, blocking variants with short spin then `nanosleep`/futex-free backoff (or condvar fallback behind a compile flag).
+- [x] **T4.1 SPSC ring** (`spsc.c/.h`, §2.3). Power-of-two capacity, cache-line-separated head/tail, release/acquire ordering; `try_push`, `try_pop`, blocking variants with short spin then `nanosleep`/futex-free backoff (or condvar fallback behind a compile flag).
   *Done when:* `tests/test_spsc.c` stress test (10M items, producer/consumer threads, checks order and checksum) passes under `make SAN=thread`.
 - [ ] **T4.2 Batch pool.** Fixed pool of preallocated `Batch` and result-batch objects recycled through a return ring (router → reader), so steady state does no `malloc`. Pool size = workers × queue depth + slack.
   *Done when:* valgrind/ASan run on a 100k-line file shows no leaks and allocation count does not grow with input size (count allocations with a debug counter).
