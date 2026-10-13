@@ -39,8 +39,6 @@ Extractor *extractor_new(const RuleSet *rs, char *err, size_t err_len)
     x->rs = rs;
     for (int i = 0; i < rs->count; i++) {
         const Rule *r = &rs->rules[i];
-        if (!needs_spans(r))
-            continue;
         int rc = regcomp(&x->re[i], r->regex, REG_EXTENDED | (r->icase ? REG_ICASE : 0));
         if (rc != 0) {
             char msg[128];
@@ -232,6 +230,38 @@ void extract_line(Extractor *x, const char *line, size_t len, uint64_t rule_mask
             got_user = out->user[0] != '\0';
         }
     }
+}
+
+/* ---- subsumption (§5.3) ------------------------------------------------------------ */
+
+uint64_t extract_subsumed(Extractor *x, const char *line, size_t len, uint64_t kept)
+{
+    Span first[RULES_MAX];
+    bool have[RULES_MAX] = { false };
+    int per_cat[32] = { 0 };
+    uint64_t drop = 0;
+
+    /* only categories with two or more kept rules need spans */
+    for (int r = 0; r < x->rs->count; r++)
+        if ((kept >> r) & 1)
+            per_cat[__builtin_ctz((unsigned)x->rs->rules[r].category)]++;
+    for (int r = 0; r < x->rs->count; r++) {
+        if (!((kept >> r) & 1) || per_cat[__builtin_ctz((unsigned)x->rs->rules[r].category)] < 2)
+            continue;
+        have[r] = extractor_spans(x, r, line, len, &first[r], 1) == 1;
+    }
+    for (int i = 0; i < x->rs->count; i++) {
+        for (int j = 0; j < x->rs->count; j++) {
+            if (i == j || !have[i] || !have[j] || ((drop >> i) & 1) ||
+                x->rs->rules[i].category != x->rs->rules[j].category)
+                continue;
+            bool inside = first[i].so <= first[j].so && first[j].eo <= first[i].eo;
+            bool equal = first[i].so == first[j].so && first[i].eo == first[j].eo;
+            if (inside && (!equal || i < j))
+                drop |= (uint64_t)1 << j;          /* j is explained by the outer rule i */
+        }
+    }
+    return drop;
 }
 
 /* ---- context keywords ------------------------------------------------------------- */

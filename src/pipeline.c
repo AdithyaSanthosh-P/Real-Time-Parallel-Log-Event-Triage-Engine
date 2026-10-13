@@ -9,6 +9,7 @@
 #include "dfa.h"
 #include "dot.h"
 #include "engine.h"
+#include "extract.h"
 #include "nfa.h"
 #include "reader.h"
 #include "route.h"
@@ -21,6 +22,7 @@ int pipeline_run(const Options *o)
     RuleSet rs;
     EnginePrepared *prepared = NULL;
     Engine *engine = NULL;
+    Extractor *extractor = NULL;
     Router *router = NULL;
     Reader *reader = NULL;
     Batch batch;
@@ -31,7 +33,7 @@ int pipeline_run(const Options *o)
         fprintf(stderr, "triage: %s\n", err);
         return 1;
     }
-    aggregator_init(&agg, &rs);
+    aggregator_init(&agg, &rs, (float)o->tau);
 
     prepared = engine_prepare(o->engine, &rs, (int)o->max_states, err, sizeof err);
     if (!prepared) {
@@ -44,6 +46,11 @@ int pipeline_run(const Options *o)
     }
     engine = engine_new(prepared, err, sizeof err);
     if (!engine) {
+        fprintf(stderr, "triage: %s\n", err);
+        goto done;
+    }
+    extractor = extractor_new(&rs, err, sizeof err);
+    if (!extractor) {
         fprintf(stderr, "triage: %s\n", err);
         goto done;
     }
@@ -66,9 +73,19 @@ int pipeline_run(const Options *o)
     int n;
     while ((n = reader_next_batch(reader, &batch, (uint32_t)o->batch)) > 0) {
         for (uint32_t i = 0; i < batch.count; i++) {
-            uint64_t mask = engine_match(engine, batch_norm(&batch, i), batch_norm_len(&batch, i));
+            const char *norm = batch_norm(&batch, i);
+            size_t len = batch_norm_len(&batch, i);
+            MatchResult m = { .seq = batch.seq_start + i };
+            m.rule_mask = engine_match(engine, norm, len);
+            uint64_t subsumed = 0;
+            if (m.rule_mask) {
+                /* §3.4 post-match steps, only on matched lines */
+                extract_line(extractor, norm, len, m.rule_mask, &m);
+                m.ctx_mask = context_mask(&rs, norm, len, m.rule_mask);
+                subsumed = extract_subsumed(extractor, norm, len, m.valid_mask);
+            }
             Classified c;
-            aggregator_classify(&agg, batch.seq_start + i, mask, &c);
+            aggregator_classify(&agg, &m, subsumed, &c);
             if (router_emit(router, &batch, i, &c) != 0) {
                 fprintf(stderr, "triage: write error in %s: %s\n", o->out_dir, strerror(errno));
                 goto done;
@@ -94,6 +111,7 @@ done:
     if (batch_ready)
         batch_free(&batch);
     reader_close(reader);
+    extractor_free(extractor);
     engine_free(engine);
     engine_prepared_free(prepared);
     rules_free(&rs);

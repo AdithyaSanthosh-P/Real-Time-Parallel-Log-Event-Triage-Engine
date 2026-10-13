@@ -1,15 +1,19 @@
 # Expected classification of tests/corpus/synthetic_small.log (one row per stream line).
 # Columns: seq <TAB> primary <TAB> labels (comma-separated, alphabetical; '-' = none).
-# Derived by hand from the "#@ rules:" annotations in the corpus and spec 5.3
-# (highest severity wins, ties SEC > PII > AUTH > ERR > PERF; SSH_ACCEPTED gives no label).
 #
-# STATE: aggregator v0 (T1.7) - no validators, context keywords or correlator yet.
-#   Consequences, to be revisited in T3.4/T5.1:
-#   - seq 111 (bad Luhn), 117 and 119 (bad Verhoeff), 168 (14-digit timestamp) are
-#     labelled PII here but must lose the label once validators run (T3.4);
-#   - seq 107 (valid card) must lose its false Aadhaar match, not its PII label.
-# Annotation lines are stream lines too: seq 89 and 91 name the TIMEOUT rule, so they
-# match it themselves and are labelled PERF_WARNING (see the header of the corpus).
+# STATE: T3.4 - validators, context keywords and the confidence model of spec 5.1-5.3
+# with tau = 0.5; no correlator escalations yet (T5.1).
+# Derived with tools/ref_classify.py, an independent Python implementation of spec 3.4
+# and 5.1-5.3 (run_e2e.sh re-derives it and fails if this file is stale). Differences
+# from the v0 file (no confidence model) were reviewed line by line:
+#   - seq 111 (bad Luhn), 117 and 119 (bad Verhoeff), 168 (14-digit timestamp) lose PII:
+#     their validators fail on every span;
+#   - seq 107 (valid card) keeps PII but its overlapping Aadhaar match is discarded;
+#   - seq 31 and 33 (bare HTTP 403/401) lose AUTH_FAILURE: HTTP_401_403 has base 0.35,
+#     below tau on its own (it needs a second AUTH signal);
+#   - seq 89-92 lose PERF_WARNING: TIMEOUT has base 0.35 and no context keywords, so a
+#     timeout line alone is below tau (this includes the annotation lines 89 and 91,
+#     which name the rule, and the configuration line 92 the corpus marks as weak).
 0	-	-
 1	-	-
 2	-	-
@@ -41,9 +45,9 @@
 28	-	-
 29	-	-
 30	-	-
-31	AUTH_FAILURE	AUTH_FAILURE
+31	-	-
 32	-	-
-33	AUTH_FAILURE	AUTH_FAILURE
+33	-	-
 34	-	-
 35	ERROR	ERROR
 36	-	-
@@ -99,10 +103,10 @@
 86	-	-
 87	-	-
 88	PERF_WARNING	PERF_WARNING
-89	PERF_WARNING	PERF_WARNING
-90	PERF_WARNING	PERF_WARNING
-91	PERF_WARNING	PERF_WARNING
-92	PERF_WARNING	PERF_WARNING
+89	-	-
+90	-	-
+91	-	-
+92	-	-
 93	-	-
 94	PERF_WARNING	PERF_WARNING
 95	-	-
@@ -121,15 +125,15 @@
 108	-	-
 109	PII	PII
 110	-	-
-111	PII	PII
+111	-	-
 112	-	-
 113	PII	PII
 114	-	-
 115	PII	PII
 116	-	-
-117	PII	PII
+117	-	-
 118	-	-
-119	PII	PII
+119	-	-
 120	-	-
 121	-	-
 122	-	-
@@ -178,7 +182,7 @@
 165	-	-
 166	-	-
 167	-	-
-168	PII	PII
+168	-	-
 169	-	-
 170	-	-
 171	-	-

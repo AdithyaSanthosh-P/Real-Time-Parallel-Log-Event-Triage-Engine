@@ -23,6 +23,13 @@ fail=0
 
 grep -v '^#' "$expected" > "$tmp/expected.tsv"
 
+# The expected file must be what the independent reference classifier derives (spec 5).
+python3 -I tools/ref_classify.py --explain "$corpus" > "$tmp/ref.tsv"
+if ! diff -u "$tmp/expected.tsv" <(cut -f1-3 "$tmp/ref.tsv") > "$tmp/diff.txt"; then
+    head -40 "$tmp/diff.txt"; echo "e2e FAIL: $expected is stale (tools/ref_classify.py disagrees)"; exit 1
+fi
+cut -f1,4 "$tmp/ref.tsv" > "$tmp/ref_sev.tsv"
+
 check() {   # check LABEL OUTDIR
     local label="$1" out="$2"
     if ! python3 -I tools/check_jsonl.py "$out/store.jsonl" "$out/alerts.jsonl" > "$tmp/check.log"; then
@@ -32,6 +39,9 @@ check() {   # check LABEL OUTDIR
     python3 -I tools/jsonl_summary.py "$out/alerts.jsonl" | cut -f1 > "$tmp/alert_seqs.txt"
     if ! diff -u "$tmp/expected.tsv" <(cut -f1-3 "$tmp/store.tsv") > "$tmp/diff.txt"; then
         head -40 "$tmp/diff.txt"; echo "e2e FAIL [$label]: classification differs from $expected"; fail=1; return
+    fi
+    if ! diff -u "$tmp/ref_sev.tsv" <(cut -f1,4 "$tmp/store.tsv") > "$tmp/diff.txt"; then
+        head -40 "$tmp/diff.txt"; echo "e2e FAIL [$label]: severity differs from tools/ref_classify.py"; fail=1; return
     fi
     awk -F'\t' '$4=="HIGH" || $4=="CRITICAL" {print $1}' "$tmp/store.tsv" > "$tmp/want_alerts.txt"
     if ! diff -u "$tmp/want_alerts.txt" "$tmp/alert_seqs.txt" > "$tmp/diff.txt"; then

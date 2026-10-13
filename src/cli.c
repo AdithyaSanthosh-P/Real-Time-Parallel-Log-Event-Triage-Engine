@@ -239,7 +239,6 @@ const char *cli_unimplemented(const Options *o)
     if (o->given & GIVEN_PIN)            return o->pin ? "--pin" : "--no-pin";
     if (o->drop)                         return "--drop";
     if (o->ordered)                      return "--ordered";
-    if (o->given & GIVEN_TAU)            return "--tau";
     if (o->bench)                        return "--bench";
     return NULL;
 }

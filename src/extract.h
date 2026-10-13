@@ -28,8 +28,8 @@ typedef struct {
 
 typedef struct Extractor Extractor;
 
-/* Compile the capture regexes of every rule that has a validator or an
- * extract flag. `rs` must outlive the result. NULL + `err` on failure. */
+/* Compile a capture regex for every rule (spans are needed for validators,
+ * extraction, and the subsumption check of §5.3). `rs` must outlive the result. NULL + `err` on failure. */
 Extractor *extractor_new(const RuleSet *rs, char *err, size_t err_len);
 void       extractor_free(Extractor *x);
 
@@ -55,6 +55,11 @@ void extract_user(const char *line, size_t len, Span span, char out[32]);
 /* Source IP: the last IPv4 token inside the span (rules end in `from <ip>`).
  * Returns false if the span holds none. */
 bool extract_ip(const char *line, Span span, uint32_t *ip);
+
+/* §5.3 explanation list: rules of `kept` whose first span lies inside the
+ * first span of another kept rule of the same category (equal spans: the
+ * higher-numbered rule is dropped). Reporting only; never changes labels. */
+uint64_t extract_subsumed(Extractor *x, const char *line, size_t len, uint64_t kept);
 
 /* Case-insensitive substring test per rule: bit r is set when rule r (in
  * rule_mask) has a context keyword occurring anywhere in line[0..len). */

@@ -180,7 +180,6 @@ static void test_unimplemented(void)
         { "--no-pin", NULL,       "--no-pin" },
         { "--drop", NULL,         "--drop" },
         { "--ordered", NULL,      "--ordered" },
-        { "--tau", "0.4",         "--tau" },
         { "--bench", NULL,        "--bench" },
     };
     for (size_t i = 0; i < sizeof nyi / sizeof nyi[0]; i++) {
@@ -195,7 +194,9 @@ static void test_unimplemented(void)
             CHECK_STR_EQ(got, nyi[i].name);
     }
 
-    /* what does work: dfa, posix, -w 1, -b, -r, -o, --max-states, --quiet, input */
+    /* what does work: dfa, posix, -w 1, -b, -r, -o, --max-states, --tau, --quiet, input */
+    CHECK_EQ_INT(PARSE(&o, err, "--tau", "0.4", "x.log"), 0);
+    CHECK(cli_unimplemented(&o) == NULL);
     CHECK_EQ_INT(PARSE(&o, err, "--engine", "posix", "-w", "1", "-b", "8", "--quiet", "x.log"), 0);
     CHECK(cli_unimplemented(&o) == NULL);
     CHECK_EQ_INT(PARSE(&o, err, "--engine", "dfa", "--max-states", "5000", "x.log"), 0);

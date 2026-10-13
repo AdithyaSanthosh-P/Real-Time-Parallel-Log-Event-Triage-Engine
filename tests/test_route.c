@@ -107,8 +107,9 @@ static Classified classify(uint32_t i, const char *first, ...)
         m |= (uint64_t)1 << k;
     }
     __builtin_va_end(ap);
+    MatchResult mr = { .seq = batch.seq_start + i, .rule_mask = m, .valid_mask = m };
     Classified c;
-    aggregator_classify(&agg, batch.seq_start + i, m, &c);
+    aggregator_classify(&agg, &mr, 0, &c);
     return c;
 }
 
@@ -122,7 +123,7 @@ static void test_format(void)
     route_format(&rs, &batch, 0, &c, &sb);
     CHECK_STR_EQ(sb.data,
         "{\"seq\":100,\"ts\":\"2026-10-11T10:14:22\",\"primary\":\"SECURITY_THREAT\","
-        "\"severity\":\"CRITICAL\",\"confidence\":1.00,"
+        "\"severity\":\"CRITICAL\",\"confidence\":0.60,"
         "\"labels\":[\"SECURITY_THREAT\",\"PII\"],\"rules\":[\"SQLI\",\"PII_EMAIL\"],"
         "\"flags\":[],\"line\":\"GET /item?id=1 UNION SELECT \\\"x\\\" a@b.com\"}");
 
@@ -267,7 +268,7 @@ int main(void)
         fprintf(stderr, "cannot load rules: %s\n", err);
         return 1;
     }
-    aggregator_init(&agg, &rs);
+    aggregator_init(&agg, &rs, 0.5f);
 
     if (batch_init(&batch) != 0)
         return 1;
