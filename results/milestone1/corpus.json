@@ -1,0 +1,56 @@
+[
+ {
+  "file": "Apache_2k.log",
+  "lines": 2000,
+  "lines_with_rule_match": 0,
+  "primary_label_counts": {}
+ },
+ {
+  "file": "BGL_2k.log",
+  "lines": 2000,
+  "lines_with_rule_match": 405,
+  "primary_label_counts": {
+   "ERROR": 389,
+   "PII": 9,
+   "PERF_WARNING": 7
+  }
+ },
+ {
+  "file": "HDFS_2k.log",
+  "lines": 2000,
+  "lines_with_rule_match": 119,
+  "primary_label_counts": {
+   "PII": 119
+  }
+ },
+ {
+  "file": "Linux_2k.log",
+  "lines": 2000,
+  "lines_with_rule_match": 30,
+  "primary_label_counts": {
+   "PERF_WARNING": 1,
+   "PII": 29
+  }
+ },
+ {
+  "file": "OpenSSH_2k.log",
+  "lines": 2000,
+  "lines_with_rule_match": 1128,
+  "primary_label_counts": {
+   "AUTH_FAILURE": 1125,
+   "ERROR": 2
+  }
+ },
+ {
+  "file": "synthetic_small.log",
+  "lines": 179,
+  "lines_with_rule_match": 55,
+  "primary_label_counts": {
+   "AUTH_FAILURE": 8,
+   "ERROR": 10,
+   "SECURITY_THREAT": 13,
+   "PERF_WARNING": 8,
+   "PII": 14
+  }
+ }
+]

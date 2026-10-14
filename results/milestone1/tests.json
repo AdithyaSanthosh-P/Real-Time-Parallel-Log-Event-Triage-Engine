@@ -1,0 +1,26 @@
+{
+ "unit_test_checks": {
+  "test_aggregate": 93,
+  "test_cli": 150,
+  "test_dfa": 169082,
+  "test_dot": 38,
+  "test_engine": 268,
+  "test_engine_posix": 10319,
+  "test_nfa": 147063,
+  "test_normalize": 43,
+  "test_parse": 264,
+  "test_reader": 1180,
+  "test_route": 64,
+  "test_rules": 116,
+  "test_timestamp": 43
+ },
+ "unit_test_programs": 13,
+ "all_passed": true,
+ "difftest": {
+  "file_lines": 10179,
+  "files": 6,
+  "random_strings": 100000,
+  "mismatches": 0
+ },
+ "annotated_lines_synthetic_small": 83
+}
