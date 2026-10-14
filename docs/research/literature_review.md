@@ -24,7 +24,7 @@
 | J5 | C. Xu, S. Chen, J. Su, S. M. Yiu, L. C. K. Hui, "A survey on regular expression matching for deep packet inspection: applications, algorithms, and hardware platforms," *IEEE Communications Surveys & Tutorials*, 18(4):2991–3029, 2016. DOI 10.1109/COMST.2016.2565660 | ✔ | C+G | Survey; names DFA state explosion as the central problem → main survey citation; justifies our state cap and rule grouping. |
 | J6 | D. Ficara, A. Di Pietro, S. Giordano, G. Procissi, F. Vitucci, G. Antichi, "Differential encoding of DFAs for fast regular expression matching," *IEEE/ACM Trans. Networking*, 19(3):683–694, 2011. DOI 10.1109/TNET.2010.2089639 | ✔ | C+G | δFA: smaller tables, still one transition per byte → related work for table-size reduction (T8.2). |
 | J7 | M. Becchi, P. Crowley, "A-DFA: A time- and space-efficient DFA compression algorithm for fast regular expression evaluation," *ACM Trans. Architecture and Code Optimization*, 10(1), Article 4, 2013. | ✔ | G (corrected) | DFA compression from the authors of the hybrid-FA work → related work on state explosion. *Gemini listed a different title under this journal; that title is actually a 2008 conference paper (see §6).* |
-| J8 | A. X. Liu, E. Torng, "A de-compositional approach to regular expression matching for network security," *IEEE/ACM Trans. Networking*, 2019. DOI 10.1109/TNET.2019.2941920 | ✔ (venue/DOI) | C | Decomposes regexes to fight state explosion → contrast with our simpler halving strategy. |
+| J8 | A. X. Liu, E. Norige, "A de-compositional approach to regular expression matching for network security," *IEEE/ACM Trans. Networking*, 27(6):2179–2191, 2019. DOI 10.1109/TNET.2019.2941920 | ✔ (venue/DOI) | C | Decomposes regexes to fight state explosion → contrast with our simpler halving strategy. |
 | J9 | S. Dharmapurikar, J. Lockwood, "Fast and scalable pattern matching for network intrusion detection systems," *IEEE J. Selected Areas in Communications*, 24(10):1781–1792, 2006. | ✔ | C | Bloom-filter-assisted multi-pattern matching for NIDS → signature matching at scale. |
 
 ### 1C. Parallel pattern matching on multicore (most relevant to the base paper)
@@ -45,7 +45,7 @@
 | J17 | M. Landauer, F. Skopik, M. Frank, W. Hotwagner, M. Wurzenberger, A. Rauber, "Maintainable log datasets for evaluation of intrusion detection systems," *IEEE Trans. Dependable and Secure Computing*, 20(4):3466–3482, 2023 (AIT-LDS v2.0). | ✔ | C | Public log datasets with per-line attack labels → our SEC/AUTH ground truth. |
 | J18 | M. Landauer, F. Skopik, M. Wurzenberger, W. Hotwagner, A. Rauber, "Have it your way: generating customized log datasets with a model-driven simulation testbed," *IEEE Trans. Reliability*, 70(1):402–415, 2021. | ✔ (venue) | G | How the AIT testbed injects and labels attacks → methodology reference for our synthetic generator (T6.3). |
 | J19 | M. Dayarathna, S. Perera, "Recent advancements in event processing," *ACM Computing Surveys*, 51(2):33:1–33:36, 2018. DOI 10.1145/3170432 | ✔ | G | Survey of event/stream processing platforms (Storm, Spark, Flink) → context for positioning a single-machine streaming pipeline. |
-| J20 | I. Pilán, P. Lison, L. Øvrelid, A. Papadopoulou, D. Sánchez, M. Batet, "The Text Anonymization Benchmark (TAB): a dedicated corpus and evaluation framework for text anonymization," *Computational Linguistics*, 48(4), 2022. | ✔ (venue) | G (substituted) | Journal reference for detecting and masking personal data in text → cite for the PII category and masking. *Replaces Gemini's Lison et al. entry, which is a conference paper (see §6).* |
+| J20 | I. Pilán, P. Lison, L. Øvrelid, A. Papadopoulou, D. Sánchez, M. Batet, "The Text Anonymization Benchmark (TAB): a dedicated corpus and evaluation framework for text anonymization," *Computational Linguistics*, 48(4):1053–1101, Dec. 2022. DOI 10.1162/coli_a_00458 | ✔ (venue) | G (substituted) | Journal reference for detecting and masking personal data in text → cite for the PII category and masking. *Replaces Gemini's Lison et al. entry, which is a conference paper (see §6).* |
 
 ### 1E. Check digits and parallel performance theory
 
@@ -63,18 +63,18 @@ Primary sources that are not journal articles (cite as such): J. Verhoeff, *Erro
 
 | # | Reference | Found by | Use |
 |---|---|---|---|
-| C1 | T. Mytkowicz, M. Musuvathi, W. Schulte, "Data-parallel finite-state machines," ASPLOS 2014. | C | Parallelizing one FSM run; contrast with line-level parallelism. |
-| C2 | S. Kumar, S. Dharmapurikar, F. Yu, P. Crowley, J. Turner, "Algorithms to accelerate multiple regular expressions matching for deep packet inspection," SIGCOMM 2006. DOI 10.1145/1159913.1159952 | C+G | D²FA transition compression. |
-| C3 | M. Becchi, P. Crowley, "A hybrid finite automaton for practical deep packet inspection," CoNEXT 2007. | C+G | Unanchored wildcards as a main cause of state explosion; DFA/NFA hybrid. |
+| C1 | T. Mytkowicz, M. Musuvathi, W. Schulte, "Data-parallel finite-state machines," ASPLOS 2014, pp. 529–542. DOI 10.1145/2541940.2541988 | C | Parallelizing one FSM run; contrast with line-level parallelism. |
+| C2 | S. Kumar, S. Dharmapurikar, F. Yu, P. Crowley, J. Turner, "Algorithms to accelerate multiple regular expressions matching for deep packet inspection," SIGCOMM 2006, pp. 339–350 (pages from one secondary source). DOI 10.1145/1159913.1159952 | C+G | D²FA transition compression. |
+| C3 | M. Becchi, P. Crowley, "A hybrid finite automaton for practical deep packet inspection," CoNEXT 2007, pp. 1–12. | C+G | Unanchored wildcards as a main cause of state explosion; DFA/NFA hybrid. |
 | C4 | M. Becchi, P. Crowley, "Extending finite automata to efficiently match Perl-compatible regular expressions," CoNEXT 2008. DOI 10.1145/1544012.1544037 | G (corrected venue) | Handling counting and back-references in automata; explains what our subset deliberately excludes. |
-| C5 | X. Wang et al., "Hyperscan: a fast multi-pattern regex matcher for modern CPUs," NSDI 2019. | C+G | Industrial engine; literal prefiltering. |
-| C6 | J. C. Davis, C. A. Coghlan, F. Servant, D. Lee, "The impact of regular expression denial of service (ReDoS) in practice," ESEC/FSE 2018, pp. 246–256. | C | Super-linear regexes are common in practice; supports the DFA safety argument. |
+| C5 | X. Wang et al., "Hyperscan: a fast multi-pattern regex matcher for modern CPUs," NSDI 2019, pp. 631–648. | C+G | Industrial engine; literal prefiltering. |
+| C6 | J. C. Davis, C. A. Coghlan, F. Servant, D. Lee, "The impact of regular expression denial of service (ReDoS) in practice," ESEC/FSE 2018, pp. 246–256. DOI 10.1145/3236024.3236027 | C | Super-linear regexes are common in practice; supports the DFA safety argument. |
 | C7 | P. He, J. Zhu, Z. Zheng, M. R. Lyu, "Drain: an online log parsing approach with fixed depth tree," ICWS 2017. DOI 10.1109/ICWS.2017.13 | C+G | Streaming log template mining. |
-| C8 | J. Zhu et al., "Loghub: a large collection of system log datasets for AI-driven log analytics," ISSRE 2023. | C | Loghub datasets. |
-| C9 | P. Lison, I. Pilán, D. Sánchez, M. Batet, L. Øvrelid, "Anonymisation models for text data: state of the art, challenges and future directions," ACL-IJCNLP 2021, pp. 4188–4203. | G (corrected venue) | Text anonymisation survey; pairs with J20. |
-| C10 | A. Baumann, J. Appavoo, O. Krieger, T. Roscoe, "A fork() in the road," HotOS 2019. | C | Cost and problems of `fork()`; context for the base paper's overhead. |
-| C11 | T. Hoefler, R. Belli, "Scientific benchmarking of parallel computing systems: twelve ways to tell the masses when reporting performance results," SC 2015. DOI 10.1145/2807591.2807644 | C+G | Rules for reporting parallel performance → our benchmark methodology (§4). |
-| C12 | A. Roodt et al., "Benchmarking regular expression matching," CIAA 2024. | C | Recent regex-engine benchmarking methodology. |
+| C8 | J. Zhu et al., "Loghub: a large collection of system log datasets for AI-driven log analytics," ISSRE 2023 (authors per arXiv 2008.06448: J. Zhu, S. He, P. He, J. Liu, M. R. Lyu). | C | Loghub datasets. |
+| C9 | P. Lison, I. Pilán, D. Sánchez, M. Batet, L. Øvrelid, "Anonymisation models for text data: state of the art, challenges and future directions," ACL-IJCNLP 2021, pp. 4188–4203. DOI 10.18653/v1/2021.acl-long.323 | G (corrected venue) | Text anonymisation survey; pairs with J20. |
+| C10 | A. Baumann, J. Appavoo, O. Krieger, T. Roscoe, "A fork() in the road," HotOS 2019. DOI 10.1145/3317550.3321435 | C | Cost and problems of `fork()`; context for the base paper's overhead. |
+| C11 | T. Hoefler, R. Belli, "Scientific benchmarking of parallel computing systems: twelve ways to tell the masses when reporting performance results," SC 2015, Art. 73 (pp. 73:1–73:12). DOI 10.1145/2807591.2807644 | C+G | Rules for reporting parallel performance → our benchmark methodology (§4). |
+| C12 | A. Roodt et al., "Benchmarking regular expression matching," CIAA 2024, LNCS vol. 15015 (authors: A. Roodt, B. K. M. Watling, W. Bester, B. van der Merwe, S. Sung, Y.-S. Han). | C | Recent regex-engine benchmarking methodology. |
 | C13 | R. Cox, "Regular expression matching can be simple and fast," swtch.com, 2007. | C+G | Thompson NFA vs backtracking; web article, not peer-reviewed. |
 
 ---
@@ -135,6 +135,7 @@ Each Gemini-only journal entry was checked. These did not survive:
 | Chapman & Stolee, "Exploring regular expression comprehension and usage in practice," *IEEE TSE* 46(3), 2020 | Not found; their regex studies are conference papers (ISSTA 2016, ASE 2017). | Dropped. |
 | Verhoeff, "Error detecting decimal codes," *ZAMM* 51(3), 1971 | Verhoeff's work is a 1969 monograph; the ZAMM item is likely a book review, not his article. | Replaced by the monograph (§1E note). |
 | Chen, Jones, Becchi, Wolf, "Picking pesky parameters…," *IEEE TPDS* 2016 (J13) | Re-checked 14 Oct 2026 by web search: no record of this title, authors or venue found. | Dropped. |
+| Liu & **Torng**, de-compositional approach, *IEEE/ACM ToN* 2019 (J8) | The author is Eric Norige, not Torng (DBLP: *ToN* 27(6):2179–2191). | Corrected, 14 Oct 2026. |
 | Ben-Porat, Bremler-Barr, Levy, *IEEE/ACM ToN* 21(3), 2013 | Title could not be matched to a known paper; weak relevance. | Dropped. |
 | Jeong et al., REACT, *IEEE TPDS* 2020; Wurzenberger et al., *Computers & Security* 2024; Skopik et al., *IEEE Security & Privacy* 2022; Sánchez et al., *Information Sciences* 2013 and *JASIST* 2016; Purtzel & Weidlich, *PACMMOD* 2025 | Not verified in this merge, and only loosely related (storage accelerators, statistical anomaly detection, ML review, document sanitisation, stream aggregation). | Left out. Add one later only if a specific report section needs it, after checking its DOI. |
 
@@ -151,5 +152,6 @@ Each Gemini-only journal entry was checked. These did not survive:
 ## 7. Still to check before the final report
 
 - Re-checked 14 Oct 2026 by web search: J1, J2, J3, J21, J22, J23 confirmed (venue, volume, pages, DOI); J17 (20(4):3466–3482) and J18 (70(1):402–415) pages added from DBLP; J13 not found and dropped.
-- Still open: J15 (volume and pages of the TDSC 2018 paper), J16 (author list).
+- Re-checked 14 Oct 2026 as well: J20, C1, C5, C6, C9, C11 (pages/DOI confirmed); C2 and C12 pages from one secondary source; J7 (A-DFA, TACO 2013) article page not found, only cited by later work; C3 has no DOI found.
+- Still open: J15 (volume and pages of the TDSC 2018 paper; cite as "2018"), J16 (author list; cite as "Landauer et al."), C7 and C10 and C8 (page ranges not confirmed; cite without pages).
 - Optional: a database search (IEEE Xplore, ACM DL, Scopus) with *parallel regular expression matching multicore*, *multi-pattern DFA state explosion*, *log classification regular expressions*, *security log analysis rule-based*.
