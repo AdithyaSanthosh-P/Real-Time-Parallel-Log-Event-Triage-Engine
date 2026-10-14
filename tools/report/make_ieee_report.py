@@ -174,7 +174,7 @@ def content(figs):
                "The compiled DFA agrees with the C library's regex engine on all test lines and 100,000 generated "
                "strings, and parallel output is identical to sequential output. A faithful reproduction of the base "
                "paper's process-per-pattern design is also reported. At this milestone the compiler, the "
-               "classification logic, the correlator and the parallel runtime are complete (35 of 45 planned "
+               "classification logic, the correlator and the parallel runtime are complete (32 of the 41 required "
                "tasks); benchmarking and accuracy evaluation remain.", abstract))
     s.append(P("<b><i>Index Terms</i></b>—regular expressions, finite automata, subset construction, log "
                "classification, intrusion detection, lock-free queues, multi-core processing.",
@@ -315,8 +315,8 @@ def content(figs):
         ["6", "Benchmark tooling", "Pending"],
         ["7", "Evaluation on full datasets", "Pending"]],
         [1.2 * cm, 5.9 * cm, 1.5 * cm]))
-    s.append(P("*One optional task (conflict-resolution scoring) is not done. In total 35 of the 45 planned tasks "
-               "are complete.", ParagraphStyle("fn", parent=cap, spaceBefore=0)))
+    s.append(P("*One optional task (conflict-resolution scoring) is not done. In total 32 of the 41 required tasks "
+               "(78 %) are complete.", ParagraphStyle("fn", parent=cap, spaceBefore=0)))
     s.append(ieee_table("III", "Modules and source size", [
         ["Module", "Source files", "Lines"],
         ["CLI, driver", "main, cli", "321"],

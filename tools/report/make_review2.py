@@ -233,8 +233,8 @@ def summary():
             ["7", "Evaluation: full datasets, hand-labelled accuracy (P/R/F1, Cohen's κ), experiments", "Planned"]]
     t = table(rows, [1.6 * cm, 11.9 * cm, 3.5 * cm])
     stats = [["Measure", "Value"],
-             ["Planned tasks completed", "35 of 45 (78 %)"],
-             ["Engine features implemented", "12 of 15 planned features"],
+             ["Planned tasks completed", "32 of 41 required tasks (78 %)"],
+             ["Optional and stretch tasks", "not started (1 optional, 11 stretch)"],
              ["Engine source (src/, C11)", "7,173 lines in 29 modules"],
              ["Tests (unit, end-to-end, scripts)", "5,076 lines; 19 unit-test programs"],
              ["Base-paper reproduction (tools/basepaper/)", "2,099 lines"],
