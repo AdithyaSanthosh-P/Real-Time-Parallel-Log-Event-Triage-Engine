@@ -7,6 +7,7 @@
 #   make bp / bp-test    Phase R: tools/basepaper/ and its tests (bp-test also runs under make test)
 #   make alloc-test      T4.2: no allocation growth with input size (also run by make test)
 #   make compare         T4.6: parallel runs == single-threaded reference on tests/corpus
+#   make demo            review demo (tools/demo.sh, talking points in docs/demo_guide.md)
 #   make SAN=address     ASan/UBSan build;  make SAN=thread  for TSan
 #   make clean
 #
@@ -54,7 +55,7 @@ TEST_BINS := $(TEST_SRCS:tests/%.c=$(BIN_DIR)/tests/%)
 TOOL_SRCS := $(wildcard tools/gen.c tools/difftest.c)
 TOOL_BINS := $(TOOL_SRCS:tools/%.c=$(BIN_DIR)/%)
 
-.PHONY: all test difftest e2e bp bp-test alloc-test compare print-flags clean
+.PHONY: all test difftest e2e bp bp-test alloc-test compare demo print-flags clean
 .SECONDARY:
 
 all: $(BIN_DIR)/triage $(TOOL_BINS)
@@ -101,6 +102,9 @@ alloc-test: $(BIN_DIR)/triage $(if $(SAN),,$(ALLOC_SHIM))
 
 compare: all
 	@tools/compare_runs.sh $(BIN_DIR)/triage
+
+demo: all
+	@tools/demo.sh
 
 # ---- Phase R: base-paper reproduction (spec §10.4). Independent of src/ ----
 # Programs are tools/basepaper/bp_*.c except bp_lib.c, which they all link.

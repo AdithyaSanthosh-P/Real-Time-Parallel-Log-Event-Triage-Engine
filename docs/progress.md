@@ -221,3 +221,8 @@ Open questions:
   - Should the correlator parameters (maxretry, findtime, spray K/T, storm N/T) become CLI options? They would extend spec §8.
   - ERROR_STORM N/T defaults are ours, not the spec's.
   - The IP map never forgets an IP (≈1 KB each); fine for the datasets of §10.1, unbounded for an endless stream.
+
+## 2026-10-14 — Review 2 demo
+Done:      `tools/demo.sh` (`make demo`): 7 paused steps on the committed sample logs — build; compiler (NFA/DFA sizes, `\d` rejected with its offset, DOT dump, rendered to PNG only if Graphviz is installed); classification (multi-label, confidence, checksum look-alikes not flagged); PII masking; correlator on OpenSSH_2k; -w 1 vs -w 8 identical output plus the live stats line; base-paper verdicts from `results/basepaper/SUMMARY.md`. `--no-pause`, or step names to run a subset. Talking points and likely questions in `docs/demo_guide.md`. No new numbers: the demo prints what the program outputs and the saved Phase R results.
+State:     demo runs clean end to end; `make test` passes.
+Next:      Phase 6 (T6.1 fork engine, T6.2 --bench, …).
