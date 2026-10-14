@@ -1,0 +1,11 @@
+digraph c {
+  graph [rankdir=TB, nodesep=0.2, ranksep=0.2, pad=0.05, fontname="Liberation Serif"];
+  node  [shape=box, style="filled", fontname="Liberation Serif", fontsize=10, color="#222222", fillcolor="#f2f2f2", penwidth=0.8, margin="0.1,0.05", width=2.6];
+  edge  [color="#222222", arrowsize=0.6, penwidth=0.8];
+  r [label="Rule file (26 regular expressions)", fillcolor="#ffffff"];
+  p [label="Lexer + recursive-descent parser\n(abstract syntax tree; rejects \\d, \\b, \\1, (?=)"];
+  n [label="Thompson construction\n(one combined ε-NFA, rule-tagged accept states)"];
+  d [label="Subset construction\n(ε-closure, 64-bit accept masks, byte classes)"];
+  t [label="Combined DFA tables (read-only, shared)", fillcolor="#dfe8f5"];
+  r -> p -> n -> d -> t;
+}

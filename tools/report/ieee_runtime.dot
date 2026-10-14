@@ -1,0 +1,18 @@
+digraph r {
+  graph [rankdir=TB, nodesep=0.18, ranksep=0.2, pad=0.05, fontname="Liberation Serif"];
+  node  [shape=box, style="filled", fontname="Liberation Serif", fontsize=10, color="#222222", fillcolor="#f2f2f2", penwidth=0.8, margin="0.1,0.05"];
+  edge  [color="#222222", arrowsize=0.6, penwidth=0.8, fontname="Liberation Serif", fontsize=8.5];
+  in  [label="Log / event stream (file, stdin, pipe)", fillcolor="#ffffff"];
+  rd  [label="Reader + dispatcher\n(split, normalise, timestamp, batch)"];
+  w1  [label="Worker 1"]; w2 [label="Worker 2"]; wn [label="Worker N"];
+  ag  [label="Aggregator\n(noisy-OR confidence, labels)"];
+  co  [label="Correlator\n(in-order sliding windows per source IP)"];
+  ro  [label="Router (JSONL sinks, 1 Hz statistics)"];
+  s1 [label="alerts", shape=note, fillcolor="#ffffff"]; s2 [label="store", shape=note, fillcolor="#ffffff"]; s3 [label="PII quarantine", shape=note, fillcolor="#ffffff"];
+  in -> rd;
+  rd -> w1; rd -> w2; rd -> wn;
+  w1 -> ag; w2 -> ag; wn -> ag;
+  ag -> co; co -> ro;
+  ro -> s1; ro -> s2; ro -> s3;
+  {rank=same; w1; w2; wn;}
+}
