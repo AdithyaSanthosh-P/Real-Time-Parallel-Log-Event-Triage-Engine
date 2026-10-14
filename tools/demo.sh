@@ -4,7 +4,7 @@
 # goes to out/demo/.
 #
 # usage: tools/demo.sh [--no-pause] [STEP...]
-#   steps: build compiler classify pii correlate parallel basepaper (default: all)
+#   steps: compiler classify pii correlate parallel basepaper (default: all; "build" is optional)
 # Talking points for each step: docs/demo_guide.md
 set -euo pipefail
 
@@ -12,7 +12,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 pause=1
 if [ "${1:-}" = "--no-pause" ]; then pause=0; shift; fi
-steps="${*:-build compiler classify pii correlate parallel basepaper}"
+steps="${*:-compiler classify pii correlate parallel basepaper}"
 demo=out/demo
 mkdir -p "$demo"
 
@@ -30,7 +30,7 @@ for t in sys.stdin:
     r = json.loads(t)
     labels = ",".join(r["labels"]) or "-"
     flags = ",".join(r["flags"])
-    line = r["line"] if len(r["line"]) <= 90 else r["line"][:87] + "..."
+    line = r["line"] if len(r["line"]) <= 84 else r["line"][:81] + "..."
     seq, sev, conf = r["seq"], r["severity"], r["confidence"]
     print(f"  #{seq:<5} {sev:<8} conf {conf:.2f}  {labels:<30} {flags}")
     print(f"         {line}")
@@ -38,89 +38,86 @@ for t in sys.stdin:
 }
 
 step_build() {
-    title "1. Build and self-check"
+    title "Build"
     run make -s
-    say "Unit tests, end-to-end checks and the sanitizer runs are in 'make test', 'make e2e', 'make compare'."
     wait_key
 }
 
 step_compiler() {
-    title "2. Our regex compiler: rules -> Thompson NFA -> one combined DFA"
-    say "26 rules, compiled at startup (sizes and build time on the first line):"
-    run bin/triage -o "$demo/empty" /dev/null
-    say "Anything outside the regular subset is rejected with its position, never approximated:"
+    title "1. Compiler: rules -> NFA -> one combined DFA"
+    printf '%s$ bin/triage <26 rules>   (startup line only)%s\n' "$C" "$N"
+    bin/triage -o "$demo/empty" /dev/null 2>&1 | sed -n 1p
+    say "Unsupported syntax is rejected with its position (rule: failed \\d+ times):"
     printf 'BAD\tERR\tLOW\t0.5\t-\t-\t-\t-\tfailed \\d+ times\n' > "$demo/bad.rules"
-    run cat "$demo/bad.rules"
     run bin/triage -r "$demo/bad.rules" -o "$demo/empty" /dev/null || true
-    say "The automata of a 2-rule file as a Graphviz diagram:"
     run bin/triage --quiet -r tests/fixtures/tiny.rules --dump-dot "$demo/tiny.dot"
     if command -v dot > /dev/null; then
-        run dot -Tpng "$demo/tiny.dot" -o "$demo/tiny.png"
-        say "-> $demo/tiny.png"
+        dot -Tpng "$demo/tiny.dot" -o "$demo/tiny.png"
+        say "NFA + DFA picture of a 2-rule file: $demo/tiny.png  (open it now)"
     else
-        say "-> $demo/tiny.dot written (install graphviz to render it: sudo apt install graphviz)"
+        say "NFA + DFA of a 2-rule file written to $demo/tiny.dot (graphviz not installed)"
     fi
     wait_key
 }
 
 step_classify() {
-    title "3. Classification: multi-label, confidence, severity"
-    run bin/triage --engine dfa -w 4 -o "$demo/synthetic" tests/corpus/synthetic_small.log
-    say "High/critical alerts (out/demo/synthetic/alerts.jsonl), first 6:"
-    head -6 "$demo/synthetic/alerts.jsonl" | show
-    say "Look-alikes are not flagged: checksums decide (Luhn for cards, Verhoeff for Aadhaar)."
+    title "2. Classification: labels, confidence, checksum validation"
+    run bin/triage --quiet -w 4 -o "$demo/synthetic" tests/corpus/synthetic_small.log
+    say "A URL-encoded SQL injection, and a line with two labels:"
+    grep -E '^\{"seq":(42|50),' "$demo/synthetic/alerts.jsonl" | show
+    say "Look-alikes get no label: bad Luhn checksum, bad Verhoeff checksum:"
     grep -F -e 'card=4111 1111 1111 1112' -e 'order id 523456789012' "$demo/synthetic/store.jsonl" | show
     wait_key
 }
 
 step_pii() {
-    title "4. PII masking: values never reach any output file"
-    say "Records in pii_quarantine.jsonl, first 6 (the line text is masked):"
-    head -6 "$demo/synthetic/pii_quarantine.jsonl" | show
+    title "3. PII masking (e-mail, card, Aadhaar)"
+    grep -E '^\{"seq":(22|107|113),' "$demo/synthetic/pii_quarantine.jsonl" | show
     wait_key
 }
 
 step_correlate() {
-    title "5. Correlator: attacks that no single line shows (real OpenSSH log)"
-    run bin/triage --engine dfa -w 4 -o "$demo/ssh" tests/corpus/OpenSSH_2k.log
-    say "Escalations by kind:"
+    title "4. Correlator: attacks spread over many lines (real OpenSSH log)"
+    run bin/triage --quiet -w 4 -o "$demo/ssh" tests/corpus/OpenSSH_2k.log
     grep -o '"flags":\["[A-Z_]*"' "$demo/ssh/alerts.jsonl" | sed 's/"flags":\["//; s/"$//' | sort | uniq -c
-    say "First brute-force and first password-spray escalation:"
-    { grep -m1 ESCALATED_BRUTE_FORCE "$demo/ssh/alerts.jsonl"; grep -m1 ESCALATED_PASSWORD_SPRAY "$demo/ssh/alerts.jsonl"; } | show
-    say "Brute force followed by a successful login (synthetic sequence) is CRITICAL:"
-    grep -F ESCALATED_FAIL_THEN_SUCCESS "$demo/synthetic/alerts.jsonl" | show
+    say "First brute force, and failures followed by a successful login (CRITICAL):"
+    { grep -m1 ESCALATED_BRUTE_FORCE "$demo/ssh/alerts.jsonl"
+      grep -F ESCALATED_FAIL_THEN_SUCCESS "$demo/synthetic/alerts.jsonl"; } | show
     wait_key
 }
 
 step_parallel() {
-    title "6. Parallel pipeline: same answers with 1 or 8 workers"
-    run bin/triage --quiet -w 1 -o "$demo/w1" tests/corpus/OpenSSH_2k.log
-    run bin/triage --quiet -w 8 -o "$demo/w8" tests/corpus/OpenSSH_2k.log
+    title "5. Parallel: 1 worker vs 8 workers, then a live stream"
+    bin/triage --quiet -w 1 -o "$demo/w1" tests/corpus/OpenSSH_2k.log
+    bin/triage --quiet -w 8 -o "$demo/w8" tests/corpus/OpenSSH_2k.log
     if cmp -s "$demo/w1/store.jsonl" "$demo/w8/store.jsonl" && cmp -s "$demo/w1/alerts.jsonl" "$demo/w8/alerts.jsonl"; then
-        printf '%sidentical output (%s records)%s\n' "$G" "$(wc -l < "$demo/w8/store.jsonl")" "$N"
+        printf '%s-w 1 and -w 8: identical output (%s records)%s\n' "$G" "$(wc -l < "$demo/w8/store.jsonl")" "$N"
     else
-        say "outputs differ only in the ingest-time stamp of lines without a timestamp; records compared by tools/compare_runs.sh"
+        say "-w 1 and -w 8 differ only in ingest-time stamps (checked by tools/compare_runs.sh)"
     fi
-    say "Live stream from a pipe, with the 1-per-second status line (lines/s, queue per worker, counts):"
-    { cat tests/corpus/OpenSSH_2k.log; sleep 2.5; cat tests/corpus/synthetic_small.log; sleep 1.5; } \
-        | bin/triage --engine posix -w 4 -o "$demo/stream" - || true
+    say "Live stream, status line every second (queues = backlog per worker):"
+    { head -500 tests/corpus/OpenSSH_2k.log; sleep 2.3; } \
+        | bin/triage --engine posix -w 4 -o "$demo/stream" - 2>&1 | grep 'lines/s' || true
     wait_key
 }
 
 step_basepaper() {
-    title "7. Base paper reproduced and measured (results/basepaper/)"
-    say "Verdict per claim (full tables and figures in results/basepaper/SUMMARY.md and figures/):"
+    title "6. Base paper: reproduced and measured"
     python3 -I -c '
 import re
+want = {"1": "per-pattern parallelism speeds up classification",
+        "3": "near-linear scaling to 6 cores",
+        "6": "3.7 ms parallel vs 8.9 ms sequential"}
 for line in open("results/basepaper/SUMMARY.md"):
     if line.startswith("## Detail tables"):
         break
-    if re.match(r"\| [0-9] \|", line):
+    m = re.match(r"\| ([0-9]) \|", line)
+    if m and m.group(1) in want:
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        verdict = re.sub(r"\*\*(.*?)\*\*.*", r"\1", cells[4])
-        print(f"  {cells[0]}. {cells[1][:66]:<66}  {verdict}")
+        verdict = re.sub(r"[*][*](.*?)[*][*].*", r"\1", cells[4])
+        print(f"  claim {cells[0]}: {want[cells[0]]:<48} -> {verdict}")
 '
-    ls results/basepaper/figures/
+    say "All six claims, tables and figures: results/basepaper/SUMMARY.md, results/basepaper/figures/"
 }
 
 for s in $steps; do
