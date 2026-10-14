@@ -5,7 +5,7 @@ publisher, DBLP, ACL Anthology, USENIX and citing papers). Keys (J1…, C1…) m
 also says what each paper contributes. In the report the numbers are assigned in order of first
 citation. Where a page range could not be confirmed it is left out rather than guessed.
 
-**Count: 34 papers (22 journal, 12 conference) + 1 web article + 5 other sources = 40 entries.**
+**Count: 34 papers (22 journal, 12 conference). Per the team's decision only papers are cited: no textbook, web article, patent, monograph, standard or unpublished base paper in the reference list.**
 
 ## 2.1 Automata theory and regex compilation
 
@@ -13,8 +13,6 @@ citation. Where a page range could not be confirmed it is left out rather than g
 - **J2** R. McNaughton and H. Yamada, "Regular expressions and state graphs for automata," *IRE Trans. Electron. Comput.*, vol. EC-9, no. 1, pp. 39–47, Mar. 1960, doi: 10.1109/TEC.1960.5221603.
 - **J3** K. Thompson, "Programming techniques: Regular expression search algorithm," *Commun. ACM*, vol. 11, no. 6, pp. 419–422, Jun. 1968, doi: 10.1145/363347.363387.
 - **J4** A. V. Aho and M. J. Corasick, "Efficient string matching: An aid to bibliographic search," *Commun. ACM*, vol. 18, no. 6, pp. 333–340, Jun. 1975, doi: 10.1145/360825.360855.
-- **B1** A. V. Aho, M. S. Lam, R. Sethi, and J. D. Ullman, *Compilers: Principles, Techniques, and Tools*, 2nd ed. Boston, MA, USA: Addison-Wesley, 2006.
-- **W1** R. Cox, "Regular expression matching can be simple and fast," 2007. [Online]. Available: https://swtch.com/~rsc/regexp/regexp1.html
 
 ## 2.2 Multi-pattern matching, DFA state explosion and compression
 
@@ -57,14 +55,6 @@ citation. Where a page range could not be confirmed it is left out rather than g
 
 - **C11** T. Hoefler and R. Belli, "Scientific benchmarking of parallel computing systems: Twelve ways to tell the masses when reporting performance results," in *Proc. Int. Conf. High Perform. Comput., Netw., Storage Anal. (SC)*, 2015, Art. no. 73, doi: 10.1145/2807591.2807644.
 - **C12** A. Roodt, B. K. M. Watling, W. Bester, B. van der Merwe, S. Sung, and Y.-S. Han, "Benchmarking regular expression matching," in *Implementation and Application of Automata (CIAA 2024)* (Lecture Notes in Computer Science, vol. 15015). Cham, Switzerland: Springer, 2024.
-
-## Other sources (not counted as papers)
-
-- **O1** H. P. Luhn, "Computer for verifying numbers," U.S. Patent 2 950 048, Aug. 23, 1960.
-- **O2** J. Verhoeff, *Error Detecting Decimal Codes* (Mathematical Centre Tracts, no. 29). Amsterdam, The Netherlands: Mathematisch Centrum, 1969.
-- **O3** *IEEE Standard for Information Technology — Portable Operating System Interface (POSIX)*, IEEE Std 1003.1-2017, Regular Expressions.
-- **O4** "Parallel text classification system using regex pattern matching on multi-core architectures," base paper provided by the course faculty, unpublished.
-- **O5** fail2ban: intrusion prevention software. [Online]. Available: https://www.fail2ban.org
 
 ## Corrections made during verification (for the record)
 

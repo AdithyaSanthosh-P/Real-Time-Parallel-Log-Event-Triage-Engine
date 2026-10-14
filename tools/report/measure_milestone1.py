@@ -122,7 +122,19 @@ def main():
                       dt.stdout + dt.stderr)
         annotated = sum(1 for l in open(os.path.join(src, "tests/corpus/synthetic_small.log"))
                         if l.startswith("#@ rules:"))
-        json.dump({"unit_test_checks": checks, "unit_test_programs": len(checks), "all_passed": t.returncode == 0,
+        def loc(globs):
+            n = 0
+            for g in globs:
+                for f in glob.glob(os.path.join(src, g)):
+                    n += sum(1 for _ in open(f, "rb"))
+            return n
+        sizes = {"src_files": len(glob.glob(os.path.join(src, "src/*.[ch]"))),
+                 "src_lines": loc(["src/*.c", "src/*.h"]),
+                 "test_lines": loc(["tests/*.c", "tests/*.h", "tests/*.sh", "tests/basepaper/*.c", "tests/basepaper/*.sh"]),
+                 "basepaper_tool_lines": loc(["tools/basepaper/*.c", "tools/basepaper/*.h", "tools/basepaper/*.py",
+                                              "tools/basepaper/*.sh"]),
+                 "other_tool_lines": loc(["tools/*.c", "tools/*.py", "tools/*.sh"])}
+        json.dump({"sizes": sizes, "unit_test_checks": checks, "unit_test_programs": len(checks), "all_passed": t.returncode == 0,
                    "difftest": {"file_lines": int(m[1]), "files": int(m[2]), "random_strings": int(m[3]),
                                 "mismatches": int(m[4])},
                    "annotated_lines_synthetic_small": annotated},
