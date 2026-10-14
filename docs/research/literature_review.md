@@ -12,9 +12,9 @@
 
 | # | Reference | ✔/◐ | Found by | Contribution → how we use it |
 |---|---|---|---|---|
-| J1 | M. O. Rabin, D. Scott, "Finite automata and their decision problems," *IBM J. Research and Development*, 3(2):114–125, 1959. DOI 10.1147/rd.32.0114 | ◐ | C+G | Nondeterministic automata and the subset construction → cite for T2.3. |
-| J2 | R. McNaughton, H. Yamada, "Regular expressions and state graphs for automata," *IRE Trans. Electronic Computers*, EC-9(1):39–47, 1960. DOI 10.1109/TEC.1960.5221603 | ◐ | C+G | Regex → automaton by position marking → background, alternative to Thompson. |
-| J3 | K. Thompson, "Regular expression search algorithm," *Communications of the ACM*, 11(6):419–422, 1968. DOI 10.1145/363347.363387 | ◐ | C+G | Thompson NFA construction, linear-time simulation → cite for T2.2; basis of the ReDoS-immunity argument. |
+| J1 | M. O. Rabin, D. Scott, "Finite automata and their decision problems," *IBM J. Research and Development*, 3(2):114–125, 1959. DOI 10.1147/rd.32.0114 | ✔ | C+G | Nondeterministic automata and the subset construction → cite for T2.3. |
+| J2 | R. McNaughton, H. Yamada, "Regular expressions and state graphs for automata," *IRE Trans. Electronic Computers*, EC-9(1):39–47, 1960. DOI 10.1109/TEC.1960.5221603 | ✔ | C+G | Regex → automaton by position marking → background, alternative to Thompson. |
+| J3 | K. Thompson, "Regular expression search algorithm," *Communications of the ACM*, 11(6):419–422, 1968. DOI 10.1145/363347.363387 | ✔ | C+G | Thompson NFA construction, linear-time simulation → cite for T2.2; basis of the ReDoS-immunity argument. |
 | J4 | A. V. Aho, M. J. Corasick, "Efficient string matching: an aid to bibliographic search," *Communications of the ACM*, 18(6):333–340, 1975. DOI 10.1145/360825.360855 | ✔ | C+G | Multi-pattern literal matching in one pass → related work; optional prefilter (T8.9). |
 
 ### 1B. Multi-pattern regex matching and DFA engineering
@@ -34,7 +34,6 @@
 | J10 | D. Luchaup, R. Smith, C. Estan, S. Jha, "Speculative parallel pattern matching," *IEEE Trans. Information Forensics and Security*, 6(2):438–451, 2011. DOI 10.1109/TIFS.2011.2112647 | ✔ | C+G | Splits **one** input into chunks matched in parallel with speculation → contrast: logs are already split into lines, so we need no speculation. |
 | J11 | Y. Ko, M. Jung, Y.-S. Han, B. Burgstaller, "A speculative parallel DFA membership test for multicore, SIMD and cloud computing environments," *Int. J. Parallel Programming*, 42:456–489, 2014. DOI 10.1007/s10766-013-0258-5 | ✔ | C | Names the two straightforward options: one DFA over many input streams, or several DFAs in parallel → **key citation for our design choice** (ours = first option, base paper = second). |
 | J12 | Y.-H. E. Yang, V. K. Prasanna, "Robust and scalable string pattern matching for deep packet inspection on multicore processors," *IEEE Trans. Parallel and Distributed Systems*, 24:2283–2292, 2013. DOI 10.1109/TPDS.2012.217 | ✔ | C | Large automata suffer poor cache behaviour on multicore; reports scaling on 32 cores → supports memory-effects claim; motivates `perf stat` cache counters. |
-| J13 | X. Chen, B. Jones, M. Becchi, T. Wolf, "Picking pesky parameters: optimizing regular expression matching in practice," *IEEE Trans. Parallel and Distributed Systems*, 2016 (IEEE Xplore doc. 7152954). | ◐ | G | Empirical study of how configuration choices affect multicore regex throughput → useful for tuning; **volume/pages not verified** — open the Xplore page before citing. |
 
 ### 1D. Log analysis, parsing, datasets, and stream processing
 
@@ -43,8 +42,8 @@
 | J14 | S. He, P. He, Z. Chen, T. Yang, Y. Su, M. R. Lyu, "A survey on automated log analysis for reliability engineering," *ACM Computing Surveys*, 54(6), Article 130, 2021. DOI 10.1145/3460345 | ✔ | C+G | Survey of the full log-analysis pipeline; regex rules described as the traditional, manual approach → main log-side survey citation. |
 | J15 | P. He, J. Zhu, S. He, J. Li, M. R. Lyu, "Towards automated log parsing for large-scale log data analysis," *IEEE Trans. Dependable and Secure Computing*, 2018 (POP). | ✔ (venue) | C | Parallel log parser on Spark → closest parallel-log work; differs (cluster template mining vs. single-machine per-line triage). |
 | J16 | M. Landauer, F. Skopik, M. Wurzenberger, A. Rauber, "System log clustering approaches for cyber security applications: a survey," *Computers & Security*, 92, 101739, 2020. DOI 10.1016/j.cose.2020.101739 | ✔ | C+G | Groups security log analysis into filtering, signature extraction, outlier and anomaly detection → places our system in the signature/filtering group. *Check the author list on the DOI page.* |
-| J17 | M. Landauer, F. Skopik, M. Frank, W. Hotwagner, M. Wurzenberger, A. Rauber, "Maintainable log datasets for evaluation of intrusion detection systems," *IEEE Trans. Dependable and Secure Computing*, 2023 (AIT-LDS v2.0). | ✔ | C | Public log datasets with per-line attack labels → our SEC/AUTH ground truth. |
-| J18 | M. Landauer, F. Skopik, M. Wurzenberger, W. Hotwagner, A. Rauber, "Have it your way: generating customized log datasets with a model-driven simulation testbed," *IEEE Trans. Reliability*, 2021. | ✔ (venue) | G | How the AIT testbed injects and labels attacks → methodology reference for our synthetic generator (T6.3). |
+| J17 | M. Landauer, F. Skopik, M. Frank, W. Hotwagner, M. Wurzenberger, A. Rauber, "Maintainable log datasets for evaluation of intrusion detection systems," *IEEE Trans. Dependable and Secure Computing*, 20(4):3466–3482, 2023 (AIT-LDS v2.0). | ✔ | C | Public log datasets with per-line attack labels → our SEC/AUTH ground truth. |
+| J18 | M. Landauer, F. Skopik, M. Wurzenberger, W. Hotwagner, A. Rauber, "Have it your way: generating customized log datasets with a model-driven simulation testbed," *IEEE Trans. Reliability*, 70(1):402–415, 2021. | ✔ (venue) | G | How the AIT testbed injects and labels attacks → methodology reference for our synthetic generator (T6.3). |
 | J19 | M. Dayarathna, S. Perera, "Recent advancements in event processing," *ACM Computing Surveys*, 51(2):33:1–33:36, 2018. DOI 10.1145/3170432 | ✔ | G | Survey of event/stream processing platforms (Storm, Spark, Flink) → context for positioning a single-machine streaming pipeline. |
 | J20 | I. Pilán, P. Lison, L. Øvrelid, A. Papadopoulou, D. Sánchez, M. Batet, "The Text Anonymization Benchmark (TAB): a dedicated corpus and evaluation framework for text anonymization," *Computational Linguistics*, 48(4), 2022. | ✔ (venue) | G (substituted) | Journal reference for detecting and masking personal data in text → cite for the PII category and masking. *Replaces Gemini's Lison et al. entry, which is a conference paper (see §6).* |
 
@@ -52,9 +51,9 @@
 
 | # | Reference | ✔/◐ | Found by | Contribution → how we use it |
 |---|---|---|---|---|
-| J21 | H. P. Gumm, "A new class of check-digit methods for arbitrary number systems," *IEEE Trans. Information Theory*, 31(1):102–105, 1985. | ◐ | G | Theory of group-based check digits (the family Verhoeff belongs to) → background for T3.1 validators. |
-| J22 | J. L. Gustafson, "Reevaluating Amdahl's law," *Communications of the ACM*, 31(5):532–533, 1988. | ◐ | C | Scaled speedup → frames the base paper's "≥10 inputs" observation and our scaling experiment. |
-| J23 | L. Lamport, "Specifying concurrent program modules," *ACM Trans. Programming Languages and Systems*, 5(2):190–222, 1983. | ◐ | C | Classic single-producer/single-consumer queue → cite for T4.1. |
+| J21 | H. P. Gumm, "A new class of check-digit methods for arbitrary number systems," *IEEE Trans. Information Theory*, 31(1):102–105, 1985. | ✔ | G | Theory of group-based check digits (the family Verhoeff belongs to) → background for T3.1 validators. |
+| J22 | J. L. Gustafson, "Reevaluating Amdahl's law," *Communications of the ACM*, 31(5):532–533, 1988. | ✔ | C | Scaled speedup → frames the base paper's "≥10 inputs" observation and our scaling experiment. |
+| J23 | L. Lamport, "Specifying concurrent program modules," *ACM Trans. Programming Languages and Systems*, 5(2):190–222, 1983. | ✔ | C | Classic single-producer/single-consumer queue → cite for T4.1. |
 
 Primary sources that are not journal articles (cite as such): J. Verhoeff, *Error Detecting Decimal Codes*, Mathematical Centre Tracts 29, Amsterdam, 1969 (monograph); H. P. Luhn, US Patent 2,950,048, 1960.
 
@@ -135,6 +134,7 @@ Each Gemini-only journal entry was checked. These did not survive:
 | Vaarandi et al., "Event log mining and aggregation for SIEM," *Computers & Security* 140, 2024 | Not found. | Dropped. |
 | Chapman & Stolee, "Exploring regular expression comprehension and usage in practice," *IEEE TSE* 46(3), 2020 | Not found; their regex studies are conference papers (ISSTA 2016, ASE 2017). | Dropped. |
 | Verhoeff, "Error detecting decimal codes," *ZAMM* 51(3), 1971 | Verhoeff's work is a 1969 monograph; the ZAMM item is likely a book review, not his article. | Replaced by the monograph (§1E note). |
+| Chen, Jones, Becchi, Wolf, "Picking pesky parameters…," *IEEE TPDS* 2016 (J13) | Re-checked 14 Oct 2026 by web search: no record of this title, authors or venue found. | Dropped. |
 | Ben-Porat, Bremler-Barr, Levy, *IEEE/ACM ToN* 21(3), 2013 | Title could not be matched to a known paper; weak relevance. | Dropped. |
 | Jeong et al., REACT, *IEEE TPDS* 2020; Wurzenberger et al., *Computers & Security* 2024; Skopik et al., *IEEE Security & Privacy* 2022; Sánchez et al., *Information Sciences* 2013 and *JASIST* 2016; Purtzel & Weidlich, *PACMMOD* 2025 | Not verified in this merge, and only loosely related (storage accelerators, statistical anomaly detection, ML review, document sanitisation, stream aggregation). | Left out. Add one later only if a specific report section needs it, after checking its DOI. |
 
@@ -150,7 +150,6 @@ Each Gemini-only journal entry was checked. These did not survive:
 
 ## 7. Still to check before the final report
 
-- ◐ entries (J1–J3, J13, J21–J23): confirm DOIs.
-- J15, J17, J18: add volume and pages from their DOI pages.
-- J16: confirm the author list.
+- Re-checked 14 Oct 2026 by web search: J1, J2, J3, J21, J22, J23 confirmed (venue, volume, pages, DOI); J17 (20(4):3466–3482) and J18 (70(1):402–415) pages added from DBLP; J13 not found and dropped.
+- Still open: J15 (volume and pages of the TDSC 2018 paper), J16 (author list).
 - Optional: a database search (IEEE Xplore, ACM DL, Scopus) with *parallel regular expression matching multicore*, *multi-pattern DFA state explosion*, *log classification regular expressions*, *security log analysis rule-based*.
