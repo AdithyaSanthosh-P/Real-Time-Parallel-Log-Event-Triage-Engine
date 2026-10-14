@@ -44,7 +44,7 @@ The order is deliberate: get a correct, single-threaded, end-to-end pipeline on 
   *Done when:* `make e2e` passes with `--engine dfa` (same expected file as T1.7).
 - [x] **T2.5 Differential test tool** (`tools/difftest.c`, §3.5). For every line in `tests/corpus/*.log` (and optionally a `--random N` mode generating strings biased toward rule fragments), compare DFA mask vs per-rule `regexec` mask. Print rule id, line number and line on mismatch; exit non-zero if any.
   *Done when:* `make difftest` reports 0 mismatches on all corpus files and `--random 100000`.
-- [ ] **T2.6 DOT dump** (`dot.c`, §3.2 step 7). `--dump-dot FILE` writes the NFA and DFA (and minimized DFA later) for the loaded rules; collapse byte ranges into labels like `[a-z]` so diagrams are readable.
+- [x] **T2.6 DOT dump** (`dot.c`, §3.2 step 7). `--dump-dot FILE` writes the NFA and DFA (and minimized DFA later) for the loaded rules; collapse byte ranges into labels like `[a-z]` so diagrams are readable.
   *Done when:* `dot -Tpng` renders the DFA for a 2-rule file in `tests/fixtures/tiny.rules` without errors.
 
 ## Phase R — Base-paper reproduction and benchmark (spec §10.4)

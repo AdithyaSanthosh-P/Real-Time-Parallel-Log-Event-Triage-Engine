@@ -226,3 +226,7 @@ Open questions:
 Done:      `tools/demo.sh` (`make demo`): 7 paused steps on the committed sample logs — build; compiler (NFA/DFA sizes, `\d` rejected with its offset, DOT dump, rendered to PNG only if Graphviz is installed); classification (multi-label, confidence, checksum look-alikes not flagged); PII masking; correlator on OpenSSH_2k; -w 1 vs -w 8 identical output plus the live stats line; base-paper verdicts from `results/basepaper/SUMMARY.md`. `--no-pause`, or step names to run a subset. Talking points and likely questions in `docs/demo_guide.md`. No new numbers: the demo prints what the program outputs and the saved Phase R results.
 State:     demo runs clean end to end; `make test` passes.
 Next:      Phase 6 (T6.1 fork engine, T6.2 --bench, …).
+
+## 2026-10-14 — T2.6 DOT dump (done-when met)
+Done:      Graphviz 14.1.2 is now installed. `bin/triage -r tests/fixtures/tiny.rules --dump-dot tiny.dot && dot -Tpng tiny.dot -o tiny.png` succeeds; the picture shows the 18-state Thompson NFA (ε-edges dashed, `^`/`$` anchor edges) and the 7-state combined DFA with collapsed byte-range labels. `tools/demo.sh` step 2 now renders `out/demo/tiny.png`.
+State:     every task of Phases 0–5 and R is done except R5 (optional).
