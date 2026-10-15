@@ -6,14 +6,14 @@ digraph arch {
   subgraph cluster_c {
     label="Start-up: rule compilation (once)"; labeljust=l; style="rounded,dashed"; color="#777777";
     rf  [label="Rule file\n26 regexes (TSV)", fillcolor="#ffffff"];
-    m1  [label="M1  Lexer +\nrecursive-descent\nparser  →  AST", fillcolor="#e3ebf6"];
-    m2a [label="M2  Thompson\nconstruction\n(ε-NFA)", fillcolor="#dde8d8"];
-    m2b [label="M2  Subset\nconstruction\n(combined DFA)", fillcolor="#dde8d8"];
+    m1  [label="Lexer +\nrecursive-descent\nparser  →  AST", fillcolor="#e3ebf6"];
+    m2a [label="Thompson\nconstruction\n(ε-NFA)", fillcolor="#dde8d8"];
+    m2b [label="Subset\nconstruction\n(combined DFA)", fillcolor="#dde8d8"];
     tb  [label="DFA tables\n(read-only)", shape=cylinder, fillcolor="#ffffff"];
     rf -> m1 -> m2a -> m2b -> tb;
   }
   subgraph cluster_r {
-    label="Run time: baseline pipeline (M3)"; labeljust=l; style="rounded,dashed"; color="#777777";
+    label="Run time: baseline pipeline"; labeljust=l; style="rounded,dashed"; color="#777777";
     in  [label="Log stream\nfile / stdin", fillcolor="#ffffff"];
     rd  [label="Reader +\nnormaliser\n(batches)", fillcolor="#f6e9d5"];
     en  [label="Matching engine\nDFA  |  POSIX\nregexec", fillcolor="#f6e9d5"];
@@ -22,7 +22,7 @@ digraph arch {
     in -> rd -> en -> cl -> out;
   }
   subgraph cluster_b {
-    label="Evaluation (M4): base-paper reproduction and benchmark"; labeljust=l; style="rounded,dashed"; color="#777777";
+    label="Evaluation: base-paper reproduction and benchmark"; labeljust=l; style="rounded,dashed"; color="#777777";
     p5 [label="5 patterns +\n1,250 labelled\ninputs", fillcolor="#ffffff"];
     vr [label="Variants: fork\n(paper), sequential,\nthreads, our DFA", fillcolor="#f0dede"];
     ru [label="Runner:\n5 runs per point,\nraw JSON", fillcolor="#f0dede"];

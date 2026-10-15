@@ -512,18 +512,18 @@ def content(arch_png):
                "including our DFA, under a documented protocol. Later milestones add validation, confidence "
                "scoring, multi-core execution and attack correlation."))
     s.append(SS("1.3", "Contributions of This Milestone"))
-    s.append(P("1)&nbsp;<b>M1</b>, a regex front end: lexer and recursive-descent parser for the regular POSIX-ERE "
+    s.append(P("1)&nbsp;a <b>regex front end</b>: lexer and recursive-descent parser for the regular POSIX-ERE "
                "subset that rejects anything outside it;", item))
-    s.append(P("2)&nbsp;<b>M2</b>, a regex-to-DFA compiler: Thompson NFA, subset construction with accept masks "
+    s.append(P("2)&nbsp;a <b>regex-to-DFA compiler</b>: Thompson NFA, subset construction with accept masks "
                "and automatic rule grouping, and a table-driven matcher;", item))
-    s.append(P("3)&nbsp;<b>M3</b>, a baseline pipeline: rule loader, normaliser, batching reader, two "
+    s.append(P("3)&nbsp;a <b>baseline pipeline</b>: rule loader, normaliser, batching reader, two "
                "interchangeable engines (our DFA and the C library), first classifier and JSON-lines output;", item))
-    s.append(P("4)&nbsp;<b>M4</b>, a faithful reproduction and benchmark of the base paper, with fairer "
+    s.append(P("4)&nbsp;a faithful <b>reproduction and benchmark</b> of the base paper, with fairer "
                "baselines and our DFA as one of the variants.", item))
     s.append(SS("1.4", "Organization"))
-    s.append(P("Fig. 1 gives an overview of the architecture: the rules are compiled once at start-up (M1, M2), "
-               "the pipeline then streams lines through matching and classification (M3), and the evaluation "
-               "harness (M4) measures everything. Section 2 surveys related work, Section 3 describes each "
+    s.append(P("Fig. 1 gives an overview of the architecture: the rules are compiled once at start-up by the front end "
+               "and the DFA compiler, the pipeline then streams lines through matching and classification, and "
+               "the evaluation harness measures everything. Section 2 surveys related work, Section 3 describes each "
                "module with pseudocode, Section 4 gives the implementation and per-module results, Section 5 "
                "compares existing and proposed methods, and Section 6 concludes.", body0))
     s.append(SS("1.5", "Scope and Limitations"))
@@ -624,25 +624,25 @@ def content(arch_png):
     # ------------------------------------------------------------------ 3 Proposed system
     s.append(S("Proposed System"))
     s.append(P("The engine is one C11 program with two phases (Fig. 1). At start-up, the rule file is compiled "
-               "into DFA tables by modules M1 and M2. At run time, the baseline pipeline (M3) reads log lines, "
+               "into DFA tables by the regex front end and the DFA compiler. At run time, the baseline pipeline reads log lines, "
                "normalises them, matches them with either engine, assigns a category and severity, and writes "
-               "JSON-lines records. Module M4 is the evaluation harness: it reproduces the base paper and "
+               "JSON-lines records. The evaluation harness reproduces the base paper and "
                "measures it together with our DFA. Table II gives the module split.", body0))
     s.append(table("Module split at this milestone", [
         ["Module", "Source files", "New", "Lines"],
-        ["M1 Regex front end", "regex_lex, regex_parse, ast", "yes", fmt(MOD_LOC["M1"], 0)],
-        ["M2 NFA/DFA compiler", "nfa, dfa, dot, engine_dfa", "yes", fmt(MOD_LOC["M2"], 0)],
-        ["M3 Baseline pipeline", "rules, reader, normalize, timestamp, batch, engine, engine_posix, "
+        ["Regex front end", "regex_lex, regex_parse, ast", "yes", fmt(MOD_LOC["M1"], 0)],
+        ["NFA/DFA compiler", "nfa, dfa, dot, engine_dfa", "yes", fmt(MOD_LOC["M2"], 0)],
+        ["Baseline pipeline", "rules, reader, normalize, timestamp, batch, engine, engine_posix, "
          "aggregate, route, json, pipeline, cli, main, types", "no", fmt(MOD_LOC["M3"], 0)],
-        ["M4 Reproduction and benchmark", "tools/basepaper/ (fork, variants, runner, evaluation)", "yes",
+        ["Reproduction and benchmark", "tools/basepaper/ (fork, variants, runner, evaluation)", "yes",
          fmt(TOOLS_BP, 0)]],
         [2.2 * cm, 3.9 * cm, 0.8 * cm, 1.2 * cm], right=(3,)))
-    s.append(P(f"M1 and M2 are the new contributions of the compiler and carry full pseudocode; M3 and M4 are "
+    s.append(P(f"The regex front end and the DFA compiler are the new contributions of the compiler and carry full pseudocode; the pipeline and the evaluation harness are "
                f"described with shorter pseudocode. The engine core totals {sum(MOD_LOC.values()):,} lines of C "
                f"in {M1['tests']['sizes']['src_files']} files.", body0))
 
-    s.append(SS("3.1", "Module 1: Regex Front End"))
-    s.append(P(f"M1 turns the text of a rule's regular expression into an abstract syntax tree (AST). The "
+    s.append(SS("3.1", "Regex Front End"))
+    s.append(P(f"The front end turns the text of a rule's regular expression into an abstract syntax tree (AST). The "
                f"grammar is the POSIX-ERE subset—literals, <tt>.</tt>, bracket expressions, "
                f"<tt>* + ? {{n,m}}</tt>, alternation, grouping and the anchors <tt>^ $</tt>—so the same text "
                f"also runs on the C library, which makes differential testing possible. A lexer produces "
@@ -677,8 +677,8 @@ def content(arch_png):
         (1, "'^', '$' : only at pattern start / end, else Error"),
         (1, "other : literal byte (set folded if <i>icase</i>)")]))
 
-    s.append(SS("3.2", "Module 2: NFA and Combined-DFA Construction"))
-    s.append(P(f"M2 compiles the ASTs of all rules into one automaton. Thompson's construction {cite('J3')} gives "
+    s.append(SS("3.2", "NFA and Combined-DFA Construction"))
+    s.append(P(f"The DFA compiler compiles the ASTs of all rules into one automaton. Thompson's construction {cite('J3')} gives "
                f"every AST node a small NFA fragment with one entry and one exit (Algorithm 2); a bounded "
                f"repetition <tt>x{{n,m}}</tt> is expanded into copies. The fragments of all rules are joined "
                f"under one start state, and each accept state is tagged with its rule number. Subset "
@@ -736,8 +736,8 @@ def content(arch_png):
         (2, "<i>mask</i> ← <i>mask</i> | <i>m</i> | accept_end[<i>st</i>]"),
         (1, kw("return") + " <i>mask</i>")]))
 
-    s.append(SS("3.3", "Module 3: Baseline Pipeline"))
-    s.append(P("M3 is a single-threaded pipeline that makes the compiler usable and gives an independent "
+    s.append(SS("3.3", "Baseline Pipeline"))
+    s.append(P("The baseline is a single-threaded pipeline that makes the compiler usable and gives an independent "
                "reference. The <i>rule loader</i> reads a tab-separated file (id, category, severity, base "
                "score, flags, validator, extract list, context keywords, regex) and rejects malformed rows with "
                "file and line number. The <i>reader</i> splits a file or stdin into lines, handles CRLF, a final "
@@ -745,7 +745,7 @@ def content(arch_png):
                "batches. The <i>normaliser</i> makes the match copy of each line: percent escapes are decoded "
                "(so <tt>%27</tt> is seen as an apostrophe), '+' becomes a space and control characters are "
                "removed, because attack strings in web logs are usually URL-encoded. Two engines sit behind one "
-               "interface: the DFA engine of M2 and a POSIX engine that calls the C library's <tt>regexec</tt> "
+               "interface: the DFA engine described above and a POSIX engine that calls the C library's <tt>regexec</tt> "
                "once per rule. The first classifier assigns each matched line the categories of its rules, the "
                "primary category by highest severity, and writes JSON-lines records to a store file and an "
                "alert file (severity HIGH or above).", body0))
@@ -760,8 +760,8 @@ def content(arch_png):
         (3, "<i>primary</i> ← label of highest severity (tie order fixed)"),
         (3, "write JSON record to store; " + kw("if") + " severity ≥ HIGH: also to alerts")]))
 
-    s.append(SS("3.4", "Module 4: Base-Paper Reproduction and Benchmark"))
-    s.append(P("M4 rebuilds the base paper's program as described and measures it. For each input the program "
+    s.append(SS("3.4", "Base-Paper Reproduction and Benchmark"))
+    s.append(P("The evaluation harness rebuilds the base paper's program as described and measures it. For each input the program "
                "creates a pipe, forks one child per pattern, pins each child to a core, and the child "
                "compiles its regular expression, matches it and reports the result through the pipe "
                "(Algorithm 6); the parent collects the five records and reaps the children. The paper's "
@@ -813,7 +813,7 @@ def content(arch_png):
                f"plus none, multi-category and near-miss lines; its ground truth describes what a line "
                f"<i>is</i>, not what the regexes match.", body0))
 
-    s.append(SS("4.2", "Module 1: Regex Front End"))
+    s.append(SS("4.2", "Regex Front End"))
     rej = [("a\\d+", r"\d shorthand not supported (write [0-9])", 1), ("a\\bb", r"\b word boundary not supported", 1),
            ("(a)\\1", "backreference \\1 (not a regular language)", 3),
            ("(?=a)b", "\"(?\" groups: lookaround not supported", 0),
@@ -830,7 +830,7 @@ def content(arch_png):
                f"the front end enforces the regular subset strictly; a rule author is told how to rewrite the "
                f"rule instead of getting silently different behaviour.", body0))
 
-    s.append(SS("4.3", "Module 2: NFA and DFA Construction"))
+    s.append(SS("4.3", "NFA and DFA Construction"))
     s.append(P(f"The 26 rules give a combined NFA of {M1['state_sweep'][0]['nfa_states']:,} states. Table V and "
                f"Fig. 2 show what the state cap does. Without a cap the combined DFA has {single:,} states and "
                f"takes {sweep[1000000]['build_ms']:.0f} ms to build; with the default cap of 20,000 it is "
@@ -859,7 +859,7 @@ def content(arch_png):
                f"semantically equal to the reference, and grouping trades a few more table lookups per byte "
                f"(one pass per group) for much smaller tables.", body0))
 
-    s.append(SS("4.4", "Module 3: Baseline Pipeline"))
+    s.append(SS("4.4", "Baseline Pipeline"))
     rows = [["File", "Lines", "Rule hits", "Primary label counts"]]
     short = {"AUTH_FAILURE": "AUTH", "SECURITY_THREAT": "SEC", "ERROR": "ERR", "PERF_WARNING": "PERF",
              "PII": "PII"}
@@ -881,7 +881,7 @@ def content(arch_png):
                f"from a card number; checksum validation of the matched digits is the planned remedy, and "
                f"the same effect explains the PII hits in the Linux sample.", body0))
 
-    s.append(SS("4.5", "Module 4: Base-Paper Reproduction"))
+    s.append(SS("4.5", "Base-Paper Reproduction"))
     def p50(variant):
         by_in = {}
         for x in RB1:
@@ -1054,8 +1054,8 @@ def main():
         iw, ih = ImageReader(arch).getSize()
         fig_h = FULL_W * ih / iw + 1.4 * cm
         doc = build_doc(fig_h)
-        arch_fig = figure(image(arch, FULL_W), "System architecture: start-up compilation (M1, M2), "
-                          "baseline pipeline (M3) and evaluation harness (M4).", wide=True)   # Fig. 1
+        arch_fig = figure(image(arch, FULL_W), "System architecture: start-up compilation, "
+                          "baseline pipeline and evaluation harness.", wide=True)   # Fig. 1
         body_flow = content(arch)
         # the full-width architecture figure goes at the top of the page where Section 3 starts
         idx = body_flow.index(FIGSLOT)
