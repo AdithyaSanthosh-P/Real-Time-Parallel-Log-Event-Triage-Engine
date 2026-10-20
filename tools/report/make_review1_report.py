@@ -115,8 +115,9 @@ MOD_LOC = {
     "M3": src("main", "cli", "rules", "reader", "normalize", "timestamp", "batch", "engine", "engine_posix",
               "aggregate", "route", "json", "pipeline", "types"),
 }
-TOOLS_BP = M1["tests"]["sizes"]["basepaper_tool_lines"]
-assert sum(MOD_LOC.values()) == M1["tests"]["sizes"]["src_lines"], (MOD_LOC, M1["tests"]["sizes"])
+if "sizes" in M1["tests"]:      # results/milestone1/tests.json written by an older script has no line counts
+    TOOLS_BP = M1["tests"]["sizes"]["basepaper_tool_lines"]
+    assert sum(MOD_LOC.values()) == M1["tests"]["sizes"]["src_lines"], (MOD_LOC, M1["tests"]["sizes"])
 
 # --------------------------------------------------------------------------------------- references
 

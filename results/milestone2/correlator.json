@@ -1,0 +1,59 @@
+[
+ {
+  "file": "OpenSSH_2k.log",
+  "lines": 2000,
+  "flags": {
+   "ESCALATED_BRUTE_FORCE": 34,
+   "ESCALATED_PASSWORD_SPRAY": 5
+  },
+  "alerts": 39,
+  "pii_quarantine": 0,
+  "lines_labelled_pii": 0
+ },
+ {
+  "file": "BGL_2k.log",
+  "lines": 2000,
+  "flags": {
+   "ERROR_STORM": 1
+  },
+  "alerts": 1,
+  "pii_quarantine": 0,
+  "lines_labelled_pii": 0
+ },
+ {
+  "file": "HDFS_2k.log",
+  "lines": 2000,
+  "flags": {},
+  "alerts": 1,
+  "pii_quarantine": 1,
+  "lines_labelled_pii": 1
+ },
+ {
+  "file": "Linux_2k.log",
+  "lines": 2000,
+  "flags": {},
+  "alerts": 1,
+  "pii_quarantine": 2,
+  "lines_labelled_pii": 2
+ },
+ {
+  "file": "Apache_2k.log",
+  "lines": 2000,
+  "flags": {},
+  "alerts": 0,
+  "pii_quarantine": 0,
+  "lines_labelled_pii": 0
+ },
+ {
+  "file": "synthetic_small.log",
+  "lines": 218,
+  "flags": {
+   "ESCALATED_BRUTE_FORCE": 1,
+   "ESCALATED_FAIL_THEN_SUCCESS": 1,
+   "ESCALATED_PASSWORD_SPRAY": 1
+  },
+  "alerts": 26,
+  "pii_quarantine": 12,
+  "lines_labelled_pii": 12
+ }
+]

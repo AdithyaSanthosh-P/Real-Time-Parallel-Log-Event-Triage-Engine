@@ -9,7 +9,8 @@ touched) and records, under results/milestone1/:
   tests.json         check counts of every unit-test program, difftest result, annotated lines
   machine.txt        commit, CPU, kernel, compiler, flags
 
-usage: tools/report/measure_milestone1.py [COMMIT]     (default 8093e0a)
+usage: tools/report/measure_milestone1.py [COMMIT [OUTDIR]]   (default 8093e0a -> results/milestone1)
+  scaling.json      (also) dfa and posix engine, -w 1/2/4/8, 5 runs each
 """
 import glob
 import json
@@ -25,7 +26,7 @@ import time
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 COMMIT = sys.argv[1] if len(sys.argv) > 1 else "8093e0a"
-OUT = os.path.join(ROOT, "results", "milestone1")
+OUT = os.path.join(ROOT, "results", sys.argv[2] if len(sys.argv) > 2 else "milestone1")
 RUNS = 5
 REPS = 100            # corpus repetitions for the throughput input
 
@@ -95,6 +96,24 @@ def main():
                      "lines_per_s_min": lines / (max(res[e]) - st), "lines_per_s_max": lines / (min(res[e]) - st)}
         tp["speedup_dfa_over_posix"] = tp["dfa"]["lines_per_s_median"] / tp["posix"]["lines_per_s_median"]
         json.dump(tp, open(os.path.join(OUT, "throughput.json"), "w"), indent=1)
+
+        # ---- scaling with worker count ----
+        scaling = {}
+        for e in ("dfa", "posix"):
+            scaling[e] = {}
+            for w in (1, 2, 4, 8):
+                ts = []
+                for _ in range(RUNS):
+                    t = time.perf_counter()
+                    subprocess.run([triage, "--quiet", "--engine", e, "-w", str(w), "-o", os.path.join(shm, "out"), inp],
+                                   cwd=src, check=True)
+                    ts.append(time.perf_counter() - t)
+                st = tp[e]["median_startup_s"]
+                med = statistics.median(ts)
+                scaling[e][w] = {"total_s": ts, "lines_per_s_median": lines / (med - st),
+                                 "lines_per_s_min": lines / (max(ts) - st), "lines_per_s_max": lines / (min(ts) - st)}
+        json.dump({"lines": lines, "runs": RUNS, "startup_s": {e: tp[e]["median_startup_s"] for e in ("dfa", "posix")},
+                   "results": scaling}, open(os.path.join(OUT, "scaling.json"), "w"), indent=1)
 
         # ---- per-corpus classification output ----
         corpus = []

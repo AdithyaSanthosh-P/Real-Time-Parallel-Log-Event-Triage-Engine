@@ -1,0 +1,38 @@
+digraph arch {
+  graph [rankdir=LR, nodesep=0.12, ranksep=0.28, pad=0.05, fontname="Liberation Serif", fontsize=10, newrank=true];
+  node  [shape=box, style="filled", fontname="Liberation Serif", fontsize=10, color="#222222", fillcolor="#f2f2f2", penwidth=0.8, margin="0.07,0.05", height=0.55, width=1.2];
+  edge  [color="#222222", arrowsize=0.6, penwidth=0.8, fontname="Liberation Serif", fontsize=8.5];
+
+  subgraph cluster_c {
+    label="Start-up: rule compilation (once)"; labeljust=l; style="rounded,dashed"; color="#777777";
+    rf  [label="Rule file\n26 regexes (TSV)", fillcolor="#ffffff"];
+    m1  [label="Lexer +\nrecursive-descent\nparser  →  AST", fillcolor="#e3ebf6"];
+    m2a [label="Thompson\nconstruction\n(ε-NFA)", fillcolor="#dde8d8"];
+    m2b [label="Subset\nconstruction\n(combined DFA)", fillcolor="#dde8d8"];
+    tb  [label="DFA tables\n(read-only,\nshared)", shape=cylinder, fillcolor="#ffffff"];
+    rf -> m1 -> m2a -> m2b -> tb;
+  }
+  subgraph cluster_r {
+    label="Run time: parallel triage pipeline (one thread per box)"; labeljust=l; style="rounded,dashed"; color="#777777";
+    in  [label="Log stream\nfile / stdin", fillcolor="#ffffff"];
+    rd  [label="Reader +\nnormaliser +\ndispatcher", fillcolor="#f6e9d5"];
+    wk  [label="Workers 0…N−1\nDFA | POSIX match,\nvalidators,\nextraction, masking", fillcolor="#f6e9d5"];
+    ag  [label="Aggregator\nnoisy-OR confidence,\nlabels, severity", fillcolor="#f6e9d5"];
+    co  [label="Correlator\nbrute force, spray,\nfail-then-success,\nerror storm", fillcolor="#e8dff0"];
+    ro  [label="Router", fillcolor="#f6e9d5"];
+    out [label="alerts.jsonl\nstore.jsonl\npii_quarantine.jsonl", shape=note, fillcolor="#ffffff"];
+    in -> rd -> wk -> ag -> co -> ro -> out;
+  }
+  subgraph cluster_b {
+    label="Evaluation: base-paper reproduction and benchmark"; labeljust=l; style="rounded,dashed"; color="#777777";
+    p5 [label="5 patterns +\n1,250 labelled\ninputs", fillcolor="#ffffff"];
+    vr [label="Variants: fork\n(paper), sequential,\nthreads, our DFA", fillcolor="#f0dede"];
+    ru [label="Runner:\n5 runs per point,\nraw JSON", fillcolor="#f0dede"];
+    rs [label="Tables and\nfigures\n(results/)", fillcolor="#ffffff"];
+    p5 -> vr -> ru -> rs;
+  }
+  tb -> wk [style=dashed, constraint=false, label=" shared"];
+  tb -> vr [style=dashed, constraint=false, label=" DFA variant"];
+  {rank=same; rf; in; p5;}
+  rf -> in -> p5 [style=invis];
+}

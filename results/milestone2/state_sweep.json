@@ -1,0 +1,51 @@
+[
+ {
+  "max_states": 500,
+  "nfa_states": 1762,
+  "groups": 5,
+  "dfa_states": 1680,
+  "build_ms": 23.0
+ },
+ {
+  "max_states": 1000,
+  "nfa_states": 1762,
+  "groups": 5,
+  "dfa_states": 1680,
+  "build_ms": 47.7
+ },
+ {
+  "max_states": 2000,
+  "nfa_states": 1762,
+  "groups": 4,
+  "dfa_states": 2899,
+  "build_ms": 89.5
+ },
+ {
+  "max_states": 5000,
+  "nfa_states": 1762,
+  "groups": 3,
+  "dfa_states": 5708,
+  "build_ms": 209.4
+ },
+ {
+  "max_states": 20000,
+  "nfa_states": 1762,
+  "groups": 2,
+  "dfa_states": 7593,
+  "build_ms": 522.2
+ },
+ {
+  "max_states": 100000,
+  "nfa_states": 1762,
+  "groups": 1,
+  "dfa_states": 39764,
+  "build_ms": 945.2
+ },
+ {
+  "max_states": 1000000,
+  "nfa_states": 1762,
+  "groups": 1,
+  "dfa_states": 39764,
+  "build_ms": 954.8
+ }
+]
