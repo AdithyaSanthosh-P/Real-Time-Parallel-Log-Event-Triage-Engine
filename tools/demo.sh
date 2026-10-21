@@ -4,7 +4,7 @@
 # goes to out/demo/.
 #
 # usage: tools/demo.sh [--no-pause] [STEP...]
-#   steps: compiler classify pii correlate parallel basepaper (default: all; "build" is optional)
+#   steps: status compiler classify pii correlate parallel speed basepaper (default: all; "build" is optional)
 # Talking points for each step: docs/demo_guide.md
 set -euo pipefail
 
@@ -12,7 +12,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 pause=1
 if [ "${1:-}" = "--no-pause" ]; then pause=0; shift; fi
-steps="${*:-compiler classify pii correlate parallel basepaper}"
+steps="${*:-status compiler classify pii correlate parallel speed basepaper}"
 demo=out/demo
 mkdir -p "$demo"
 
@@ -40,6 +40,26 @@ for t in sys.stdin:
 step_build() {
     title "Build"
     run make -s
+    wait_key
+}
+
+step_status() {
+    title "0. Status: tasks of docs/implementation_plan.md"
+    python3 -I -c '
+import re
+done = total = 0
+todo = []
+for line in open("docs/implementation_plan.md"):
+    m = re.match(r"- \[( |x)\] \*{0,2}(T[0-7]\.\d+|R\d)\b", line)
+    if m and m.group(2) != "R5":              # R5 is optional; Phase 8 (T8.x) is stretch
+        total += 1
+        done += m.group(1) == "x"
+        if m.group(1) == " ":
+            todo.append(m.group(2))
+print(f"  required tasks done: {done} of {total}  ({100 * done / total:.0f} %)")
+print("  open: " + " ".join(todo))
+'
+    say "Done: compiler, classifier, parallel pipeline, correlator, base-paper study. Open: benchmark tooling (Phase 6), full datasets and labelled evaluation (Phase 7)."
     wait_key
 }
 
@@ -101,8 +121,23 @@ step_parallel() {
     wait_key
 }
 
+step_speed() {
+    title "6. Speed: DFA engine vs C library regexec (1 worker, same 26 rules)"
+    local big="$demo/big.log" n t0 t1
+    for _ in $(seq 20); do cat tests/corpus/*.log; done > "$big"
+    n=$(wc -l < "$big")
+    say "$n log lines; each run includes rule compilation, so absolute numbers are lower than in the report:"
+    for e in dfa posix; do
+        t0=$(date +%s.%N)
+        bin/triage --quiet --engine "$e" -w 1 -o "$demo/speed_$e" "$big"
+        t1=$(date +%s.%N)
+        awk -v e="$e" -v n="$n" -v a="$t0" -v b="$t1" 'BEGIN { printf "  %-5s %6.2f s   %9.0f lines/s\n", e, b - a, n / (b - a) }'
+    done
+    wait_key
+}
+
 step_basepaper() {
-    title "6. Base paper: reproduced and measured"
+    title "7. Base paper: reproduced and measured"
     python3 -I -c '
 import re
 want = {"1": "per-pattern parallelism speeds up classification",
@@ -122,7 +157,7 @@ for line in open("results/basepaper/SUMMARY.md"):
 
 for s in $steps; do
     case "$s" in
-        build|compiler|classify|pii|correlate|parallel|basepaper) "step_$s" ;;
+        build|status|compiler|classify|pii|correlate|parallel|speed|basepaper) "step_$s" ;;
         *) echo "unknown step '$s'" >&2; exit 2 ;;
     esac
 done
