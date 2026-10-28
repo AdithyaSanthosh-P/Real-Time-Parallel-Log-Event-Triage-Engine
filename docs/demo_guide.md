@@ -8,9 +8,9 @@ make                      # build once (bin/triage); the demo does not rebuild
 make demo                 # all steps, pauses after each one: press Enter to continue
 ```
 
-Other ways: `tools/demo.sh --no-pause` runs straight through (about 30 s, about 90 lines of output);
+Other ways: `tools/demo.sh --no-pause` runs straight through (about 35 s, about 120 lines of output);
 `tools/demo.sh correlate` runs one step. Steps, in order: `status compiler classify pii correlate
-parallel speed generator basepaper` (`build` is an optional extra). Everything the demo writes goes to
+parallel speed generator accuracy basepaper` (`build` is an optional extra). Everything the demo writes goes to
 `out/demo/` (gitignored). Dry-run once on the demo machine first. Optional: `sudo apt install graphviz`
 so step 1 also renders the DFA picture `out/demo/tiny.png`.
 
@@ -79,7 +79,16 @@ lines/s, MB/s, latency p50/p90/p99/p99.9, DFA size. The last table is the saved 
 (`results/SUMMARY.md`): POSIX falls with the rule count (259,850 to 36,829 lines/s from 5 to 64 rules), the DFA
 stays near 880,000 up to 32 rules and falls at 64, where the rule set needs 7 DFA groups (one pass per group).
 
-**8. Base paper.** Three of the professor's paper's six claims, with the verdict from our measured
+**8. Accuracy.** Three pieces of evidence, each labelled for what it is. (a) Validators: on the generated set with
+look-alike numbers PII precision goes from 0.60 (no validators, 4,000 false labels) to 1.00; on the real logs the
+PII-labelled lines drop (BGL 12,279 to 1,175, OpenSSH 163 to 0, HDFS 2k 119 to 1). (b) 100 real log lines labelled by
+an AI annotator (Claude): this is NOT human ground truth and it also wrote the rules; failed-login precision is 1.00
+but recall 0.69, error recall is near 0 (the rule misses sshd `error:` lines), PII precision 0.80 (all-zero memory
+addresses pass the card checksum). (c) AIT-LDS, real attack-labelled logs: only 7 of 7,739 attack lines detected, 0
+false alarms: the rules have no rule for those requests. Say plainly: human labelling is the open item, sheets are in
+`data/labeling_100/`.
+
+**9. Base paper.** Three of the professor's paper's six claims, with the verdict from our measured
 reproduction (`results/basepaper/SUMMARY.md`): per-pattern parallelism, near-linear scaling to 6
 cores and "3.7 ms vs 8.9 ms" are all *not reproduced*: the fork-per-pattern design is about 12.6x
 slower than a sequential loop that recompiles and 424x slower than one that precompiles, and only
@@ -98,7 +107,7 @@ All required tasks are done. Not done: hand-labelled evaluation (two people labe
 
 == 1. Compiler: rules -> NFA -> one combined DFA ==
 $ bin/triage <26 rules>   (startup line only)
-triage: dfa: 26 rules, NFA 1762 states, 2 DFA groups, 7593 DFA states, built in 493.6 ms
+triage: dfa: 26 rules, NFA 1762 states, 2 DFA groups, 7593 DFA states, built in 507.3 ms
 Unsupported syntax is rejected with its position (rule: failed \d+ times):
 $ bin/triage -r out/demo/bad.rules -o out/demo/empty /dev/null
 triage: rule BAD: offset 7: \d shorthand is not supported; write a bracket expression such as [0-9]
@@ -139,13 +148,13 @@ First brute force, and failures followed by a successful login (CRITICAL):
 == 5. Parallel: 1 worker vs 8 workers, then a live stream ==
 -w 1 and -w 8: identical output (2000 records)
 Live stream, status line every second (queues = backlog per worker):
-triage: 496 lines/s | queues 0 0 0 0 | AUTH 252 SEC 13 ERR 2 PERF 0 PII 0 | dropped 0
+triage: 497 lines/s | queues 0 0 0 0 | AUTH 252 SEC 13 ERR 2 PERF 0 PII 0 | dropped 0
 triage: 0 lines/s | queues 0 0 0 0 | AUTH 252 SEC 13 ERR 2 PERF 0 PII 0 | dropped 0
 
 == 6. Speed: DFA engine vs C library regexec (1 worker, same 26 rules) ==
 204280 log lines; each run includes rule compilation, so absolute numbers are lower than in the report:
-  dfa     0.71 s      287318 lines/s
-  posix   2.92 s       69906 lines/s
+  dfa     0.71 s      288784 lines/s
+  posix   2.68 s       76277 lines/s
 
 == 7. Generator, ground truth and --bench ==
 $ bin/gen -n 50000 --seed 5 --truth out/demo/gen.truth.tsv > out/demo/gen.log
@@ -164,7 +173,7 @@ Engine labels vs the generator's truth, line by line:
 check_gen: 50000 lines, 0 differ
 Benchmark mode: one JSON line (input preloaded, sinks off):
 $ bin/triage --bench -w 4 out/demo/gen.log
-{"engine":"dfa","workers":4,"batch":256,"lines":50000,"bytes":5600373,"seconds":0.065178,"lines_per_s":767130.8,"mb_per_s":85.924,"latency_us":{"p50":4987.90,"p90":11863.
+{"engine":"dfa","workers":4,"batch":256,"lines":50000,"bytes":5600373,"seconds":0.061052,"lines_per_s":818975.0,"mb_per_s":91.731,"latency_us":{"p50":4194.30,"p90":10878.
 Rule-count experiment E3 (saved run, results/SUMMARY.md):
 | rules | posix lines/s | dfa lines/s | dfa / posix | DFA groups | DFA states | DFA build (ms) |
 |---|---|---|---|---|---|---|
@@ -174,7 +183,30 @@ Rule-count experiment E3 (saved run, results/SUMMARY.md):
 | 32 | 61,592 | 863,779 | 14.0× | 2 | 20,061 | 816 |
 | 64 | 36,829 | 329,323 | 8.9× | 7 | 26,517 | 1,761 |
 
-== 8. Base paper: reproduced and measured ==
+== 8. Accuracy: validators, AI-annotated real lines, attack logs ==
+Validators on/off on the generated truth (saved run E7), PII labels on real logs:
+  PII precision without validators 0.60 (4000 false labels), with validators 1.00
+  OpenSSH    655,147 lines: PII-labelled    163 without,      0 with
+  Apache      56,482 lines: PII-labelled      0 without,      0 with
+  Linux       25,567 lines: PII-labelled    105 without,     40 with
+  BGL      4,747,963 lines: PII-labelled 12,279 without,  1,175 with
+  HDFS_2k      2,000 lines: PII-labelled    119 without,      1 with
+100 real log lines labelled by an AI annotator (NOT human ground truth; results/e6/ai_100):
+== vs_A   (100 lines, weighted 737196)
+  category         precision   recall      F1    support
+  AUTH_FAILURE         1.000    0.688   0.815     533897
+  SECURITY_THREAT      0.400    0.025   0.047     226608
+  ERROR                1.000    0.002   0.003     111052
+  PERF_WARNING           n/a      n/a     n/a          0
+  PII                  0.800    1.000   0.889         32
+  exact label-set match: 0.5882   ECE of the primary label: 0.4058
+AIT-LDS attack-labelled logs (real, saved run): the rules have no rule for most attacker requests:
+  auth.log                                         attack lines      8  detected    1  false alarms 0
+  intranet.smith.russellmitchell.com-access.log.2  attack lines  7,695  detected    6  false alarms 0
+  intranet.smith.russellmitchell.com-error.log.2   attack lines     36  detected    0  false alarms 0
+Human labelling of a sample is the open item (data/labeling_100/ for two annotators).
+
+== 9. Base paper: reproduced and measured ==
   claim 1: per-pattern parallelism speeds up classification -> Not reproduced
   claim 3: near-linear scaling to 6 cores                   -> Not reproduced
   claim 6: 3.7 ms parallel vs 8.9 ms sequential             -> Not reproduced

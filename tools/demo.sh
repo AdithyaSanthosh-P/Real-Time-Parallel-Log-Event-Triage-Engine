@@ -4,7 +4,7 @@
 # goes to out/demo/.
 #
 # usage: tools/demo.sh [--no-pause] [STEP...]
-#   steps: status compiler classify pii correlate parallel speed generator basepaper (default: all; "build" is optional)
+#   steps: status compiler classify pii correlate parallel speed generator accuracy basepaper (default: all; "build" is optional)
 # Talking points for each step: docs/demo_guide.md
 set -euo pipefail
 
@@ -12,7 +12,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 pause=1
 if [ "${1:-}" = "--no-pause" ]; then pause=0; shift; fi
-steps="${*:-status compiler classify pii correlate parallel speed generator basepaper}"
+steps="${*:-status compiler classify pii correlate parallel speed generator accuracy basepaper}"
 demo=out/demo
 mkdir -p "$demo"
 
@@ -160,8 +160,33 @@ step_generator() {
     wait_key
 }
 
+step_accuracy() {
+    title "8. Accuracy: validators, AI-annotated real lines, attack logs"
+    say "Validators on/off on the generated truth (saved run E7), PII labels on real logs:"
+    python3 -I - <<'PY'
+import json
+on = json.load(open("results/e6/synthetic/result.json"))["all"]["categories"]["PII"]
+off = json.load(open("results/e7/synthetic_novalidators/result.json"))["all"]["categories"]["PII"]
+print(f"  PII precision without validators {off['precision']:.2f} ({off['fp']:.0f} false labels), with validators {on['precision']:.2f}")
+for k, v in json.load(open("results/e7/pii_on_logs.json")).items():
+    print(f"  {k:8s} {v['lines']:>9,} lines: PII-labelled {v['lines_labelled_pii_no_validators']:>6,} without, {v['lines_labelled_pii_validators']:>6,} with")
+PY
+    say "100 real log lines labelled by an AI annotator (NOT human ground truth; results/e6/ai_100):"
+    python3 -I tools/label_eval.py --annot results/e6/ai_100/annotator_AI_claude.csv --key results/e6/ai_100/key.csv 2>&1 | sed -n 2,9p
+    say "AIT-LDS attack-labelled logs (real, saved run): the rules have no rule for most attacker requests:"
+    python3 -I - <<'PY'
+import glob, json, os
+for d in sorted(glob.glob("results/e6/ait/*/result.json")):
+    a = json.load(open(d))["all"]["categories"]["ATTACK"]
+    name = os.path.basename(os.path.dirname(d)).replace("intranet_server__", "")[:48]
+    print(f"  {name:48s} attack lines {a['support']:>6,.0f}  detected {a['tp']:>4,.0f}  false alarms {a['fp']:.0f}")
+PY
+    say "Human labelling of a sample is the open item (data/labeling_100/ for two annotators)."
+    wait_key
+}
+
 step_basepaper() {
-    title "8. Base paper: reproduced and measured"
+    title "9. Base paper: reproduced and measured"
     python3 -I -c '
 import re
 want = {"1": "per-pattern parallelism speeds up classification",
@@ -181,7 +206,7 @@ for line in open("results/basepaper/SUMMARY.md"):
 
 for s in $steps; do
     case "$s" in
-        build|status|compiler|classify|pii|correlate|parallel|speed|generator|basepaper) "step_$s" ;;
+        build|status|compiler|classify|pii|correlate|parallel|speed|generator|accuracy|basepaper) "step_$s" ;;
         *) echo "unknown step '$s'" >&2; exit 2 ;;
     esac
 done
