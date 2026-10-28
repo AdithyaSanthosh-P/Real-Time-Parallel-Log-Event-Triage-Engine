@@ -282,7 +282,7 @@ def hbar_log(rows, width, height, xlabel, lo, hi, ticks):
     for i, (label, v, vmin, vmax, col) in enumerate(rows):
         yc = y1 - slot * (i + 0.5)
         bh = slot * 0.62
-        d.add(Rect(x0, yc - bh / 2, sx(v) - x0, bh, fillColor=col, strokeColor=None))
+        d.add(Rect(x0, yc - bh / 2, sx(v) - x0, bh, fillColor=col, strokeColor=colors.black, strokeWidth=0.4))
         d.add(String(x0 - 4, yc - 2.2, label, fontName=FONT, fontSize=6.8, textAnchor="end"))
         d.add(String(sx(v) + 3, yc - 2.2, si(v), fontName=FONT, fontSize=6.2))
     d.add(String((x0 + x1) / 2, 2, xlabel, fontName=FONT, fontSize=7, textAnchor="middle"))
@@ -347,7 +347,7 @@ def vbars(groups, series_cols, width, height, ymax, ylabel, labels_fmt="{:.2f}",
     for gi, (label, vals) in enumerate(groups):
         gx = x0 + slot * gi + slot * 0.13
         for si_, v in enumerate(vals):
-            d.add(Rect(gx + si_ * bw, y0, bw - 0.6, sy(v) - y0, fillColor=series_cols[si_], strokeColor=None))
+            d.add(Rect(gx + si_ * bw, y0, bw - 0.6, sy(v) - y0, fillColor=series_cols[si_], strokeColor=colors.black, strokeWidth=0.4))
             if labels_fmt:
                 d.add(String(gx + si_ * bw + bw / 2 - 0.3, sy(v) + 1.5, labels_fmt.format(v), fontName=FONT,
                              fontSize=5.4, textAnchor="middle"))
@@ -358,7 +358,7 @@ def vbars(groups, series_cols, width, height, ymax, ylabel, labels_fmt="{:.2f}",
     if legend and series_names:
         lx = x0 + 4
         for name, col in zip(series_names, series_cols):
-            d.add(Rect(lx, y0 - 20, 6, 5, fillColor=col, strokeColor=None))
+            d.add(Rect(lx, y0 - 20, 6, 5, fillColor=col, strokeColor=colors.black, strokeWidth=0.4))
             d.add(String(lx + 8, y0 - 20, name, fontName=FONT, fontSize=6.4))
             lx += 8 + pdfmetrics.stringWidth(name, FONT, 6.4) + 8
     d.add(String(2, y1 + 11, ylabel, fontName=FONT, fontSize=6.8))
@@ -381,7 +381,7 @@ def hbar_err(rows, width, height, xlabel, xmax):
     for i, (label, v, lo, hi, col) in enumerate(rows):
         yc = y1 - slot * (i + 0.5)
         bh = slot * 0.5
-        d.add(Rect(x0, yc - bh / 2, sx(v) - x0, bh, fillColor=col, strokeColor=None))
+        d.add(Rect(x0, yc - bh / 2, sx(v) - x0, bh, fillColor=col, strokeColor=colors.black, strokeWidth=0.4))
         d.add(Line(sx(lo), yc, sx(hi), yc, strokeColor=colors.black, strokeWidth=0.7))
         d.add(String(x0 - 4, yc - 2.2, label, fontName=FONT, fontSize=6.8, textAnchor="end"))
         d.add(String(sx(v) + 3, yc + bh / 2 + 1, si(v) + " lines/s", fontName=FONT, fontSize=6.4))

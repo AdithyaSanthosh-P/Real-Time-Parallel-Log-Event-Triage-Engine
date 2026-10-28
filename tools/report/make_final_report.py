@@ -25,6 +25,7 @@ import sys
 import tempfile
 
 sys.path.insert(0, os.path.dirname(__file__))
+from reportlab.lib import colors
 import make_review1_report as R                      # page machinery, charts, references, base-paper data
 from make_review1_report import (BLUE, COL_W, FULL_W, GREEN, GREY, ORANGE, RB1, RB2, RB4, S, SS, algorithm,
                                  body, body0, cite, fmt, hbar_err, hbar_log, item, kw, line_chart, si,
@@ -32,6 +33,9 @@ from make_review1_report import (BLUE, COL_W, FULL_W, GREEN, GREY, ORANGE, RB1, 
                                  NextPageTemplate, PageBreak, FrameBreak, Spacer, ImageReader, cm, sec, ref)
 
 ROOT = R.ROOT
+# Black-and-white figures: fills are shades of grey with black outlines, lines differ by dash pattern.
+BLUE, ORANGE, GREEN, GREY = (colors.black, colors.HexColor("#d0d0d0"), colors.HexColor("#808080"),
+                             colors.HexColor("#4a4a4a"))
 COMMIT = subprocess.run(["git", "log", "-1", "--format=%h", "--", "src", "rules", "tools/gen.c", "tools/run_bench.sh"],
                         cwd=R.ROOT, capture_output=True, text=True).stdout.strip()
 R.COMMIT = COMMIT
@@ -80,7 +84,7 @@ TITLE_KEYS = {"Module split": "modules", "Rejected syntax (message and byte offs
               "Accuracy on the labelled set": "acc", "Architecture comparison (E1)": "e1",
               "Rule-count sensitivity (E3)": "e3", "Batch size (E4)": "e4", "Accuracy on generated ground truth (E6)": "e6",
               "Attack detection on AIT-LDS (E6)": "ait", "AI-annotator check on real log lines (E6)": "ai100", "Validator effect on PII labels (E7)": "e7",
-              "Lines labelled PII on the full real logs": "e7logs", "Full-size Loghub logs": "full"}
+              "Lines labelled PII on the full real logs": "e7logs", "Base paper versus this work": "cmp", "Full-size Loghub logs": "full"}
 FIG_KEYS = {"Total DFA states": "statecap", "Speed-up of the whole pipeline": "scaling",
             "End-to-end throughput of the two engines": "engines", "Throughput of six designs": "designs",
             "F1 per category": "acc", "Throughput against the number of rules": "e3", "Batch size against": "e4"}
@@ -764,7 +768,7 @@ def content():
                      si(pt(e2, engine="posix", workers=w)["lines_per_s"]["median"]), f"{sp('posix', w):.2f}"])
     s.append(table("Throughput against worker count (median of 5 runs)", rows,
                    [1.4 * cm, 2.2 * cm, 1.2 * cm, 2.4 * cm, 1.2 * cm], right=(0, 1, 2, 3, 4)))
-    ser = [("POSIX engine", [(w, sp("posix", w)) for w in WS], ORANGE, None),
+    ser = [("POSIX engine", [(w, sp("posix", w)) for w in WS], BLUE, [4, 2]),
            ("DFA engine", [(w, sp("dfa", w)) for w in WS], BLUE, None)]
     s.append(figure(line_chart(ser, COL_W, 98, WS, 8, "workers", "speed-up vs. 1 worker"),
                     "Speed-up of the whole pipeline against one worker (median of 5 runs)."))
@@ -844,7 +848,7 @@ def content():
                f"{c2 / c1:.0f}× slower than the sequential POSIX engine (C2, {si(c2)}) and {c4 / c1:,.0f}× slower than "
                f"the DFA engine with {PHYS} workers (C4, {si(c4)}); C3 (POSIX, {PHYS} workers) reaches {si(c3)}. "
                f"C1 is measured on {pt(e1, id='c1-fork')['lines']:,} lines because it is so slow. <i>Inference:</i> the "
-               f"ordering C1 ≪ C2 &lt; C3 &lt; C4 expected from the base-paper analysis holds; creating a process per "
+               f"ordering C1 &lt;&lt; C2 &lt; C3 &lt; C4 expected from the base-paper analysis holds; creating a process per "
                f"rule per line costs far more than the matching, as the reproduction in Section 4.7 showed for five "
                f"patterns.", body0))
     rows = [["Rules", "POSIX lines/s", "DFA lines/s", "DFA / POSIX", "DFA groups", "DFA states", "Build (ms)"]]
@@ -855,7 +859,7 @@ def content():
     s.append(table("Rule-count sensitivity (E3)", rows,
                    [0.9 * cm, 1.5 * cm, 1.5 * cm, 1.3 * cm, 1.2 * cm, 1.3 * cm, 1.2 * cm], right=(0, 1, 2, 3, 4, 5, 6)))
     ns = [5, 10, 20, 32, 64]
-    ser = [("POSIX engine", [(n, p_r[n]["lines_per_s"]["median"] / 1e5) for n in ns], ORANGE, None),
+    ser = [("POSIX engine", [(n, p_r[n]["lines_per_s"]["median"] / 1e5) for n in ns], BLUE, [4, 2]),
            ("DFA engine", [(n, d_r[n]["lines_per_s"]["median"] / 1e5) for n in ns], BLUE, None)]
     s.append(figure(line_chart(ser, COL_W, 98, ns, 10, "rules in the set", "throughput, 100,000 lines/s", ideal=False),
                     "Throughput against the number of rules, one worker (median of 5 runs)."))
@@ -1082,6 +1086,44 @@ def content():
         ["Exact-set accuracy, 5 categories", f"{a['overall']['exact_match_accuracy']:.3f}",
          f"{b['overall']['exact_match_accuracy']:.3f}"]],
         [3.2 * cm, 2.6 * cm, 2.6 * cm], flat=True)))
+
+    s.append(SS("5.5", "Comparison with the Base Paper"))
+    s.append(P(f"@T:cmp@ compares the base paper provided for the course with this work: the design, what the "
+               f"paper reports, and what we measured. The paper's figures are quoted from the paper; ours come "
+               f"from the saved runs in <tt>results/</tt> (Sections 4 and 5).", body0))
+    per_us = 1e6 / dfa_lps
+    rows = [["Aspect", "Base paper", "This work"],
+        ["Task", "Classify short texts into 5 classes (e-mail, phone, question, greeting, name)",
+         "Classify log lines into 5 categories (authentication failure, security threat, error, performance, PII), several labels per line"],
+        ["Input", "Typed or batched short texts; its own 1,250 samples (data not available)",
+         f"Streams: files and pipes; real logs up to {LOGS['BGL']['lines']:,} lines; generated logs"],
+        ["Matching", "One C-library regex per pattern; 5 fixed patterns",
+         "Own regex → NFA → DFA compiler; all rules in one pass; 26 rules (up to 64); library and fork engines kept as baselines"],
+        ["Rule syntax", "Any library regex, unchecked", "Regular subset only; other syntax rejected with its position"],
+        ["Parallelism", "One process forked per pattern per input, pinned to cores",
+         "Threads over lines: pinned workers, lock-free queues, pooled buffers, output in input order"],
+        ["Input handling", f"Own input module (whitelist, lowercasing); rejects {RB4['paper']['rejected_by_input_module']} of our {lab:,} test lines",
+         "URL-decoding and control-character stripping; nothing rejected"],
+        ["Decision", "Single winner by weights 0.4 / 0.3 / 0.3; confidence from completeness, complexity and history",
+         "Noisy-OR of rule evidence (base score, checksum, keyword); a label if confidence ≥ 0.5; several labels"],
+        ["Match checks", "None", "Luhn, Verhoeff and PAN checksums; masking of personal data"],
+        ["Across lines", "None", "Correlator: brute force, password spraying, fail-then-success, error storm"],
+        ["Reported speed", "3.7 ms parallel vs 8.9 ms sequential per input; 2.4× speed-up",
+         f"Paper's design rebuilt: {min(fk):.0f}–{max(fk):.0f} µs per input, {c2 / c1:.0f}× slower than a sequential library loop on our rules; "
+         f"our engine {si(dfa_lps)} lines/s (about {per_us:.1f} µs per line), {speed:.1f}× the library engine"],
+        ["Scaling", "Near-linear to 6 cores; 5.62× at 8",
+         f"Paper's design at most {kmax('fork'):.2f}×; threads over inputs {max(sp3['threads-data'].values()):.2f}× at 6 cores; "
+         f"our POSIX pipeline {sp('posix', PHYS):.2f}× at {PHYS} workers; DFA pipeline flat (serial stages)"],
+        ["Accuracy", "96.3 % overall on its own samples",
+         f"Paper's task on our set: exact match {b['overall']['exact_match_accuracy']:.3f} without its input module, "
+         f"{a['overall']['exact_match_accuracy']:.3f} with it. Log rules: 1.000 on generated truth (consistency only); "
+         f"AIT recall {det / atk * 100:.2f} %; AI-annotator check on real lines (Section 4.9)"],
+        ["Evidence", "Results tables; code and data not provided",
+         "Code, seeds, raw JSON of every run, tests and sanitizer runs in the repository"],
+        ["Paper's claims", "Speed-up, scaling, latency, accuracy, conflict resolution",
+         "Speed-up, scaling, latency: not reproduced; batch effect: partly; structured formats more accurate: "
+         "supported by trend; conflict resolution: not tested"]]
+    s.extend(table("Base paper versus this work", rows, [1.7 * cm, 3.4 * cm, 3.5 * cm], key="cmp", flat=True))
 
     # ------------------------------------------------------------------ 6 Conclusion
     s.append(S("Conclusion"))
