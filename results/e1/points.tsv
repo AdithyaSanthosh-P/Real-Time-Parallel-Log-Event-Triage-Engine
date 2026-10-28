@@ -1,0 +1,4 @@
+c1-fork	fork	1	256	default	2000
+c2-posix-w1	posix	1	256	default	1000000
+c3-posix-w14	posix	14	256	default	1000000
+c4-dfa-w14	dfa	14	256	default	1000000

@@ -1,0 +1,6 @@
+bin/triage --bench --engine dfa -w 4 -b 1 -r rules/default.rules data/bench/gen_1000000.log   # dfa-b1, 5 runs
+bin/triage --bench --engine dfa -w 4 -b 4 -r rules/default.rules data/bench/gen_1000000.log   # dfa-b4, 5 runs
+bin/triage --bench --engine dfa -w 4 -b 16 -r rules/default.rules data/bench/gen_1000000.log   # dfa-b16, 5 runs
+bin/triage --bench --engine dfa -w 4 -b 64 -r rules/default.rules data/bench/gen_1000000.log   # dfa-b64, 5 runs
+bin/triage --bench --engine dfa -w 4 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # dfa-b256, 5 runs
+bin/triage --bench --engine dfa -w 4 -b 1024 -r rules/default.rules data/bench/gen_1000000.log   # dfa-b1024, 5 runs

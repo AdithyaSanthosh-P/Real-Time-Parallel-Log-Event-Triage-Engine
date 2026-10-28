@@ -1,0 +1,107 @@
+{
+ "source": "/home/adi/Desktop/Projects/CD/data/ait/russellmitchell/intranet_server__intranet.smith.russellmitchell.com-error.log.2.truth.tsv vs /tmp/tmp.HDAgDBzff4/ait/store.jsonl",
+ "all": {
+  "categories": {
+   "ATTACK": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 36.0,
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "support": 36.0
+   }
+  },
+  "n": 36,
+  "weighted_n": 36.0,
+  "exact_match": 0.0,
+  "confusion": {
+   "rows": "truth primary",
+   "cols": "predicted primary",
+   "labels": [
+    "none"
+   ],
+   "matrix": {
+    "none": {
+     "none": 36.0
+    }
+   }
+  },
+  "calibration": {
+   "ece": null,
+   "lines_with_label": 0.0,
+   "bins": [
+    {
+     "lo": 0.0,
+     "hi": 0.1,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.1,
+     "hi": 0.2,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.2,
+     "hi": 0.3,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.3,
+     "hi": 0.4,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.4,
+     "hi": 0.5,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.5,
+     "hi": 0.6,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.6,
+     "hi": 0.7,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.7,
+     "hi": 0.8,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.8,
+     "hi": 0.9,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    }
+   ]
+  }
+ }
+}

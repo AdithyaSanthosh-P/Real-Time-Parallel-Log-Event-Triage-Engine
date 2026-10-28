@@ -1,0 +1,27 @@
+{
+ "OpenSSH": {
+  "lines": 655147,
+  "lines_labelled_pii_validators": 0,
+  "lines_labelled_pii_no_validators": 163
+ },
+ "Apache": {
+  "lines": 56482,
+  "lines_labelled_pii_validators": 0,
+  "lines_labelled_pii_no_validators": 0
+ },
+ "Linux": {
+  "lines": 25567,
+  "lines_labelled_pii_validators": 40,
+  "lines_labelled_pii_no_validators": 105
+ },
+ "BGL": {
+  "lines": 4747963,
+  "lines_labelled_pii_validators": 1175,
+  "lines_labelled_pii_no_validators": 12279
+ },
+ "HDFS_2k": {
+  "lines": 2000,
+  "lines_labelled_pii_validators": 1,
+  "lines_labelled_pii_no_validators": 119
+ }
+}

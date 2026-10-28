@@ -1,0 +1,770 @@
+[
+ {
+  "id": "posix-w1",
+  "engine": "posix",
+  "workers": 1,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 74125.6,
+   "min": 72821.9,
+   "max": 74836.4
+  },
+  "mb_per_s": {
+   "median": 8.306,
+   "min": 8.16,
+   "max": 8.385
+  },
+  "seconds": {
+   "median": 13.490611,
+   "min": 13.36248,
+   "max": 13.732142
+  },
+  "dfa_states": 0,
+  "dfa_groups": 0,
+  "build_ms": 0.0,
+  "spread_pct": 2.7176845786071206,
+  "latency_p50_us": {
+   "median": 87029.43,
+   "min": 87029.43,
+   "max": 87029.43
+  },
+  "latency_p90_us": {
+   "median": 134217.73,
+   "min": 134217.73,
+   "max": 146365.47
+  },
+  "latency_p99_us": {
+   "median": 146365.47,
+   "min": 146365.47,
+   "max": 154099.8
+  },
+  "latency_p99_9_us": {
+   "median": 153672.51,
+   "min": 151127.93,
+   "max": 154634.65
+  }
+ },
+ {
+  "id": "posix-w2",
+  "engine": "posix",
+  "workers": 2,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 143577.8,
+   "min": 143048.0,
+   "max": 144590.0
+  },
+  "mb_per_s": {
+   "median": 16.088,
+   "min": 16.029,
+   "max": 16.201
+  },
+  "seconds": {
+   "median": 6.964866,
+   "min": 6.916106,
+   "max": 6.990661
+  },
+  "dfa_states": 0,
+  "dfa_groups": 0,
+  "build_ms": 0.0,
+  "spread_pct": 1.073982189447115,
+  "latency_p50_us": {
+   "median": 47453.13,
+   "min": 47453.13,
+   "max": 47453.13
+  },
+  "latency_p90_us": {
+   "median": 73182.74,
+   "min": 73182.74,
+   "max": 79806.34
+  },
+  "latency_p99_us": {
+   "median": 87029.43,
+   "min": 87029.43,
+   "max": 87029.43
+  },
+  "latency_p99_9_us": {
+   "median": 87029.43,
+   "min": 87029.43,
+   "max": 94906.27
+  }
+ },
+ {
+  "id": "posix-w4",
+  "engine": "posix",
+  "workers": 4,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 243225.8,
+   "min": 232020.6,
+   "max": 248173.6
+  },
+  "mb_per_s": {
+   "median": 27.253,
+   "min": 25.998,
+   "max": 27.808
+  },
+  "seconds": {
+   "median": 4.111407,
+   "min": 4.029437,
+   "max": 4.309963
+  },
+  "dfa_states": 0,
+  "dfa_groups": 0,
+  "build_ms": 0.0,
+  "spread_pct": 6.6411540223117775,
+  "latency_p50_us": {
+   "median": 33554.43,
+   "min": 30769.55,
+   "max": 33554.43
+  },
+  "latency_p90_us": {
+   "median": 51748.01,
+   "min": 51748.01,
+   "max": 51748.01
+  },
+  "latency_p99_us": {
+   "median": 61539.1,
+   "min": 61539.1,
+   "max": 67108.86
+  },
+  "latency_p99_9_us": {
+   "median": 67108.86,
+   "min": 67108.86,
+   "max": 73182.74
+  }
+ },
+ {
+  "id": "posix-w6",
+  "engine": "posix",
+  "workers": 6,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 335315.0,
+   "min": 298580.8,
+   "max": 348758.7
+  },
+  "mb_per_s": {
+   "median": 37.572,
+   "min": 33.456,
+   "max": 39.078
+  },
+  "seconds": {
+   "median": 2.98227,
+   "min": 2.867312,
+   "max": 3.349178
+  },
+  "dfa_states": 0,
+  "dfa_groups": 0,
+  "build_ms": 0.0,
+  "spread_pct": 14.964406602746678,
+  "latency_p50_us": {
+   "median": 28215.8,
+   "min": 25874.01,
+   "max": 30769.55
+  },
+  "latency_p90_us": {
+   "median": 43514.71,
+   "min": 43514.71,
+   "max": 43514.71
+  },
+  "latency_p99_us": {
+   "median": 56431.6,
+   "min": 51748.01,
+   "max": 61539.1
+  },
+  "latency_p99_9_us": {
+   "median": 67108.86,
+   "min": 58082.6,
+   "max": 67108.86
+  }
+ },
+ {
+  "id": "posix-w8",
+  "engine": "posix",
+  "workers": 8,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 341089.4,
+   "min": 337888.6,
+   "max": 345663.3
+  },
+  "mb_per_s": {
+   "median": 38.219,
+   "min": 37.86,
+   "max": 38.732
+  },
+  "seconds": {
+   "median": 2.931783,
+   "min": 2.892989,
+   "max": 2.959555
+  },
+  "dfa_states": 0,
+  "dfa_groups": 0,
+  "build_ms": 0.0,
+  "spread_pct": 2.279373091042997,
+  "latency_p50_us": {
+   "median": 23726.57,
+   "min": 21757.36,
+   "max": 23726.57
+  },
+  "latency_p90_us": {
+   "median": 47453.13,
+   "min": 47453.13,
+   "max": 47453.13
+  },
+  "latency_p99_us": {
+   "median": 61539.1,
+   "min": 61539.1,
+   "max": 61539.1
+  },
+  "latency_p99_9_us": {
+   "median": 67108.86,
+   "min": 61539.1,
+   "max": 67108.86
+  }
+ },
+ {
+  "id": "posix-w10",
+  "engine": "posix",
+  "workers": 10,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 406776.4,
+   "min": 404111.7,
+   "max": 411297.1
+  },
+  "mb_per_s": {
+   "median": 45.579,
+   "min": 45.281,
+   "max": 46.086
+  },
+  "seconds": {
+   "median": 2.458353,
+   "min": 2.431333,
+   "max": 2.474563
+  },
+  "dfa_states": 0,
+  "dfa_groups": 0,
+  "build_ms": 0.0,
+  "spread_pct": 1.7664249941736945,
+  "latency_p50_us": {
+   "median": 23726.57,
+   "min": 23726.57,
+   "max": 23726.57
+  },
+  "latency_p90_us": {
+   "median": 47453.13,
+   "min": 47453.13,
+   "max": 51748.01
+  },
+  "latency_p99_us": {
+   "median": 56431.6,
+   "min": 56431.6,
+   "max": 56431.6
+  },
+  "latency_p99_9_us": {
+   "median": 60172.98,
+   "min": 59050.75,
+   "max": 61539.1
+  }
+ },
+ {
+  "id": "posix-w12",
+  "engine": "posix",
+  "workers": 12,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 463005.5,
+   "min": 426945.8,
+   "max": 489961.5
+  },
+  "mb_per_s": {
+   "median": 51.88,
+   "min": 47.839,
+   "max": 54.9
+  },
+  "seconds": {
+   "median": 2.159802,
+   "min": 2.040977,
+   "max": 2.342218
+  },
+  "dfa_states": 0,
+  "dfa_groups": 0,
+  "build_ms": 0.0,
+  "spread_pct": 13.61014070027246,
+  "latency_p50_us": {
+   "median": 19951.58,
+   "min": 18295.68,
+   "max": 23726.57
+  },
+  "latency_p90_us": {
+   "median": 43514.71,
+   "min": 33554.43,
+   "max": 47453.13
+  },
+  "latency_p99_us": {
+   "median": 56431.6,
+   "min": 51748.01,
+   "max": 56431.6
+  },
+  "latency_p99_9_us": {
+   "median": 56431.6,
+   "min": 56431.6,
+   "max": 61539.1
+  }
+ },
+ {
+  "id": "posix-w14",
+  "engine": "posix",
+  "workers": 14,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 507421.1,
+   "min": 454234.5,
+   "max": 510763.6
+  },
+  "mb_per_s": {
+   "median": 56.857,
+   "min": 50.897,
+   "max": 57.231
+  },
+  "seconds": {
+   "median": 1.97075,
+   "min": 1.957853,
+   "max": 2.201506
+  },
+  "dfa_states": 0,
+  "dfa_groups": 0,
+  "build_ms": 0.0,
+  "spread_pct": 11.140470902766948,
+  "latency_p50_us": {
+   "median": 15384.77,
+   "min": 15384.77,
+   "max": 18295.68
+  },
+  "latency_p90_us": {
+   "median": 23726.57,
+   "min": 23726.57,
+   "max": 28215.8
+  },
+  "latency_p99_us": {
+   "median": 36591.37,
+   "min": 36591.37,
+   "max": 43514.71
+  },
+  "latency_p99_9_us": {
+   "median": 47453.13,
+   "min": 46760.18,
+   "max": 51748.01
+  }
+ },
+ {
+  "id": "dfa-w1",
+  "engine": "dfa",
+  "workers": 1,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 971393.8,
+   "min": 918360.9,
+   "max": 982841.8
+  },
+  "mb_per_s": {
+   "median": 108.845,
+   "min": 102.903,
+   "max": 110.128
+  },
+  "seconds": {
+   "median": 1.029449,
+   "min": 1.017458,
+   "max": 1.088897
+  },
+  "dfa_states": 7593,
+  "dfa_groups": 2,
+  "build_ms": 534.9,
+  "spread_pct": 6.637977306423,
+  "latency_p50_us": {
+   "median": 4987.9,
+   "min": 4987.9,
+   "max": 5439.34
+  },
+  "latency_p90_us": {
+   "median": 9147.84,
+   "min": 9147.84,
+   "max": 9147.84
+  },
+  "latency_p99_us": {
+   "median": 11863.28,
+   "min": 11863.28,
+   "max": 14107.9
+  },
+  "latency_p99_9_us": {
+   "median": 30281.87,
+   "min": 30052.83,
+   "max": 35165.09
+  }
+ },
+ {
+  "id": "dfa-w2",
+  "engine": "dfa",
+  "workers": 2,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 944127.8,
+   "min": 916373.7,
+   "max": 980491.4
+  },
+  "mb_per_s": {
+   "median": 105.79,
+   "min": 102.68,
+   "max": 109.864
+  },
+  "seconds": {
+   "median": 1.059179,
+   "min": 1.019897,
+   "max": 1.091258
+  },
+  "dfa_states": 7593,
+  "dfa_groups": 2,
+  "build_ms": 529.2,
+  "spread_pct": 6.791209834092384,
+  "latency_p50_us": {
+   "median": 4987.9,
+   "min": 4987.9,
+   "max": 5439.34
+  },
+  "latency_p90_us": {
+   "median": 9147.84,
+   "min": 9147.84,
+   "max": 9147.84
+  },
+  "latency_p99_us": {
+   "median": 10878.68,
+   "min": 9975.79,
+   "max": 11863.28
+  },
+  "latency_p99_9_us": {
+   "median": 30609.34,
+   "min": 29821.13,
+   "max": 32989.08
+  }
+ },
+ {
+  "id": "dfa-w4",
+  "engine": "dfa",
+  "workers": 4,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 850069.2,
+   "min": 832419.3,
+   "max": 878428.5
+  },
+  "mb_per_s": {
+   "median": 95.25,
+   "min": 93.273,
+   "max": 98.428
+  },
+  "seconds": {
+   "median": 1.176375,
+   "min": 1.138397,
+   "max": 1.201318
+  },
+  "dfa_states": 7593,
+  "dfa_groups": 2,
+  "build_ms": 521.2,
+  "spread_pct": 5.412406425265138,
+  "latency_p50_us": {
+   "median": 5931.64,
+   "min": 5439.34,
+   "max": 5931.64
+  },
+  "latency_p90_us": {
+   "median": 9975.79,
+   "min": 9975.79,
+   "max": 10878.68
+  },
+  "latency_p99_us": {
+   "median": 12937.0,
+   "min": 12937.0,
+   "max": 14107.9
+  },
+  "latency_p99_9_us": {
+   "median": 28165.85,
+   "min": 27369.14,
+   "max": 36591.37
+  }
+ },
+ {
+  "id": "dfa-w6",
+  "engine": "dfa",
+  "workers": 6,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 892285.1,
+   "min": 865442.2,
+   "max": 908061.6
+  },
+  "mb_per_s": {
+   "median": 99.981,
+   "min": 96.973,
+   "max": 101.748
+  },
+  "seconds": {
+   "median": 1.120718,
+   "min": 1.101247,
+   "max": 1.155479
+  },
+  "dfa_states": 7593,
+  "dfa_groups": 2,
+  "build_ms": 515.3,
+  "spread_pct": 4.776433003308026,
+  "latency_p50_us": {
+   "median": 5439.34,
+   "min": 5439.34,
+   "max": 5931.64
+  },
+  "latency_p90_us": {
+   "median": 9975.79,
+   "min": 9975.79,
+   "max": 9975.79
+  },
+  "latency_p99_us": {
+   "median": 11863.28,
+   "min": 11863.28,
+   "max": 12937.0
+  },
+  "latency_p99_9_us": {
+   "median": 27920.3,
+   "min": 25874.01,
+   "max": 35435.25
+  }
+ },
+ {
+  "id": "dfa-w8",
+  "engine": "dfa",
+  "workers": 8,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 863661.4,
+   "min": 837806.0,
+   "max": 873886.5
+  },
+  "mb_per_s": {
+   "median": 96.773,
+   "min": 93.876,
+   "max": 97.919
+  },
+  "seconds": {
+   "median": 1.157861,
+   "min": 1.144313,
+   "max": 1.193594
+  },
+  "dfa_states": 7593,
+  "dfa_groups": 2,
+  "build_ms": 515.8,
+  "spread_pct": 4.177620998229167,
+  "latency_p50_us": {
+   "median": 5439.34,
+   "min": 5439.34,
+   "max": 5931.64
+  },
+  "latency_p90_us": {
+   "median": 9975.79,
+   "min": 9975.79,
+   "max": 10878.68
+  },
+  "latency_p99_us": {
+   "median": 12937.0,
+   "min": 11863.28,
+   "max": 14107.9
+  },
+  "latency_p99_9_us": {
+   "median": 30731.43,
+   "min": 25487.44,
+   "max": 35721.16
+  }
+ },
+ {
+  "id": "dfa-w10",
+  "engine": "dfa",
+  "workers": 10,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 848410.0,
+   "min": 814702.9,
+   "max": 893775.0
+  },
+  "mb_per_s": {
+   "median": 95.065,
+   "min": 91.288,
+   "max": 100.148
+  },
+  "seconds": {
+   "median": 1.178675,
+   "min": 1.11885,
+   "max": 1.227441
+  },
+  "dfa_states": 7593,
+  "dfa_groups": 2,
+  "build_ms": 508.4,
+  "spread_pct": 9.32003394585165,
+  "latency_p50_us": {
+   "median": 5931.64,
+   "min": 5439.34,
+   "max": 5931.64
+  },
+  "latency_p90_us": {
+   "median": 9975.79,
+   "min": 9975.79,
+   "max": 10878.68
+  },
+  "latency_p99_us": {
+   "median": 12937.0,
+   "min": 11863.28,
+   "max": 12937.0
+  },
+  "latency_p99_9_us": {
+   "median": 14107.9,
+   "min": 14107.9,
+   "max": 18295.68
+  }
+ },
+ {
+  "id": "dfa-w12",
+  "engine": "dfa",
+  "workers": 12,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 878397.6,
+   "min": 864910.5,
+   "max": 903159.2
+  },
+  "mb_per_s": {
+   "median": 98.425,
+   "min": 96.913,
+   "max": 101.199
+  },
+  "seconds": {
+   "median": 1.138437,
+   "min": 1.107225,
+   "max": 1.156189
+  },
+  "dfa_states": 7593,
+  "dfa_groups": 2,
+  "build_ms": 508.1,
+  "spread_pct": 4.354372097555817,
+  "latency_p50_us": {
+   "median": 5439.34,
+   "min": 5439.34,
+   "max": 5439.34
+  },
+  "latency_p90_us": {
+   "median": 9975.79,
+   "min": 9975.79,
+   "max": 9975.79
+  },
+  "latency_p99_us": {
+   "median": 11863.28,
+   "min": 11863.28,
+   "max": 12937.0
+  },
+  "latency_p99_9_us": {
+   "median": 30769.55,
+   "min": 19951.58,
+   "max": 33554.43
+  }
+ },
+ {
+  "id": "dfa-w14",
+  "engine": "dfa",
+  "workers": 14,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 897981.5,
+   "min": 866329.3,
+   "max": 898312.7
+  },
+  "mb_per_s": {
+   "median": 100.619,
+   "min": 97.072,
+   "max": 100.656
+  },
+  "seconds": {
+   "median": 1.113609,
+   "min": 1.113198,
+   "max": 1.154295
+  },
+  "dfa_states": 7593,
+  "dfa_groups": 2,
+  "build_ms": 531.8,
+  "spread_pct": 3.5616992109525536,
+  "latency_p50_us": {
+   "median": 5439.34,
+   "min": 5439.34,
+   "max": 5439.34
+  },
+  "latency_p90_us": {
+   "median": 9975.79,
+   "min": 9975.79,
+   "max": 9975.79
+  },
+  "latency_p99_us": {
+   "median": 11863.28,
+   "min": 11863.28,
+   "max": 11863.28
+  },
+  "latency_p99_9_us": {
+   "median": 18295.68,
+   "min": 18295.68,
+   "max": 18295.68
+  }
+ }
+]

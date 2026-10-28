@@ -1,0 +1,10 @@
+
+== all   (36 lines, weighted 36)
+  category         precision   recall      F1    support
+  ATTACK                 n/a    0.000     n/a         36
+  exact label-set match: 0.0000   ECE of the primary label: n/a
+  confusion (rows truth primary, columns predicted primary):
+                          none
+    none                    36
+
+label_eval: wrote /home/adi/Desktop/Projects/CD/results/e6/ait/intranet_server__intranet.smith.russellmitchell.com-error.log.2/result.json and reliability.svg

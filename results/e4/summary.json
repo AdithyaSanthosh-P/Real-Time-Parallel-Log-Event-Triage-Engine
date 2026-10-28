@@ -1,0 +1,284 @@
+[
+ {
+  "id": "dfa-b1",
+  "engine": "dfa",
+  "workers": 4,
+  "batch": 1,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 191317.8,
+   "min": 182985.6,
+   "max": 222535.9
+  },
+  "mb_per_s": {
+   "median": 21.437,
+   "min": 20.504,
+   "max": 24.935
+  },
+  "seconds": {
+   "median": 5.226905,
+   "min": 4.493658,
+   "max": 5.46491
+  },
+  "dfa_states": 7593,
+  "dfa_groups": 2,
+  "build_ms": 610.3,
+  "latency_p50_us": {
+   "median": 23726.57,
+   "min": 19951.58,
+   "max": 25874.01
+  },
+  "latency_p90_us": {
+   "median": 51748.01,
+   "min": 43514.71,
+   "max": 51748.01
+  },
+  "latency_p99_us": {
+   "median": 61539.1,
+   "min": 56431.6,
+   "max": 73182.74
+  },
+  "latency_p99_9_us": {
+   "median": 86463.57,
+   "min": 73182.74,
+   "max": 94906.27
+  }
+ },
+ {
+  "id": "dfa-b4",
+  "engine": "dfa",
+  "workers": 4,
+  "batch": 4,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 563613.7,
+   "min": 558278.7,
+   "max": 588282.7
+  },
+  "mb_per_s": {
+   "median": 63.153,
+   "min": 62.555,
+   "max": 65.917
+  },
+  "seconds": {
+   "median": 1.774265,
+   "min": 1.699863,
+   "max": 1.79122
+  },
+  "dfa_states": 7593,
+  "dfa_groups": 2,
+  "build_ms": 605.4,
+  "latency_p50_us": {
+   "median": 8388.61,
+   "min": 7692.39,
+   "max": 8388.61
+  },
+  "latency_p90_us": {
+   "median": 15384.77,
+   "min": 14107.9,
+   "max": 15384.77
+  },
+  "latency_p99_us": {
+   "median": 25874.01,
+   "min": 21757.36,
+   "max": 28215.8
+  },
+  "latency_p99_9_us": {
+   "median": 39903.17,
+   "min": 39903.17,
+   "max": 46572.34
+  }
+ },
+ {
+  "id": "dfa-b16",
+  "engine": "dfa",
+  "workers": 4,
+  "batch": 16,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 737277.2,
+   "min": 714950.6,
+   "max": 757598.4
+  },
+  "mb_per_s": {
+   "median": 82.612,
+   "min": 80.11,
+   "max": 84.889
+  },
+  "seconds": {
+   "median": 1.356342,
+   "min": 1.319961,
+   "max": 1.398698
+  },
+  "dfa_states": 7593,
+  "dfa_groups": 2,
+  "build_ms": 607.3,
+  "latency_p50_us": {
+   "median": 6468.5,
+   "min": 5931.64,
+   "max": 6468.5
+  },
+  "latency_p90_us": {
+   "median": 11863.28,
+   "min": 10878.68,
+   "max": 11863.28
+  },
+  "latency_p99_us": {
+   "median": 19951.58,
+   "min": 19951.58,
+   "max": 25874.01
+  },
+  "latency_p99_9_us": {
+   "median": 36591.37,
+   "min": 36591.37,
+   "max": 50278.58
+  }
+ },
+ {
+  "id": "dfa-b64",
+  "engine": "dfa",
+  "workers": 4,
+  "batch": 64,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 765927.7,
+   "min": 756542.3,
+   "max": 775356.0
+  },
+  "mb_per_s": {
+   "median": 85.822,
+   "min": 84.771,
+   "max": 86.879
+  },
+  "seconds": {
+   "median": 1.305606,
+   "min": 1.28973,
+   "max": 1.321803
+  },
+  "dfa_states": 7593,
+  "dfa_groups": 2,
+  "build_ms": 603.5,
+  "latency_p50_us": {
+   "median": 5931.64,
+   "min": 5931.64,
+   "max": 5931.64
+  },
+  "latency_p90_us": {
+   "median": 10878.68,
+   "min": 10878.68,
+   "max": 10878.68
+  },
+  "latency_p99_us": {
+   "median": 16777.22,
+   "min": 16777.22,
+   "max": 18295.68
+  },
+  "latency_p99_9_us": {
+   "median": 35938.53,
+   "min": 35790.42,
+   "max": 43514.71
+  }
+ },
+ {
+  "id": "dfa-b256",
+  "engine": "dfa",
+  "workers": 4,
+  "batch": 256,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 787649.3,
+   "min": 769921.5,
+   "max": 801893.6
+  },
+  "mb_per_s": {
+   "median": 88.256,
+   "min": 86.27,
+   "max": 89.852
+  },
+  "seconds": {
+   "median": 1.269601,
+   "min": 1.247048,
+   "max": 1.298834
+  },
+  "dfa_states": 7593,
+  "dfa_groups": 2,
+  "build_ms": 606.6,
+  "latency_p50_us": {
+   "median": 6468.5,
+   "min": 5931.64,
+   "max": 6468.5
+  },
+  "latency_p90_us": {
+   "median": 10878.68,
+   "min": 10878.68,
+   "max": 11863.28
+  },
+  "latency_p99_us": {
+   "median": 15384.77,
+   "min": 14107.9,
+   "max": 16777.22
+  },
+  "latency_p99_9_us": {
+   "median": 30769.55,
+   "min": 29653.75,
+   "max": 33554.43
+  }
+ },
+ {
+  "id": "dfa-b1024",
+  "engine": "dfa",
+  "workers": 4,
+  "batch": 1024,
+  "rules": "default",
+  "lines": 1000000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 806878.1,
+   "min": 798938.6,
+   "max": 812974.7
+  },
+  "mb_per_s": {
+   "median": 90.411,
+   "min": 89.521,
+   "max": 91.094
+  },
+  "seconds": {
+   "median": 1.239345,
+   "min": 1.230051,
+   "max": 1.251661
+  },
+  "dfa_states": 7593,
+  "dfa_groups": 2,
+  "build_ms": 602.8,
+  "latency_p50_us": {
+   "median": 7053.95,
+   "min": 7053.95,
+   "max": 7053.95
+  },
+  "latency_p90_us": {
+   "median": 11863.28,
+   "min": 11863.28,
+   "max": 11863.28
+  },
+  "latency_p99_us": {
+   "median": 14107.9,
+   "min": 12937.0,
+   "max": 14107.9
+  },
+  "latency_p99_9_us": {
+   "median": 15384.77,
+   "min": 15010.97,
+   "max": 16777.22
+  }
+ }
+]

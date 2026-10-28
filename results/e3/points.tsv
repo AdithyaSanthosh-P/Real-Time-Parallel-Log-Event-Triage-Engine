@@ -1,0 +1,10 @@
+posix-r5	posix	1	256	bench_5	300000
+dfa-r5	dfa	1	256	bench_5	300000
+posix-r10	posix	1	256	bench_10	300000
+dfa-r10	dfa	1	256	bench_10	300000
+posix-r20	posix	1	256	bench_20	300000
+dfa-r20	dfa	1	256	bench_20	300000
+posix-r32	posix	1	256	bench_32	300000
+dfa-r32	dfa	1	256	bench_32	300000
+posix-r64	posix	1	256	bench_64	300000
+dfa-r64	dfa	1	256	bench_64	300000

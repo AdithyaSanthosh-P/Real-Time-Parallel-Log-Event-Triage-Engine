@@ -1,0 +1,16 @@
+posix-w1	posix	1	256	default	1000000
+posix-w2	posix	2	256	default	1000000
+posix-w4	posix	4	256	default	1000000
+posix-w6	posix	6	256	default	1000000
+posix-w8	posix	8	256	default	1000000
+posix-w10	posix	10	256	default	1000000
+posix-w12	posix	12	256	default	1000000
+posix-w14	posix	14	256	default	1000000
+dfa-w1	dfa	1	256	default	1000000
+dfa-w2	dfa	2	256	default	1000000
+dfa-w4	dfa	4	256	default	1000000
+dfa-w6	dfa	6	256	default	1000000
+dfa-w8	dfa	8	256	default	1000000
+dfa-w10	dfa	10	256	default	1000000
+dfa-w12	dfa	12	256	default	1000000
+dfa-w14	dfa	14	256	default	1000000

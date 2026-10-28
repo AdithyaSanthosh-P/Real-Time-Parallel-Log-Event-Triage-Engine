@@ -1,0 +1,4 @@
+bin/triage --bench --engine fork -w 1 -b 256 -r rules/default.rules data/bench/gen_2000.log   # c1-fork, 5 runs
+bin/triage --bench --engine posix -w 1 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # c2-posix-w1, 5 runs
+bin/triage --bench --engine posix -w 14 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # c3-posix-w14, 5 runs
+bin/triage --bench --engine dfa -w 14 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # c4-dfa-w14, 5 runs

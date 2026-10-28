@@ -92,7 +92,7 @@ run_experiment() {   # run_experiment EXP
         *) echo "run_bench.sh: unknown experiment $exp" >&2; exit 2 ;;
     esac
     rm -rf "$d"; mkdir -p "$d/raw"
-    : > "$d/points.tsv"; : > "$d/commands.txt"
+    : > "$d/points.tsv"; : > "$d/commands.txt"; : > "$d/load.tsv"
     local i
     for i in "${!P_ID[@]}"; do
         # E3 shows the rule count in the point; the others use the default rule set
@@ -104,6 +104,7 @@ run_experiment() {   # run_experiment EXP
     for run in $(seq "$RUNS"); do
         for i in "${!P_ID[@]}"; do
             echo "[$exp] run $run/$RUNS ${P_ID[$i]}" >&2
+            echo "$run ${P_ID[$i]} $(cut -d' ' -f1-3 /proc/loadavg)" >> "$d/load.tsv"      # system load before the run
             "$TRIAGE" --bench --engine "${P_ENG[$i]}" -w "${P_W[$i]}" -b "${P_B[$i]}" -r "$ROOT/${P_RULES[$i]}" \
                 "${P_FILE[$i]}" > "$d/raw/${P_ID[$i]}__run$run.json"
         done

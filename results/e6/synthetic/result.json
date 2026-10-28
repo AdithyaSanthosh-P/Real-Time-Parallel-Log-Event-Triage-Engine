@@ -1,0 +1,193 @@
+{
+ "source": "/home/adi/Desktop/Projects/CD/data/bench/gen11.truth.tsv vs /tmp/tmp.HDAgDBzff4/gen_default/store.jsonl",
+ "all": {
+  "categories": {
+   "AUTH_FAILURE": {
+    "tp": 10000.0,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 10000.0
+   },
+   "SECURITY_THREAT": {
+    "tp": 6000.0,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 6000.0
+   },
+   "ERROR": {
+    "tp": 10000.0,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 10000.0
+   },
+   "PERF_WARNING": {
+    "tp": 6000.0,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 6000.0
+   },
+   "PII": {
+    "tp": 6000.0,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 6000.0
+   }
+  },
+  "n": 200000,
+  "weighted_n": 200000.0,
+  "exact_match": 1.0,
+  "confusion": {
+   "rows": "truth primary",
+   "cols": "predicted primary",
+   "labels": [
+    "SECURITY_THREAT",
+    "PII",
+    "AUTH_FAILURE",
+    "ERROR",
+    "PERF_WARNING",
+    "none"
+   ],
+   "matrix": {
+    "SECURITY_THREAT": {
+     "SECURITY_THREAT": 6000.0,
+     "PII": 0.0,
+     "AUTH_FAILURE": 0.0,
+     "ERROR": 0.0,
+     "PERF_WARNING": 0.0,
+     "none": 0.0
+    },
+    "PII": {
+     "SECURITY_THREAT": 0.0,
+     "PII": 6000.0,
+     "AUTH_FAILURE": 0.0,
+     "ERROR": 0.0,
+     "PERF_WARNING": 0.0,
+     "none": 0.0
+    },
+    "AUTH_FAILURE": {
+     "SECURITY_THREAT": 0.0,
+     "PII": 0.0,
+     "AUTH_FAILURE": 10000.0,
+     "ERROR": 0.0,
+     "PERF_WARNING": 0.0,
+     "none": 0.0
+    },
+    "ERROR": {
+     "SECURITY_THREAT": 0.0,
+     "PII": 0.0,
+     "AUTH_FAILURE": 0.0,
+     "ERROR": 10000.0,
+     "PERF_WARNING": 0.0,
+     "none": 0.0
+    },
+    "PERF_WARNING": {
+     "SECURITY_THREAT": 0.0,
+     "PII": 0.0,
+     "AUTH_FAILURE": 0.0,
+     "ERROR": 0.0,
+     "PERF_WARNING": 6000.0,
+     "none": 0.0
+    },
+    "none": {
+     "SECURITY_THREAT": 0.0,
+     "PII": 0.0,
+     "AUTH_FAILURE": 0.0,
+     "ERROR": 0.0,
+     "PERF_WARNING": 0.0,
+     "none": 162000.0
+    }
+   }
+  },
+  "calibration": {
+   "ece": 0.3731500000000489,
+   "lines_with_label": 38000.0,
+   "bins": [
+    {
+     "lo": 0.0,
+     "hi": 0.1,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.1,
+     "hi": 0.2,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.2,
+     "hi": 0.3,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.3,
+     "hi": 0.4,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.4,
+     "hi": 0.5,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.5,
+     "hi": 0.6,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.6,
+     "hi": 0.7,
+     "weight": 33402.0,
+     "mean_confidence": 0.5999999999999444,
+     "observed_precision": 1.0
+    },
+    {
+     "lo": 0.7,
+     "hi": 0.8,
+     "weight": 3226.0,
+     "mean_confidence": 0.75,
+     "observed_precision": 1.0
+    },
+    {
+     "lo": 0.8,
+     "hi": 0.9,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "weight": 1372.0,
+     "mean_confidence": 0.9909620991253657,
+     "observed_precision": 1.0
+    }
+   ]
+  }
+ }
+}

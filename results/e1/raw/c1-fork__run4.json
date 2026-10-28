@@ -1,0 +1,1 @@
+{"engine":"fork","workers":1,"batch":256,"lines":2000,"bytes":224126,"seconds":5.531629,"lines_per_s":361.6,"mb_per_s":0.041,"latency_us":{"p50":3037000.50,"p90":5531057.42,"p99":5531057.42,"p99.9":5531057.42,"max":5531057.42},"nfa_states":0,"dfa_groups":0,"dfa_states":0,"build_ms":0.0}

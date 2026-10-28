@@ -1,0 +1,6 @@
+dfa-b1	dfa	4	1	default	1000000
+dfa-b4	dfa	4	4	default	1000000
+dfa-b16	dfa	4	16	default	1000000
+dfa-b64	dfa	4	64	default	1000000
+dfa-b256	dfa	4	256	default	1000000
+dfa-b1024	dfa	4	1024	default	1000000

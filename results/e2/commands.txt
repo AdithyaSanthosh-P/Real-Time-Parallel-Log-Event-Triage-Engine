@@ -1,0 +1,16 @@
+bin/triage --bench --engine posix -w 1 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # posix-w1, 5 runs
+bin/triage --bench --engine posix -w 2 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # posix-w2, 5 runs
+bin/triage --bench --engine posix -w 4 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # posix-w4, 5 runs
+bin/triage --bench --engine posix -w 6 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # posix-w6, 5 runs
+bin/triage --bench --engine posix -w 8 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # posix-w8, 5 runs
+bin/triage --bench --engine posix -w 10 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # posix-w10, 5 runs
+bin/triage --bench --engine posix -w 12 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # posix-w12, 5 runs
+bin/triage --bench --engine posix -w 14 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # posix-w14, 5 runs
+bin/triage --bench --engine dfa -w 1 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # dfa-w1, 5 runs
+bin/triage --bench --engine dfa -w 2 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # dfa-w2, 5 runs
+bin/triage --bench --engine dfa -w 4 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # dfa-w4, 5 runs
+bin/triage --bench --engine dfa -w 6 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # dfa-w6, 5 runs
+bin/triage --bench --engine dfa -w 8 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # dfa-w8, 5 runs
+bin/triage --bench --engine dfa -w 10 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # dfa-w10, 5 runs
+bin/triage --bench --engine dfa -w 12 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # dfa-w12, 5 runs
+bin/triage --bench --engine dfa -w 14 -b 256 -r rules/default.rules data/bench/gen_1000000.log   # dfa-w14, 5 runs

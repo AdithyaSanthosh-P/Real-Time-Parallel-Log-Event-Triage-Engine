@@ -1,0 +1,118 @@
+{
+ "OpenSSH": {
+  "lines": 655147,
+  "default": {
+   "primary": {
+    "none": 288107,
+    "AUTH_FAILURE": 353185,
+    "SECURITY_THREAT": 13671,
+    "ERROR": 184
+   },
+   "lines_labelled_pii": 0,
+   "flags": {
+    "ESCALATED_BRUTE_FORCE": 13412,
+    "ESCALATED_PASSWORD_SPRAY": 284
+   }
+  },
+  "novalidators": {
+   "primary": {
+    "none": 287944,
+    "AUTH_FAILURE": 353185,
+    "SECURITY_THREAT": 13671,
+    "ERROR": 184,
+    "PII": 163
+   },
+   "lines_labelled_pii": 163,
+   "flags": {
+    "ESCALATED_BRUTE_FORCE": 13412,
+    "ESCALATED_PASSWORD_SPRAY": 284
+   }
+  }
+ },
+ "Apache": {
+  "lines": 56482,
+  "default": {
+   "primary": {
+    "none": 55929,
+    "SECURITY_THREAT": 553
+   },
+   "lines_labelled_pii": 0,
+   "flags": {}
+  },
+  "novalidators": {
+   "primary": {
+    "none": 55929,
+    "SECURITY_THREAT": 553
+   },
+   "lines_labelled_pii": 0,
+   "flags": {}
+  }
+ },
+ "Linux": {
+  "lines": 25567,
+  "default": {
+   "primary": {
+    "none": 25525,
+    "PII": 40,
+    "SECURITY_THREAT": 2
+   },
+   "lines_labelled_pii": 40,
+   "flags": {}
+  },
+  "novalidators": {
+   "primary": {
+    "none": 25460,
+    "PII": 105,
+    "SECURITY_THREAT": 2
+   },
+   "lines_labelled_pii": 105,
+   "flags": {}
+  }
+ },
+ "BGL": {
+  "lines": 4747963,
+  "default": {
+   "primary": {
+    "none": 3760111,
+    "ERROR": 985785,
+    "PII": 1175,
+    "SECURITY_THREAT": 892
+   },
+   "lines_labelled_pii": 1175,
+   "flags": {
+    "ERROR_STORM": 1
+   }
+  },
+  "novalidators": {
+   "primary": {
+    "none": 3756615,
+    "ERROR": 978177,
+    "PII": 12279,
+    "SECURITY_THREAT": 892
+   },
+   "lines_labelled_pii": 12279,
+   "flags": {
+    "ERROR_STORM": 1
+   }
+  }
+ },
+ "HDFS_2k": {
+  "lines": 2000,
+  "default": {
+   "primary": {
+    "none": 1999,
+    "PII": 1
+   },
+   "lines_labelled_pii": 1,
+   "flags": {}
+  },
+  "novalidators": {
+   "primary": {
+    "none": 1881,
+    "PII": 119
+   },
+   "lines_labelled_pii": 119,
+   "flags": {}
+  }
+ }
+}

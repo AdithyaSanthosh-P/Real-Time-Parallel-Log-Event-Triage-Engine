@@ -1,0 +1,10 @@
+bin/triage --bench --engine posix -w 1 -b 256 -r rules/bench_5.rules data/bench/gen_300000.log   # posix-r5, 5 runs
+bin/triage --bench --engine dfa -w 1 -b 256 -r rules/bench_5.rules data/bench/gen_300000.log   # dfa-r5, 5 runs
+bin/triage --bench --engine posix -w 1 -b 256 -r rules/bench_10.rules data/bench/gen_300000.log   # posix-r10, 5 runs
+bin/triage --bench --engine dfa -w 1 -b 256 -r rules/bench_10.rules data/bench/gen_300000.log   # dfa-r10, 5 runs
+bin/triage --bench --engine posix -w 1 -b 256 -r rules/bench_20.rules data/bench/gen_300000.log   # posix-r20, 5 runs
+bin/triage --bench --engine dfa -w 1 -b 256 -r rules/bench_20.rules data/bench/gen_300000.log   # dfa-r20, 5 runs
+bin/triage --bench --engine posix -w 1 -b 256 -r rules/bench_32.rules data/bench/gen_300000.log   # posix-r32, 5 runs
+bin/triage --bench --engine dfa -w 1 -b 256 -r rules/bench_32.rules data/bench/gen_300000.log   # dfa-r32, 5 runs
+bin/triage --bench --engine posix -w 1 -b 256 -r rules/bench_64.rules data/bench/gen_300000.log   # posix-r64, 5 runs
+bin/triage --bench --engine dfa -w 1 -b 256 -r rules/bench_64.rules data/bench/gen_300000.log   # dfa-r64, 5 runs

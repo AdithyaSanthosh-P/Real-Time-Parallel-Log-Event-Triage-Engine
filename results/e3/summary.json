@@ -1,0 +1,472 @@
+[
+ {
+  "id": "posix-r5",
+  "engine": "posix",
+  "workers": 1,
+  "batch": 256,
+  "rules": "bench_5",
+  "lines": 300000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 259850.3,
+   "min": 259466.3,
+   "max": 260836.7
+  },
+  "mb_per_s": {
+   "median": 29.111,
+   "min": 29.068,
+   "max": 29.222
+  },
+  "seconds": {
+   "median": 1.154511,
+   "min": 1.150145,
+   "max": 1.156219
+  },
+  "dfa_states": 0,
+  "dfa_groups": 0,
+  "build_ms": 0.0,
+  "latency_p50_us": {
+   "median": 23726.57,
+   "min": 23726.57,
+   "max": 23726.57
+  },
+  "latency_p90_us": {
+   "median": 39903.17,
+   "min": 39903.17,
+   "max": 39903.17
+  },
+  "latency_p99_us": {
+   "median": 42904.72,
+   "min": 42431.19,
+   "max": 43514.71
+  },
+  "latency_p99_9_us": {
+   "median": 42904.72,
+   "min": 42431.19,
+   "max": 44589.29
+  }
+ },
+ {
+  "id": "dfa-r5",
+  "engine": "dfa",
+  "workers": 1,
+  "batch": 256,
+  "rules": "bench_5",
+  "lines": 300000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 886234.9,
+   "min": 848157.5,
+   "max": 900552.9
+  },
+  "mb_per_s": {
+   "median": 99.286,
+   "min": 95.02,
+   "max": 100.89
+  },
+  "seconds": {
+   "median": 0.338511,
+   "min": 0.333129,
+   "max": 0.353708
+  },
+  "dfa_states": 703,
+  "dfa_groups": 1,
+  "build_ms": 4.0,
+  "latency_p50_us": {
+   "median": 5439.34,
+   "min": 5439.34,
+   "max": 5439.34
+  },
+  "latency_p90_us": {
+   "median": 9975.79,
+   "min": 9975.79,
+   "max": 9975.79
+  },
+  "latency_p99_us": {
+   "median": 14107.9,
+   "min": 12937.0,
+   "max": 14107.9
+  },
+  "latency_p99_9_us": {
+   "median": 15384.77,
+   "min": 15138.15,
+   "max": 16777.22
+  }
+ },
+ {
+  "id": "posix-r10",
+  "engine": "posix",
+  "workers": 1,
+  "batch": 256,
+  "rules": "bench_10",
+  "lines": 300000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 154795.6,
+   "min": 153997.6,
+   "max": 155154.5
+  },
+  "mb_per_s": {
+   "median": 17.342,
+   "min": 17.253,
+   "max": 17.382
+  },
+  "seconds": {
+   "median": 1.93804,
+   "min": 1.933556,
+   "max": 1.948083
+  },
+  "dfa_states": 0,
+  "dfa_groups": 0,
+  "build_ms": 0.0,
+  "latency_p50_us": {
+   "median": 39903.17,
+   "min": 39903.17,
+   "max": 39903.17
+  },
+  "latency_p90_us": {
+   "median": 67108.86,
+   "min": 67108.86,
+   "max": 67108.86
+  },
+  "latency_p99_us": {
+   "median": 71525.65,
+   "min": 70925.89,
+   "max": 73182.74
+  },
+  "latency_p99_9_us": {
+   "median": 71525.65,
+   "min": 70925.89,
+   "max": 73182.74
+  }
+ },
+ {
+  "id": "dfa-r10",
+  "engine": "dfa",
+  "workers": 1,
+  "batch": 256,
+  "rules": "bench_10",
+  "lines": 300000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 884768.6,
+   "min": 842816.9,
+   "max": 907216.6
+  },
+  "mb_per_s": {
+   "median": 99.122,
+   "min": 94.422,
+   "max": 101.637
+  },
+  "seconds": {
+   "median": 0.339072,
+   "min": 0.330682,
+   "max": 0.355949
+  },
+  "dfa_states": 2554,
+  "dfa_groups": 1,
+  "build_ms": 23.7,
+  "latency_p50_us": {
+   "median": 5439.34,
+   "min": 4987.9,
+   "max": 5439.34
+  },
+  "latency_p90_us": {
+   "median": 9975.79,
+   "min": 9975.79,
+   "max": 9975.79
+  },
+  "latency_p99_us": {
+   "median": 14107.9,
+   "min": 12937.0,
+   "max": 15384.77
+  },
+  "latency_p99_9_us": {
+   "median": 15033.27,
+   "min": 14702.66,
+   "max": 19067.37
+  }
+ },
+ {
+  "id": "posix-r20",
+  "engine": "posix",
+  "workers": 1,
+  "batch": 256,
+  "rules": "bench_20",
+  "lines": 300000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 81203.9,
+   "min": 80519.5,
+   "max": 81345.1
+  },
+  "mb_per_s": {
+   "median": 9.097,
+   "min": 9.021,
+   "max": 9.113
+  },
+  "seconds": {
+   "median": 3.694403,
+   "min": 3.687992,
+   "max": 3.725806
+  },
+  "dfa_states": 0,
+  "dfa_groups": 0,
+  "build_ms": 0.0,
+  "latency_p50_us": {
+   "median": 79806.34,
+   "min": 79806.34,
+   "max": 79806.34
+  },
+  "latency_p90_us": {
+   "median": 123078.2,
+   "min": 123078.2,
+   "max": 123078.2
+  },
+  "latency_p99_us": {
+   "median": 134217.73,
+   "min": 134217.73,
+   "max": 141120.4
+  },
+  "latency_p99_9_us": {
+   "median": 135956.76,
+   "min": 135582.89,
+   "max": 141120.4
+  }
+ },
+ {
+  "id": "dfa-r20",
+  "engine": "dfa",
+  "workers": 1,
+  "batch": 256,
+  "rules": "bench_20",
+  "lines": 300000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 880042.3,
+   "min": 863857.1,
+   "max": 885686.2
+  },
+  "mb_per_s": {
+   "median": 98.592,
+   "min": 96.779,
+   "max": 99.224
+  },
+  "seconds": {
+   "median": 0.340893,
+   "min": 0.33872,
+   "max": 0.34728
+  },
+  "dfa_states": 4954,
+  "dfa_groups": 2,
+  "build_ms": 486.6,
+  "latency_p50_us": {
+   "median": 5439.34,
+   "min": 5439.34,
+   "max": 5439.34
+  },
+  "latency_p90_us": {
+   "median": 9975.79,
+   "min": 9975.79,
+   "max": 9975.79
+  },
+  "latency_p99_us": {
+   "median": 12937.0,
+   "min": 12937.0,
+   "max": 14107.9
+  },
+  "latency_p99_9_us": {
+   "median": 15384.77,
+   "min": 15172.35,
+   "max": 16725.2
+  }
+ },
+ {
+  "id": "posix-r32",
+  "engine": "posix",
+  "workers": 1,
+  "batch": 256,
+  "rules": "bench_32",
+  "lines": 300000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 61592.2,
+   "min": 61491.2,
+   "max": 61760.4
+  },
+  "mb_per_s": {
+   "median": 6.9,
+   "min": 6.889,
+   "max": 6.919
+  },
+  "seconds": {
+   "median": 4.870746,
+   "min": 4.857481,
+   "max": 4.878744
+  },
+  "dfa_states": 0,
+  "dfa_groups": 0,
+  "build_ms": 0.0,
+  "latency_p50_us": {
+   "median": 103496.02,
+   "min": 103496.02,
+   "max": 103496.02
+  },
+  "latency_p90_us": {
+   "median": 174058.86,
+   "min": 174058.86,
+   "max": 174058.86
+  },
+  "latency_p99_us": {
+   "median": 179622.59,
+   "min": 174058.86,
+   "max": 180063.91
+  },
+  "latency_p99_9_us": {
+   "median": 179622.59,
+   "min": 178304.21,
+   "max": 180063.91
+  }
+ },
+ {
+  "id": "dfa-r32",
+  "engine": "dfa",
+  "workers": 1,
+  "batch": 256,
+  "rules": "bench_32",
+  "lines": 300000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 863778.7,
+   "min": 837803.5,
+   "max": 878423.9
+  },
+  "mb_per_s": {
+   "median": 96.77,
+   "min": 93.86,
+   "max": 98.411
+  },
+  "seconds": {
+   "median": 0.347311,
+   "min": 0.341521,
+   "max": 0.358079
+  },
+  "dfa_states": 20061,
+  "dfa_groups": 2,
+  "build_ms": 816.1,
+  "latency_p50_us": {
+   "median": 5931.64,
+   "min": 5439.34,
+   "max": 5931.64
+  },
+  "latency_p90_us": {
+   "median": 9975.79,
+   "min": 9975.79,
+   "max": 10878.68
+  },
+  "latency_p99_us": {
+   "median": 15384.77,
+   "min": 12937.0,
+   "max": 15384.77
+  },
+  "latency_p99_9_us": {
+   "median": 15971.22,
+   "min": 15384.77,
+   "max": 18295.68
+  }
+ },
+ {
+  "id": "posix-r64",
+  "engine": "posix",
+  "workers": 1,
+  "batch": 256,
+  "rules": "bench_64",
+  "lines": 300000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 36828.6,
+   "min": 36776.5,
+   "max": 36969.9
+  },
+  "mb_per_s": {
+   "median": 4.126,
+   "min": 4.12,
+   "max": 4.142
+  },
+  "seconds": {
+   "median": 8.145852,
+   "min": 8.114719,
+   "max": 8.157387
+  },
+  "dfa_states": 0,
+  "dfa_groups": 0,
+  "build_ms": 0.0,
+  "latency_p50_us": {
+   "median": 174058.86,
+   "min": 174058.86,
+   "max": 174058.86
+  },
+  "latency_p90_us": {
+   "median": 292730.94,
+   "min": 292730.94,
+   "max": 292730.94
+  },
+  "latency_p99_us": {
+   "median": 292730.94,
+   "min": 292730.94,
+   "max": 292730.94
+  },
+  "latency_p99_9_us": {
+   "median": 299841.82,
+   "min": 298772.03,
+   "max": 300400.24
+  }
+ },
+ {
+  "id": "dfa-r64",
+  "engine": "dfa",
+  "workers": 1,
+  "batch": 256,
+  "rules": "bench_64",
+  "lines": 300000,
+  "runs": 5,
+  "lines_per_s": {
+   "median": 329323.1,
+   "min": 329140.6,
+   "max": 330843.9
+  },
+  "mb_per_s": {
+   "median": 36.894,
+   "min": 36.874,
+   "max": 37.065
+  },
+  "seconds": {
+   "median": 0.91096,
+   "min": 0.906772,
+   "max": 0.911465
+  },
+  "dfa_states": 26517,
+  "dfa_groups": 7,
+  "build_ms": 1761.2,
+  "latency_p50_us": {
+   "median": 19951.58,
+   "min": 18295.68,
+   "max": 19951.58
+  },
+  "latency_p90_us": {
+   "median": 30769.55,
+   "min": 30769.55,
+   "max": 30769.55
+  },
+  "latency_p99_us": {
+   "median": 33554.43,
+   "min": 33554.43,
+   "max": 33554.43
+  },
+  "latency_p99_9_us": {
+   "median": 35009.97,
+   "min": 34680.25,
+   "max": 36591.37
+  }
+ }
+]

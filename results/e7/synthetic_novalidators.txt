@@ -1,0 +1,19 @@
+
+== all   (200000 lines, weighted 200000)
+  category         precision   recall      F1    support
+  AUTH_FAILURE         1.000    1.000   1.000      10000
+  SECURITY_THREAT      1.000    1.000   1.000       6000
+  ERROR                1.000    1.000   1.000      10000
+  PERF_WARNING         1.000    1.000   1.000       6000
+  PII                  0.600    1.000   0.750       6000
+  exact label-set match: 0.9800   ECE of the primary label: 0.3061
+  confusion (rows truth primary, columns predicted primary):
+                     SECURITY_       PII AUTH_FAIL     ERROR PERF_WARN      none
+    SECURITY_THREAT       6000         0         0         0         0         0
+    PII                      0      6000         0         0         0         0
+    AUTH_FAILURE             0         0     10000         0         0         0
+    ERROR                    0         0         0     10000         0         0
+    PERF_WARNING             0         0         0         0      6000         0
+    none                     0      4000         0         0         0    158000
+
+label_eval: wrote /home/adi/Desktop/Projects/CD/results/e7/synthetic_novalidators/result.json and reliability.svg

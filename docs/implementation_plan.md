@@ -141,7 +141,7 @@ Keep them in `tools/basepaper/patterns.h` (one shared definition used by every v
 - [x] **T7.2 Labeling helper.** `tools/sample_for_labeling.py` draws a stratified sample (by predicted category + unmatched) into a CSV with empty label columns for two annotators. *Humans do the labeling* — Claude Code only builds the tool.
 - [x] **T7.3 `tools/label_eval.py`.** Multi-label P/R/F1 per category, confusion matrix, Cohen's κ between annotators, reliability diagram + ECE (§5.4).
   *Done when:* runs on generator ground truth and produces numbers + plots.
-- [ ] **T7.4 Run must-have experiments.** E1, E2, E3, E6, E7 from §10.3 via `run_bench.sh`; results and plots in `results/`. Summarize in `results/SUMMARY.md` with exact commands used — numbers only from the saved JSON.
+- [x] **T7.4 Run must-have experiments.** E1, E2, E3, E6, E7 from §10.3 via `run_bench.sh`; results and plots in `results/`. Summarize in `results/SUMMARY.md` with exact commands used — numbers only from the saved JSON.
 
 ## Phase 8 — Stretch (only after Phase 7 is done; ask before starting)
 

@@ -39,6 +39,8 @@ def summarize(exp_dir):
                "seconds": agg([r["seconds"] for r in runs]),
                "dfa_states": runs[0]["dfa_states"], "dfa_groups": runs[0]["dfa_groups"],
                "build_ms": runs[0]["build_ms"]}
+        x = row["lines_per_s"]
+        row["spread_pct"] = (x["max"] - x["min"]) / x["median"] * 100       # run-to-run spread, % of the median
         for q in ("p50", "p90", "p99", "p99.9"):
             row["latency_" + q.replace(".", "_") + "_us"] = agg([r["latency_us"][q] for r in runs])
         rows.append(row)
@@ -53,7 +55,8 @@ def main():
     rows = summarize(sys.argv[2])
     for r in rows:
         x = r["lines_per_s"]
-        print(f"{r['id']:28s} {x['median']:12,.0f} lines/s  (min {x['min']:,.0f}, max {x['max']:,.0f}, {r['runs']} runs)")
+        warn = "   <-- spread over 15 %: the machine was not steady, rerun" if r["spread_pct"] > 15 else ""
+        print(f"{r['id']:28s} {x['median']:12,.0f} lines/s  (min {x['min']:,.0f}, max {x['max']:,.0f}, {r['runs']} runs){warn}")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,1 @@
+{"engine":"posix","workers":1,"batch":256,"lines":300000,"bytes":33609344,"seconds":1.153259,"lines_per_s":260132.4,"mb_per_s":29.143,"latency_us":{"p50":23726.57,"p90":39903.17,"p99":42431.19,"p99.9":42431.19,"max":42431.19},"nfa_states":0,"dfa_groups":0,"dfa_states":0,"build_ms":0.0}

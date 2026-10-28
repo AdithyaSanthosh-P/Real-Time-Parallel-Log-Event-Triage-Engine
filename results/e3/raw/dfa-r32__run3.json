@@ -1,0 +1,1 @@
+{"engine":"dfa","workers":1,"batch":256,"lines":300000,"bytes":33609344,"seconds":0.352029,"lines_per_s":852201.7,"mb_per_s":95.473,"latency_us":{"p50":5931.64,"p90":9975.79,"p99":15384.77,"p99.9":15971.22,"max":15971.22},"nfa_states":2254,"dfa_groups":2,"dfa_states":20061,"build_ms":820.6}

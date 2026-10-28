@@ -1,0 +1,10 @@
+
+== all   (272 lines, weighted 272)
+  category         precision   recall      F1    support
+  ATTACK               1.000    0.125   0.222          8
+  exact label-set match: 0.9743   ECE of the primary label: n/a
+  confusion (rows truth primary, columns predicted primary):
+                          none
+    none                   270
+
+label_eval: wrote /home/adi/Desktop/Projects/CD/results/e6/ait/intranet_server__auth.log/result.json and reliability.svg

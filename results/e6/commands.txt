@@ -1,0 +1,11 @@
+bin/gen -n 200000 --seed 11 --truth data/bench/gen11.truth.tsv > data/bench/gen11.log
+bin/triage --quiet -w 4 -r rules/default.rules -o <tmp> data/bench/gen11.log
+tools/label_eval.py --truth data/bench/gen11.truth.tsv --pred <tmp>/store.jsonl --out results/e6/synthetic
+bin/triage --quiet -w 4 -r rules/novalidators.rules -o <tmp> data/bench/gen11.log
+tools/label_eval.py --truth data/bench/gen11.truth.tsv --pred <tmp>/store.jsonl --out results/e7/synthetic_novalidators
+bin/triage --quiet -w 4 -o <tmp> data/ait/.../intranet_server__auth.log.log
+tools/label_eval.py --truth data/ait/.../intranet_server__auth.log.truth.tsv --pred <tmp>/store.jsonl --attack-map ATTACK=SECURITY_THREAT+AUTH_FAILURE --out results/e6/ait/intranet_server__auth.log
+bin/triage --quiet -w 4 -o <tmp> data/ait/.../intranet_server__intranet.smith.russellmitchell.com-access.log.2.log
+tools/label_eval.py --truth data/ait/.../intranet_server__intranet.smith.russellmitchell.com-access.log.2.truth.tsv --pred <tmp>/store.jsonl --attack-map ATTACK=SECURITY_THREAT+AUTH_FAILURE --out results/e6/ait/intranet_server__intranet.smith.russellmitchell.com-access.log.2
+bin/triage --quiet -w 4 -o <tmp> data/ait/.../intranet_server__intranet.smith.russellmitchell.com-error.log.2.log
+tools/label_eval.py --truth data/ait/.../intranet_server__intranet.smith.russellmitchell.com-error.log.2.truth.tsv --pred <tmp>/store.jsonl --attack-map ATTACK=SECURITY_THREAT+AUTH_FAILURE --out results/e6/ait/intranet_server__intranet.smith.russellmitchell.com-error.log.2
