@@ -304,6 +304,10 @@ int pipeline_run(const Options *o)
     /* Everything is allocated and compiled before any thread starts
      * (spec §2.2: the pool is created after the rules are compiled). */
     p.nw = o->workers;
+    if (o->engine == ENGINE_FORK && p.nw != 1) {      /* spec §2.1: single dispatcher, no pool */
+        fprintf(stderr, "triage: warning: --engine fork is single-threaded; ignoring -w %d\n", p.nw);
+        p.nw = 1;
+    }
     p.workers = calloc((size_t)p.nw, sizeof *p.workers);
     p.in_rings = calloc((size_t)p.nw, sizeof *p.in_rings);
     if (!p.workers || !p.in_rings) {

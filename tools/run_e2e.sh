@@ -3,7 +3,7 @@
 # compare (seq, primary, labels) with tests/expected/synthetic_small.expected.
 #
 # usage: tools/run_e2e.sh [path/to/triage]        (default: bin/triage)
-# env:   E2E_ENGINES="posix dfa"                  engines to run (default: both)
+# env:   E2E_ENGINES="posix dfa"                  engines to run (default: all three)
 #
 # Per engine it runs four ways - file input, stdin, file input with a tiny
 # batch size (-b 7), and 4 workers with -b 5 - and also checks that the output
@@ -15,7 +15,7 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 bin="${1:-bin/triage}"
-engines="${E2E_ENGINES:-posix dfa}"
+engines="${E2E_ENGINES:-posix dfa fork}"
 corpus=tests/corpus/synthetic_small.log
 expected=tests/expected/synthetic_small.expected
 

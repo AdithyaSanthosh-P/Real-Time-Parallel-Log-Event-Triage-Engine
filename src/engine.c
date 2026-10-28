@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "engine_dfa.h"
+#include "engine_fork.h"
 #include "engine_posix.h"
 
 struct EnginePrepared {
@@ -16,6 +17,7 @@ struct Engine {
     EngineKind       kind;
     const EngineDfa *dfa;    /* shared, read-only */
     EnginePosix     *posix;  /* owned by this engine */
+    EngineFork      *fork;   /* owned by this engine */
 };
 
 const char *engine_kind_name(EngineKind kind)
@@ -31,10 +33,6 @@ const char *engine_kind_name(EngineKind kind)
 EnginePrepared *engine_prepare(EngineKind kind, const RuleSet *rs, int max_states,
                                char *err, size_t err_len)
 {
-    if (kind == ENGINE_FORK) {
-        snprintf(err, err_len, "engine '%s' is not implemented yet", engine_kind_name(kind));
-        return NULL;
-    }
     EnginePrepared *p = calloc(1, sizeof *p);
     if (!p) {
         snprintf(err, err_len, "out of memory");
@@ -81,6 +79,12 @@ Engine *engine_new(const EnginePrepared *p, char *err, size_t err_len)
     e->kind = p->kind;
     if (p->kind == ENGINE_DFA) {
         e->dfa = p->dfa;
+    } else if (p->kind == ENGINE_FORK) {
+        e->fork = fork_engine_new(p->rs, err, err_len);
+        if (!e->fork) {
+            free(e);
+            return NULL;
+        }
     } else {
         e->posix = posix_new(p->rs, err, err_len);
         if (!e->posix) {
@@ -95,6 +99,8 @@ uint64_t engine_match(Engine *e, const char *line, size_t len)
 {
     if (e->kind == ENGINE_DFA)
         return dfa_engine_match(e->dfa, line, len);
+    if (e->kind == ENGINE_FORK)
+        return fork_engine_match(e->fork, line, len);
     return posix_match(e->posix, line, len);
 }
 
@@ -103,5 +109,6 @@ void engine_free(Engine *e)
     if (!e)
         return;
     posix_free(e->posix);
+    fork_engine_free(e->fork);
     free(e);
 }

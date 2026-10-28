@@ -232,7 +232,6 @@ const char *cli_unimplemented(const Options *o)
 {
     if (o->help)
         return NULL;
-    if (o->engine == ENGINE_FORK)        return "--engine fork";
     if (o->ordered)                      return "--ordered";
     if (o->bench)                        return "--bench";
     return NULL;

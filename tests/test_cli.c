@@ -172,7 +172,6 @@ static void test_unimplemented(void)
     Options o;
     char err[256];
     static const struct { const char *a, *b; const char *name; } nyi[] = {
-        { "--engine", "fork",     "--engine fork" },
         { "--ordered", NULL,      "--ordered" },
         { "--bench", NULL,        "--bench" },
     };

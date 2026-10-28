@@ -124,7 +124,7 @@ Keep them in `tools/basepaper/patterns.h` (one shared definition used by every v
 
 ## Phase 6 — Baselines and benchmarking infrastructure
 
-- [ ] **T6.1 Fork engine** (`engine_fork.c/.h`, §2.1). Reproduce the base paper: per line, `fork()` one child per rule; child runs `regcomp` + `regexec` and writes the result to a pipe; parent collects and `waitpid`s. Single-threaded only (`-w` ignored with a warning). Reuse the fork/pipe/collect code from R1 (move the shared part into `src/` if needed); here it runs our log rules instead of the paper's five patterns.
+- [x] **T6.1 Fork engine** (`engine_fork.c/.h`, §2.1). Reproduce the base paper: per line, `fork()` one child per rule; child runs `regcomp` + `regexec` and writes the result to a pipe; parent collects and `waitpid`s. Single-threaded only (`-w` ignored with a warning). Reuse the fork/pipe/collect code from R1 (move the shared part into `src/` if needed); here it runs our log rules instead of the paper's five patterns.
   *Done when:* masks equal `posix -w 1` on `synthetic_small.log`.
 - [ ] **T6.2 `--bench` mode** (§8, §10.2). Preload the whole input into memory before timing; disable sinks; record per-line latency (ingest → aggregated) into a log-scale histogram; print one JSON object: engine, workers, batch, lines, seconds, lines/s, MB/s, p50/p90/p99/p99.9, DFA states, build time.
   *Done when:* output validates as JSON and line counts match the input.

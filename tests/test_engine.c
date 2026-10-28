@@ -60,11 +60,8 @@ int main(void)
     }
     check_engine(ENGINE_POSIX, 0);
     check_engine(ENGINE_DFA, 0);
+    check_engine(ENGINE_FORK, 0);             /* the paper's design: a process per rule per line */
     check_engine(ENGINE_DFA, 500);            /* many small groups, same answers */
-
-    /* not built yet */
-    CHECK(engine_prepare(ENGINE_FORK, &rs, 0, err, sizeof err) == NULL);
-    CHECK(strstr(err, "not implemented") != NULL);
 
     /* a cap too small for one rule is reported, not crashed on */
     CHECK(engine_prepare(ENGINE_DFA, &rs, 5, err, sizeof err) == NULL);
