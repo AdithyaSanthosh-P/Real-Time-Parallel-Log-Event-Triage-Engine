@@ -1,0 +1,193 @@
+{
+ "source": "data/labeling_100/_claude_private/annotator_AI_claude.csv vs data/labeling_100/key.csv",
+ "vs_A": {
+  "categories": {
+   "AUTH_FAILURE": {
+    "tp": 367411.0,
+    "fp": 0,
+    "fn": 166486.44999999998,
+    "precision": 1.0,
+    "recall": 0.688167737081344,
+    "f1": 0.8152836024115829,
+    "support": 533897.45
+   },
+   "SECURITY_THREAT": {
+    "tp": 5690.4,
+    "fp": 8535.599999999999,
+    "fn": 220917.8,
+    "precision": 0.4,
+    "recall": 0.025111183090461862,
+    "f1": 0.04725574689973434,
+    "support": 226608.19999999998
+   },
+   "ERROR": {
+    "tp": 184.0,
+    "fp": 0,
+    "fn": 110868.29999999999,
+    "precision": 1.0,
+    "recall": 0.0016568769849881545,
+    "f1": 0.0033082725692961746,
+    "support": 111052.29999999999
+   },
+   "PERF_WARNING": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 0,
+    "precision": null,
+    "recall": null,
+    "f1": null,
+    "support": 0
+   },
+   "PII": {
+    "tp": 32.0,
+    "fp": 8.0,
+    "fn": 0,
+    "precision": 0.8,
+    "recall": 1.0,
+    "f1": 0.888888888888889,
+    "support": 32.0
+   }
+  },
+  "n": 100,
+  "weighted_n": 737196.0,
+  "exact_match": 0.5882267402427577,
+  "confusion": {
+   "rows": "truth primary",
+   "cols": "predicted primary",
+   "labels": [
+    "SECURITY_THREAT",
+    "PII",
+    "AUTH_FAILURE",
+    "ERROR",
+    "PERF_WARNING",
+    "none"
+   ],
+   "matrix": {
+    "SECURITY_THREAT": {
+     "SECURITY_THREAT": 5690.400000000001,
+     "PII": 0.0,
+     "AUTH_FAILURE": 17659.25,
+     "ERROR": 0.0,
+     "PERF_WARNING": 0.0,
+     "none": 203258.54999999996
+    },
+    "PII": {
+     "SECURITY_THREAT": 0.0,
+     "PII": 32.0,
+     "AUTH_FAILURE": 0.0,
+     "ERROR": 0.0,
+     "PERF_WARNING": 0.0,
+     "none": 0.0
+    },
+    "AUTH_FAILURE": {
+     "SECURITY_THREAT": 8535.6,
+     "PII": 0.0,
+     "AUTH_FAILURE": 335525.75,
+     "ERROR": 183.99999999999994,
+     "PERF_WARNING": 0.0,
+     "none": 18478.05
+    },
+    "ERROR": {
+     "SECURITY_THREAT": 0.0,
+     "PII": 0.0,
+     "AUTH_FAILURE": 0.0,
+     "ERROR": 0.0,
+     "PERF_WARNING": 0.0,
+     "none": 55434.149999999994
+    },
+    "PERF_WARNING": {
+     "SECURITY_THREAT": 0.0,
+     "PII": 0.0,
+     "AUTH_FAILURE": 0.0,
+     "ERROR": 0.0,
+     "PERF_WARNING": 0.0,
+     "none": 0.0
+    },
+    "none": {
+     "SECURITY_THREAT": 0.0,
+     "PII": 8.0,
+     "AUTH_FAILURE": 0.0,
+     "ERROR": 0.0,
+     "PERF_WARNING": 0.0,
+     "none": 92390.25
+    }
+   }
+  },
+  "calibration": {
+   "ece": 0.4057826376705157,
+   "lines_with_label": 367635.0,
+   "bins": [
+    {
+     "lo": 0.0,
+     "hi": 0.1,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.1,
+     "hi": 0.2,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.2,
+     "hi": 0.3,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.3,
+     "hi": 0.4,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.4,
+     "hi": 0.5,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.5,
+     "hi": 0.6,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.6,
+     "hi": 0.7,
+     "weight": 353409.0,
+     "mean_confidence": 0.5999999999999999,
+     "observed_precision": 0.9999773633382285
+    },
+    {
+     "lo": 0.7,
+     "hi": 0.8,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.8,
+     "hi": 0.9,
+     "weight": 0.0,
+     "mean_confidence": null,
+     "observed_precision": null
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "weight": 14225.999999999995,
+     "mean_confidence": 0.9500000000000004,
+     "observed_precision": 0.4000000000000002
+    }
+   ]
+  }
+ }
+}

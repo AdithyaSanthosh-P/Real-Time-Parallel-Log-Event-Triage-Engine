@@ -312,8 +312,12 @@ test suite and e2e runs are clean under ThreadSanitizer and AddressSanitizer.
 
 What humans must still do:
 
+- **Interim real-data check (done):** 100 real log lines (`results/e6/ai_100/`) labelled by an AI annotator
+  (Claude), clearly not human ground truth: failed-login precision 1.00 / recall 0.69, ERROR recall about 0,
+  PII precision 0.80. A second LLM annotator can be added later with `docs/llm_labelling_instructions.md`
+  (and `tools/check_labels_csv.py` to validate its answer).
 - **Hand-labelling:** both teammates label the same stratified sample *independently*. Blank sheets are
-  generated in `data/labeling/` (`annotator_A.csv`, `annotator_B.csv`; `key.csv` holds the engine's labels and
+  generated in `data/labeling/` (1,500 lines), `data/labeling_small/` (300) and `data/labeling_100/` (100) (`annotator_A.csv`, `annotator_B.csv`; `key.csv` holds the engine's labels and
   must not be opened before labelling). Fill 1 or 0 in the five category columns. Then run
   `tools/label_eval.py --annot A.csv B.csv --key key.csv --out results/e6/hand` for P/R/F1, kappa and
   calibration on real lines. Until then no such number is claimed.

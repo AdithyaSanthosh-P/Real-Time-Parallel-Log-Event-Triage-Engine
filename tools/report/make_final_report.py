@@ -50,6 +50,7 @@ E6 = jload("results/e6/synthetic/result.json")["all"]
 E7 = jload("results/e7/synthetic_novalidators/result.json")["all"]
 E7L = jload("results/e7/pii_on_logs.json")
 LOGS = jload("results/e6/loghub_full.json")
+AI100 = jload("results/e6/ai_100/result.json")["vs_A"]
 POSIX_START_S = jload("results/milestone2/throughput.json")["posix"]["median_startup_s"]   # regcomp of 26 rules, measured earlier
 AIT = {f[:-4]: jload(f"results/e6/ait/{f[:-4]}/result.json")["all"]
        for f in sorted(os.listdir(os.path.join(ROOT, "results/e6/ait"))) if f.endswith(".txt")}
@@ -78,7 +79,7 @@ TITLE_KEYS = {"Module split": "modules", "Rejected syntax (message and byte offs
               "Correlator results on the real samples": "corr", "Latency per input, median (µs)": "latency",
               "Accuracy on the labelled set": "acc", "Architecture comparison (E1)": "e1",
               "Rule-count sensitivity (E3)": "e3", "Batch size (E4)": "e4", "Accuracy on generated ground truth (E6)": "e6",
-              "Attack detection on AIT-LDS (E6)": "ait", "Validator effect on PII labels (E7)": "e7",
+              "Attack detection on AIT-LDS (E6)": "ait", "AI-annotator check on real log lines (E6)": "ai100", "Validator effect on PII labels (E7)": "e7",
               "Lines labelled PII on the full real logs": "e7logs", "Full-size Loghub logs": "full"}
 FIG_KEYS = {"Total DFA states": "statecap", "Speed-up of the whole pipeline": "scaling",
             "End-to-end throughput of the two engines": "engines", "Throughput of six designs": "designs",
@@ -264,8 +265,9 @@ def content():
                "plan are implemented. Two limits matter for reading the results. First, accuracy on the log rules is "
                "measured against ground truth that is synthetic (a generator written together with the rules, so "
                "it checks consistency, not real-world accuracy) and against attack labels of one public data set "
-               "(AIT-LDS); a hand-labelled sample of real log lines needs two people labelling independently, and "
-               "the tools for it exist, but no number is reported until it is done. Second, the correlator "
+               "(AIT-LDS); on real Loghub lines accuracy is checked only by an AI annotator on 100 lines (clearly not "
+               "human ground truth), because a hand-labelled sample needs two people labelling independently; the "
+               "tools for it exist, and no human-labelled number is reported until it is done. Second, the correlator "
                "thresholds are the defaults of the fail2ban tool, not tuned values, and all absolute numbers "
                "depend on the machine described in Section 4.", body0))
 
@@ -919,6 +921,27 @@ def content():
                f"{LOGS['OpenSSH']['default']['flags'].get('ESCALATED_PASSWORD_SPRAY', 0)} password-spray episodes in the "
                f"{LOGS['OpenSSH']['lines']:,}-line OpenSSH log and one error storm in BGL, and labels "
                f"{LOGS['BGL']['default']['primary'].get('ERROR', 0):,} BGL lines as errors.", body0))
+    rows = [["Category", "Precision", "Recall", "F1"]]
+    for c, m in AI100["categories"].items():
+        rows.append([c.replace("_", " ").title(), f4(m["precision"]), f4(m["recall"]), f4(m["f1"])])
+    s.append(table("AI-annotator check on real log lines (E6)", rows, [2.6 * cm, 1.6 * cm, 1.4 * cm, 1.3 * cm],
+                   right=(1, 2, 3)))
+    A_ = AI100["categories"]
+    s.append(P(f"<i>E6, AI-annotator check on real lines.</i> To measure accuracy on real logs while the human labelling "
+               f"is pending, a stratified sample of 100 lines from the full OpenSSH, Apache and Linux logs (20 from "
+               f"each stratum of the engine's primary label, plus unlabelled lines) was labelled by an AI annotator "
+               f"(Claude), from the lines and written criteria only, without seeing the engine's answers. This is "
+               f"<b>not human ground truth</b>: the annotator also wrote the rules, and several labels are judgement "
+               f"calls (for example, a line that states repeated failed logins counts as a threat). Strata are "
+               f"weighted back to the full logs, so the figures are rough. @T:ai100@ shows high precision for failed "
+               f"logins ({f4(A_['AUTH_FAILURE']['precision'])}) but a recall of {f4(A_['AUTH_FAILURE']['recall'])}: "
+               f"disconnect lines that report an authentication failure are missed. The recall for errors is "
+               f"{f4(A_['ERROR']['recall'])}, because the error rule looks for the uppercase level word and misses "
+               f"<tt>error:</tt> lines of sshd. PII precision is {f4(A_['PII']['precision'])}: kernel boot lines with "
+               f"an all-zero memory address pass the card checksum. <i>Inference:</i> on real logs the rule set is "
+               f"precise where it fires and misses categories it was not written for; labels from two human "
+               f"annotators, and from a second model, are the planned replacement for this check "
+               f"(<tt>docs/llm_labelling_instructions.md</tt>).", body0))
     rows = [["Validators", "PII precision", "PII recall", "False PII"]]
     rows.append(["off", f4(pii_off["precision"]), f4(pii_off["recall"]), f"{pii_off['fp']:,.0f}"])
     rows.append(["on", f4(pii_on["precision"]), f4(pii_on["recall"]), f"{pii_on['fp']:,.0f}"])
@@ -1080,8 +1103,9 @@ def content():
                f"lines per second by the serial stages and does not rise with workers; confidences are conservative "
                f"(ECE {cal['ece']:.2f}); and on attack-labelled real logs the recall is {det / atk * 100:.2f} % because the rule set "
                f"has no rules for those attacks. Accuracy against human labels on real log lines is not yet "
-               f"measured: the sampling and evaluation tools are ready, and two annotators must label the sample "
-               f"independently. Further work is a faster serial stage, a rule set informed by public attack "
+               f"measured: an AI annotator's labels on 100 real lines show precision {f4(A_['AUTH_FAILURE']['precision'])} but "
+               f"recall {f4(A_['AUTH_FAILURE']['recall'])} for failed logins and near zero for sshd error lines, and the "
+               f"sampling and evaluation tools are ready for two human annotators. Further work is a faster serial stage, a rule set informed by public attack "
                f"signatures, calibration of the base scores on labelled data, and measurements under a paced load.", body))
 
     s.append(Paragraph("REFERENCES", sec))

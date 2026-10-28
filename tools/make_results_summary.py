@@ -213,9 +213,30 @@ if have("e6", "synthetic", "result.json"):
               f"{p_.get('ERROR', 0):,} | {p_.get('PERF_WARNING', 0):,} | {p_.get('PII', 0):,} | {p_.get('none', 0):,} | "
               f"{fl.get('ESCALATED_BRUTE_FORCE', 0)} / {fl.get('ESCALATED_PASSWORD_SPRAY', 0)} / {fl.get('ERROR_STORM', 0)} |")
         w()
-    w("Hand-labelled precision and recall on a stratified sample of real log lines need two people labelling "
-      "independently (`tools/sample_for_labeling.py`, then `tools/label_eval.py --annot`); that has not been done and "
-      "no number for it is reported.")
+    if have("e6", "ai_100", "result.json"):
+        ai = J("e6", "ai_100", "result.json")["vs_A"]
+        w("**AI-annotator check on 100 real log lines** (not human ground truth). A stratified sample of 100 lines "
+          "from the full OpenSSH, Apache and Linux logs (20 per stratum: AUTH, SEC, ERROR, PII, none) was labelled by "
+          "Claude, the model that also wrote the rules, from the log lines and the written criteria only "
+          "(`docs/llm_labelling_instructions.md`), without seeing the engine's answers. Strata are weighted back to "
+          "the full logs. Details and judgement calls: `results/e6/ai_100/README.md`.")
+        w()
+        w("| category | precision | recall | F1 |")
+        w("|---|---|---|---|")
+        for c, m in ai["categories"].items():
+            w(f"| {c} | {f3(m['precision'])} | {f3(m['recall'])} | {f3(m['f1'])} |")
+        w()
+        w(f"Exact label-set match {ai['exact_match']:.3f}; ECE of the primary label {ai['calibration']['ece']:.3f}. "
+          "Reading: failed-login precision is perfect but about a third of failed-login lines are missed (for example "
+          "\"Auth fail\" disconnects); the ERROR recall is near zero because the ERROR rules look for the uppercase "
+          "level word and miss sshd `error:` lines; PII precision is below 1 because kernel boot lines with an all-zero "
+          "memory address pass the card checksum; security-threat numbers depend on the labelling criteria (repeated "
+          "failures stated in the line count as threats). With 100 lines the weighted figures are rough.")
+        w()
+    w("Human-labelled precision and recall on a stratified sample of real log lines need two people labelling "
+      "independently (`tools/sample_for_labeling.py`, then `tools/label_eval.py --annot`); that has not been done, so "
+      "no human-labelled number is reported. The AI-annotator check above is the stand-in until it is, and a second "
+      "LLM annotator can be added with `docs/llm_labelling_instructions.md`.")
     w()
 
 # ------------------------------------------------------------------------------------------------ E7

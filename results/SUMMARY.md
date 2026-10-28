@@ -98,7 +98,19 @@ The rule set has no rule for most of these attacker requests (WordPress scanning
 | BGL | 4,747,963 | 0 | 892 | 985,785 | 0 | 1,175 | 3,760,111 | 0 / 0 / 1 |
 | HDFS_2k | 2,000 | 0 | 0 | 0 | 0 | 1 | 1,999 | 0 / 0 / 0 |
 
-Hand-labelled precision and recall on a stratified sample of real log lines need two people labelling independently (`tools/sample_for_labeling.py`, then `tools/label_eval.py --annot`); that has not been done and no number for it is reported.
+**AI-annotator check on 100 real log lines** (not human ground truth). A stratified sample of 100 lines from the full OpenSSH, Apache and Linux logs (20 per stratum: AUTH, SEC, ERROR, PII, none) was labelled by Claude, the model that also wrote the rules, from the log lines and the written criteria only (`docs/llm_labelling_instructions.md`), without seeing the engine's answers. Strata are weighted back to the full logs. Details and judgement calls: `results/e6/ai_100/README.md`.
+
+| category | precision | recall | F1 |
+|---|---|---|---|
+| AUTH_FAILURE | 1.0000 | 0.6882 | 0.8153 |
+| SECURITY_THREAT | 0.4000 | 0.0251 | 0.0473 |
+| ERROR | 1.0000 | 0.0017 | 0.0033 |
+| PERF_WARNING | n/a | n/a | n/a |
+| PII | 0.8000 | 1.0000 | 0.8889 |
+
+Exact label-set match 0.588; ECE of the primary label 0.406. Reading: failed-login precision is perfect but about a third of failed-login lines are missed (for example "Auth fail" disconnects); the ERROR recall is near zero because the ERROR rules look for the uppercase level word and miss sshd `error:` lines; PII precision is below 1 because kernel boot lines with an all-zero memory address pass the card checksum; security-threat numbers depend on the labelling criteria (repeated failures stated in the line count as threats). With 100 lines the weighted figures are rough.
+
+Human-labelled precision and recall on a stratified sample of real log lines need two people labelling independently (`tools/sample_for_labeling.py`, then `tools/label_eval.py --annot`); that has not been done, so no human-labelled number is reported. The AI-annotator check above is the stand-in until it is, and a second LLM annotator can be added with `docs/llm_labelling_instructions.md`.
 
 ## E7 Validator gain
 

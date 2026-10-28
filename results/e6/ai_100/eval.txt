@@ -1,0 +1,19 @@
+
+== vs_A   (100 lines, weighted 737196)
+  category         precision   recall      F1    support
+  AUTH_FAILURE         1.000    0.688   0.815     533897
+  SECURITY_THREAT      0.400    0.025   0.047     226608
+  ERROR                1.000    0.002   0.003     111052
+  PERF_WARNING           n/a      n/a     n/a          0
+  PII                  0.800    1.000   0.889         32
+  exact label-set match: 0.5882   ECE of the primary label: 0.4058
+  confusion (rows truth primary, columns predicted primary):
+                     SECURITY_       PII AUTH_FAIL     ERROR PERF_WARN      none
+    SECURITY_THREAT       5690         0     17659         0         0    203259
+    PII                      0        32         0         0         0         0
+    AUTH_FAILURE          8536         0    335526       184         0     18478
+    ERROR                    0         0         0         0         0     55434
+    PERF_WARNING             0         0         0         0         0         0
+    none                     0         8         0         0         0     92390
+
+label_eval: wrote data/labeling_100/_claude_private/eval/result.json and reliability.svg
