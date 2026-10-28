@@ -92,6 +92,7 @@ test: $(TEST_BINS)
 	@$(MAKE) --no-print-directory bp-test
 	@$(MAKE) --no-print-directory alloc-test
 	@$(MAKE) --no-print-directory gen-test
+	@python3 -I tests/test_label_eval.py
 
 # LD_PRELOAD allocation counter (plain builds only: the sanitizers own malloc).
 ALLOC_SHIM := $(BIN_DIR)/tests/alloc_count.so
