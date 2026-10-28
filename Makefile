@@ -6,6 +6,7 @@
 #   make e2e             triage on tests/corpus/synthetic_small.log vs tests/expected/
 #   make bp / bp-test    Phase R: tools/basepaper/ and its tests (bp-test also runs under make test)
 #   make alloc-test      T4.2: no allocation growth with input size (also run by make test)
+#   make gen-test        T6.3: generator reproducible, exact rates, truth equals engine labels (also run by make test)
 #   make compare         T4.6: parallel runs == single-threaded reference on tests/corpus
 #   make demo            review demo (tools/demo.sh, talking points in docs/demo_guide.md)
 #   make SAN=address     ASan/UBSan build;  make SAN=thread  for TSan
@@ -55,7 +56,7 @@ TEST_BINS := $(TEST_SRCS:tests/%.c=$(BIN_DIR)/tests/%)
 TOOL_SRCS := $(wildcard tools/gen.c tools/difftest.c)
 TOOL_BINS := $(TOOL_SRCS:tools/%.c=$(BIN_DIR)/%)
 
-.PHONY: all test difftest e2e bp bp-test alloc-test compare demo print-flags clean
+.PHONY: all test difftest e2e bp bp-test alloc-test gen-test compare demo print-flags clean
 .SECONDARY:
 
 all: $(BIN_DIR)/triage $(TOOL_BINS)
@@ -90,6 +91,7 @@ test: $(TEST_BINS)
 	echo "all $(words $(TEST_BINS)) test programs passed"
 	@$(MAKE) --no-print-directory bp-test
 	@$(MAKE) --no-print-directory alloc-test
+	@$(MAKE) --no-print-directory gen-test
 
 # LD_PRELOAD allocation counter (plain builds only: the sanitizers own malloc).
 ALLOC_SHIM := $(BIN_DIR)/tests/alloc_count.so
@@ -99,6 +101,9 @@ $(ALLOC_SHIM): tests/alloc_count.c
 
 alloc-test: $(BIN_DIR)/triage $(if $(SAN),,$(ALLOC_SHIM))
 	@echo "== tests/test_alloc.sh"; tests/test_alloc.sh $(BIN_DIR) $(SAN)
+
+gen-test: all
+	@tests/test_gen.sh $(BIN_DIR)
 
 compare: all
 	@tools/compare_runs.sh $(BIN_DIR)/triage
