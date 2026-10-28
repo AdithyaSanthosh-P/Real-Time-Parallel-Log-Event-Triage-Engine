@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Minimal plotting for the Phase R experiments (plan R4); T6.5 extends it for E1-E11.
+"""Plotting for the experiments: Phase R (rb1-rb5, plan R4) and the engine benchmarks (e1-e4, T6.5).
 
-  plot.py --results results/basepaper --out DIR
+  plot.py --results results/basepaper --out DIR     rb1.svg ... rb5.svg
+  plot.py --results results --out DIR               e1.svg, e2.svg, e2_speedup.svg, e3.svg, e3_states.svg,
+                                                    e4.svg, e4_latency.svg, ... (those whose summary.json exists)
 
-Reads <results>/rbN/summary.json (written by bp_eval.py summarize) and writes one SVG per
-experiment into DIR: rb1.svg ... rb5.svg. Points are medians; bars show min and max over
+Reads <results>/<exp>/summary.json (bp_eval.py or bench_eval.py summarize) and writes one SVG per
+figure into DIR. Points are medians; bars show min and max over
 runs. Standard library only (no matplotlib on the build machine), so the figures are plain
 SVG: open them in a browser or convert for the report."""
 import argparse
@@ -211,6 +213,74 @@ def fig_rb5(rows):
                             next(k for k, n in metrics if n == s)])
 
 
+# ---- engine benchmarks (tools/run_bench.sh) ---------------------------------------------------------
+
+def pt(rows, **kw):
+    for r in rows:
+        if all(r[k] == v for k, v in kw.items()):
+            return r
+    return None
+
+
+def const(v):
+    return {"median": v, "min": v, "max": v}
+
+
+def fig_e1(rows):
+    ids = [r["id"] for r in rows]
+    return grouped_bars("E1 architecture comparison: throughput (median; bars = min..max of runs)",
+                        "lines / s (log)", ids, ["triage --bench, default rules"],
+                        lambda g, s: pt(rows, id=g)["lines_per_s"])
+
+
+def fig_e2(rows):
+    engines = sorted({r["engine"] for r in rows})
+    ws = sorted({r["workers"] for r in rows})
+    return lines("E2 scaling: throughput vs workers", "workers (-w)", "lines / s (log)", ws, engines,
+                 lambda e, w: (pt(rows, engine=e, workers=w) or {}).get("lines_per_s"))
+
+
+def fig_e2_speedup(rows):
+    engines = sorted({r["engine"] for r in rows})
+    ws = sorted({r["workers"] for r in rows})
+    def v(e, w):
+        r, base = pt(rows, engine=e, workers=w), pt(rows, engine=e, workers=1)
+        if not r or not base:
+            return None
+        b = base["lines_per_s"]["median"]
+        x = r["lines_per_s"]
+        return {"median": x["median"] / b, "min": x["min"] / b, "max": x["max"] / b}
+    return lines("E2 scaling: speedup vs the same engine with -w 1", "workers (-w)", "speedup (log)", ws, engines, v)
+
+
+def fig_e3(rows):
+    engines = sorted({r["engine"] for r in rows})
+    ns = sorted({int(r["rules"].split("_")[1]) for r in rows})
+    return lines("E3 rule-count sensitivity: throughput, one worker", "rules in the set", "lines / s (log)", ns, engines,
+                 lambda e, n: (pt(rows, engine=e, rules=f"bench_{n}") or {}).get("lines_per_s"))
+
+
+def fig_e3_states(rows):
+    ns = sorted({int(r["rules"].split("_")[1]) for r in rows})
+    return grouped_bars("E3 DFA size and build time (dfa engine)", "DFA states / build ms (log)", [str(n) for n in ns],
+                        ["DFA states", "build time, ms"],
+                        lambda g, s: const((pt(rows, engine="dfa", rules=f"bench_{g}") or {}).get(
+                            "dfa_states" if s == "DFA states" else "build_ms") or 1))
+
+
+def fig_e4(rows):
+    bs = sorted({r["batch"] for r in rows})
+    return lines("E4 batch size: throughput (dfa, -w 4)", "batch size (-b, lines)", "lines / s (log)", bs, ["dfa"],
+                 lambda e, b: (pt(rows, batch=b) or {}).get("lines_per_s"))
+
+
+def fig_e4_latency(rows):
+    bs = sorted({r["batch"] for r in rows})
+    return lines("E4 batch size: latency ingest -> aggregated (dfa, -w 4)", "batch size (-b, lines)", "microseconds (log)",
+                 bs, ["p50", "p99"],
+                 lambda s, b: (pt(rows, batch=b) or {}).get("latency_p50_us" if s == "p50" else "latency_p99_us"))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--results", required=True)
@@ -228,6 +298,16 @@ def main():
         for fname, svg in figs:
             with open(os.path.join(args.out, fname + ".svg"), "w") as f:
                 f.write(svg)
+            made += 1
+    for name, figs in (("e1", [("e1", fig_e1)]), ("e2", [("e2", fig_e2), ("e2_speedup", fig_e2_speedup)]),
+                       ("e3", [("e3", fig_e3), ("e3_states", fig_e3_states)]),
+                       ("e4", [("e4", fig_e4), ("e4_latency", fig_e4_latency)])):
+        data = load(args.results, name)
+        if not data:
+            continue
+        for fname, fn in figs:
+            with open(os.path.join(args.out, fname + ".svg"), "w") as f:
+                f.write(fn(data))
             made += 1
     print(f"plot: wrote {made} figure(s) to {args.out}", file=sys.stderr)
 
