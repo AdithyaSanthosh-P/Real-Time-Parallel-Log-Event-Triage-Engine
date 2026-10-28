@@ -1,0 +1,41 @@
+# 38 extra rules for the rule-count experiment (E3): more keywords, attack and PII variants.
+# Used by tools/make_bench_rules.sh to build rules/bench_{5,10,20,32,64}.rules.
+# id	category	severity	base	flags	validator	extract	context	regex
+SSH_MAXAUTH	AUTH	MEDIUM	0.6	-	-	ip,user	-	maximum authentication attempts exceeded for [^ ]+ from [0-9.]+
+SSH_NO_ID	AUTH	LOW	0.35	-	-	ip	-	Did not receive identification string from [0-9.]+
+SU_FAILED	AUTH	MEDIUM	0.6	-	-	-	-	FAILED SU \([a-z]+\)|su: authentication failure
+FTP_LOGIN_FAIL	AUTH	MEDIUM	0.6	-	-	-	-	(530 Login incorrect|FAIL LOGIN: Client)
+APP_LOGIN_FAIL	AUTH	MEDIUM	0.6	i	-	-	-	(login|authentication) failed for user
+WIN_LOGON_FAIL	AUTH	MEDIUM	0.6	-	-	-	-	An account failed to log on
+BAD_CREDENTIALS	AUTH	LOW	0.35	i	-	-	-	(invalid|incorrect|wrong) (password|credentials)
+SQLI_DDL	SEC	CRITICAL	0.6	i	-	-	drop,table	(drop|truncate|alter)[ +]+table
+SQLI_STACKED	SEC	CRITICAL	0.6	i	-	-	select,where	;[ +]*(drop|insert|update|delete)[ +]
+XSS_IFRAME	SEC	HIGH	0.6	i	-	-	-	(<iframe|<svg[ +/]|<img[ +][^>]*src=)
+XSS_COOKIE	SEC	HIGH	0.6	i	-	-	-	document\.(cookie|location|write)
+LFI_PROC	SEC	HIGH	0.6	-	-	-	-	(/proc/self/environ|/proc/version)
+LFI_WIN	SEC	HIGH	0.6	i	-	-	-	(win\.ini|boot\.ini|system32)
+SSRF_METADATA	SEC	HIGH	0.6	i	-	-	-	(169\.254\.169\.254|metadata\.google\.internal)
+LOG4SHELL	SEC	CRITICAL	0.6	i	-	-	-	\$\{jndi:(ldap|rmi|dns)
+SHELLSHOCK	SEC	CRITICAL	0.6	-	-	-	-	\(\) *\{ *: *; *\}
+XXE_ENTITY	SEC	HIGH	0.6	-	-	-	-	<!(ENTITY|DOCTYPE)[ +]
+SCANNER_UA2	SEC	MEDIUM	0.6	i	-	-	-	(wpscan|acunetix|nessus|openvas|zgrab|hydra|havij)
+WEBSHELL	SEC	CRITICAL	0.6	i	-	-	-	(c99|r57|wso|cmd|shell)\.php
+PHP_WRAPPER	SEC	HIGH	0.6	i	-	-	-	(php://(input|filter)|data://text|expect://)
+DOTFILE_PROBE	SEC	MEDIUM	0.6	-	-	-	-	/\.(env|git/config|aws/credentials|ssh/id_rsa)
+HEADER_INJECTION	SEC	MEDIUM	0.35	i	-	-	-	%0d%0a(set-cookie|location):
+OPEN_REDIRECT	SEC	LOW	0.35	i	-	-	-	(redirect|url|next)=https?://[^& ]+
+PY_TRACEBACK	ERR	MEDIUM	0.6	-	-	-	-	Traceback \(most recent call last\)
+DB_ERROR	ERR	HIGH	0.6	i	-	-	-	(deadlock detected|too many connections|could not connect to (server|database))
+DISK_FULL	ERR	HIGH	0.6	i	-	-	-	(No space left on device|disk full)
+SERVICE_FAILED	ERR	HIGH	0.6	i	-	-	-	(service|unit) [^ ]+ (failed|entered failed state)
+CONN_REFUSED	ERR	MEDIUM	0.6	i	-	-	-	(connection refused|connection reset by peer|broken pipe)
+HW_ERROR	ERR	HIGH	0.6	-	-	-	-	(Machine check|I/O error|EXT4-fs error)
+NULL_POINTER	ERR	MEDIUM	0.6	-	-	-	-	(NullPointerException|null pointer dereference)
+GC_PAUSE	PERF	LOW	0.6	-	-	-	-	(GC overhead|Full GC|pause of [0-9]{3,} ?ms)
+RETRYING	PERF	LOW	0.35	i	-	-	-	retry(ing)? (attempt )?[0-9]+ (of|/) [0-9]+
+POOL_SATURATED	PERF	MEDIUM	0.6	i	-	-	-	(thread|worker) pool (saturated|exhausted)
+LOAD_HIGH	PERF	MEDIUM	0.6	i	-	-	-	(swap (usage|space) (high|exceeded)|load average: [0-9]{2,}\.)
+PII_AWS_KEY	PII	CRITICAL	0.6	-	-	-	-	AKIA[0-9A-Z]{16}
+PII_PRIVATE_KEY	PII	CRITICAL	0.6	-	-	-	-	-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----
+PII_JWT	PII	HIGH	0.6	-	-	-	-	eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]+
+PII_SSN_US	PII	HIGH	0.35	-	-	-	ssn,social security	(^|[^0-9])[0-9]{3}-[0-9]{2}-[0-9]{4}([^0-9]|$)

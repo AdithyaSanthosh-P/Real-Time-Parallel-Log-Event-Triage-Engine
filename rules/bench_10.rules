@@ -1,0 +1,12 @@
+# bench rule set with 10 rules, built by tools/make_bench_rules.sh; do not edit
+# id	category	severity	base	flags	validator	extract	context	regex
+SSH_FAIL_PW	AUTH	MEDIUM	0.6	-	-	ip,user	-	Failed password for (invalid user )?[^ ]+ from [0-9.]+
+SQLI	SEC	CRITICAL	0.6	i	-	-	select,union,where	(union[ +]+(all[ +]+)?select|' *or *'?[0-9]+'? *= *'?[0-9]+|or[ +]+1=1|sleep\([0-9]+\)|benchmark\(|information_schema)
+ERR_LEVEL	ERR	MEDIUM	0.6	-	-	-	-	(^|[^A-Za-z])(ERROR|FATAL|CRITICAL|SEVERE)([^A-Za-z]|$)
+HIGH_LATENCY	PERF	LOW	0.6	-	-	-	-	(took|duration|elapsed)[=: ]+[0-9]{4,}(\.[0-9]+)? ?ms
+PII_EMAIL	PII	LOW	0.6	-	-	-	-	[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+SSH_INVALID_USER	AUTH	MEDIUM	0.6	-	-	ip,user	-	Invalid user [^ ]* from [0-9.]+
+XSS	SEC	HIGH	0.6	i	-	-	-	(<script|javascript:|onerror *=|onload *=)
+HTTP_5XX	ERR	HIGH	0.6	-	-	-	-	" 5[0-9][0-9] [0-9-]+
+SLOW_QUERY	PERF	LOW	0.6	i	-	-	-	(slow query|Query_time: [0-9]+)
+PII_CARD	PII	CRITICAL	0.35	-	luhn	-	card,cc,payment	(^|[^0-9])[0-9]{4}[ -]?[0-9]{4}[ -]?[0-9]{4}[ -]?[0-9]{1,4}([^0-9]|$)

@@ -154,6 +154,7 @@ DIFFTEST_RANDOM ?= 100000
 difftest: all
 	@if [ -x $(BIN_DIR)/difftest ]; then \
 	    $(BIN_DIR)/difftest --random $(DIFFTEST_RANDOM) tests/corpus/*.log; \
+	    for r in rules/bench_*.rules; do $(BIN_DIR)/difftest -r $$r --random $(DIFFTEST_RANDOM) tests/corpus/*.log || exit 1; done; \
 	else \
 	    echo "difftest: tools/difftest.c is missing" >&2; exit 1; \
 	fi

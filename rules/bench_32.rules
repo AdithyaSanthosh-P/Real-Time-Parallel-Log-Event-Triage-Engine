@@ -1,0 +1,34 @@
+# bench rule set with 32 rules, built by tools/make_bench_rules.sh; do not edit
+# id	category	severity	base	flags	validator	extract	context	regex
+SSH_FAIL_PW	AUTH	MEDIUM	0.6	-	-	ip,user	-	Failed password for (invalid user )?[^ ]+ from [0-9.]+
+SSH_INVALID_USER	AUTH	MEDIUM	0.6	-	-	ip,user	-	Invalid user [^ ]* from [0-9.]+
+PAM_AUTH_FAIL	AUTH	MEDIUM	0.6	-	-	user	-	pam_unix\([a-z-]+:auth\): authentication failure
+SUDO_BAD_PW	AUTH	MEDIUM	0.6	-	-	user	-	incorrect password attempts?
+SSH_ACCEPTED	AUTH*	INFO	0.6	-	-	ip,user	-	Accepted (password|publickey) for [^ ]+ from [0-9.]+
+HTTP_401_403	AUTH	LOW	0.35	-	-	-	-	" (401|403) [0-9-]+
+SQLI	SEC	CRITICAL	0.6	i	-	-	select,union,where	(union[ +]+(all[ +]+)?select|' *or *'?[0-9]+'? *= *'?[0-9]+|or[ +]+1=1|sleep\([0-9]+\)|benchmark\(|information_schema)
+XSS	SEC	HIGH	0.6	i	-	-	-	(<script|javascript:|onerror *=|onload *=)
+PATH_TRAVERSAL	SEC	HIGH	0.6	-	-	-	-	(\.\./|\.\.\\|/etc/passwd|/etc/shadow)
+CMD_INJECTION	SEC	CRITICAL	0.6	i	-	-	-	(;|\|\||&&|\$\()[ +]*(wget|curl|nc|bash|sh)[ +/]
+SCANNER_UA	SEC	MEDIUM	0.6	i	-	-	-	(sqlmap|nikto|nmap|masscan|gobuster|dirbuster)
+ERR_LEVEL	ERR	MEDIUM	0.6	-	-	-	-	(^|[^A-Za-z])(ERROR|FATAL|CRITICAL|SEVERE)([^A-Za-z]|$)
+JAVA_EXCEPTION	ERR	MEDIUM	0.6	-	-	-	-	[A-Za-z_][A-Za-z0-9_.]*(Exception|Error): 
+JAVA_STACK	ERR	MEDIUM	0.6	-	-	-	-	^[ 	]+at [A-Za-z0-9_.$]+\(
+HTTP_5XX	ERR	HIGH	0.6	-	-	-	-	" 5[0-9][0-9] [0-9-]+
+CRASH_OOM	ERR	HIGH	0.6	-	-	-	-	(segfault at|Kernel panic|Out of memory: Kill(ed)? process|oom-killer)
+SLOW_QUERY	PERF	LOW	0.6	i	-	-	-	(slow query|Query_time: [0-9]+)
+TIMEOUT	PERF	MEDIUM	0.35	i	-	-	-	(timed out|timeout|deadline exceeded)
+HIGH_LATENCY	PERF	LOW	0.6	-	-	-	-	(took|duration|elapsed)[=: ]+[0-9]{4,}(\.[0-9]+)? ?ms
+RESOURCE_PRESSURE	PERF	MEDIUM	0.6	i	-	-	-	(connection pool exhausted|queue (is )?full|disk usage 9[0-9]%|high (cpu|memory) usage)
+PII_EMAIL	PII	LOW	0.6	-	-	-	-	[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+PII_CARD	PII	CRITICAL	0.35	-	luhn	-	card,cc,payment	(^|[^0-9])[0-9]{4}[ -]?[0-9]{4}[ -]?[0-9]{4}[ -]?[0-9]{1,4}([^0-9]|$)
+PII_AADHAAR	PII	HIGH	0.35	-	verhoeff	-	aadhaar,aadhar,uid	(^|[^0-9])[2-9][0-9]{3}[ -]?[0-9]{4}[ -]?[0-9]{4}([^0-9]|$)
+PII_PAN	PII	HIGH	0.6	-	pan	-	pan	[A-Z]{3}[ABCFGHJLPT][A-Z][0-9]{4}[A-Z]
+PII_PHONE_IN	PII	MEDIUM	0.35	-	-	-	phone,mobile,tel	(^|[^0-9])(\+91[ -]?)?[6-9][0-9]{9}([^0-9]|$)
+PII_SECRET_QS	PII	CRITICAL	0.6	i	-	-	-	(password|passwd|pwd|token|api_key|secret)=[^& "]+
+SSH_MAXAUTH	AUTH	MEDIUM	0.6	-	-	ip,user	-	maximum authentication attempts exceeded for [^ ]+ from [0-9.]+
+SSH_NO_ID	AUTH	LOW	0.35	-	-	ip	-	Did not receive identification string from [0-9.]+
+SU_FAILED	AUTH	MEDIUM	0.6	-	-	-	-	FAILED SU \([a-z]+\)|su: authentication failure
+FTP_LOGIN_FAIL	AUTH	MEDIUM	0.6	-	-	-	-	(530 Login incorrect|FAIL LOGIN: Client)
+APP_LOGIN_FAIL	AUTH	MEDIUM	0.6	i	-	-	-	(login|authentication) failed for user
+WIN_LOGON_FAIL	AUTH	MEDIUM	0.6	-	-	-	-	An account failed to log on

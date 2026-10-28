@@ -130,7 +130,7 @@ Keep them in `tools/basepaper/patterns.h` (one shared definition used by every v
   *Done when:* output validates as JSON and line counts match the input.
 - [ ] **T6.3 Synthetic generator** (`tools/gen.c`, §10.1). Templates for normal traffic per log type (sshd, Apache access/error, app logs); configurable injection rates per category; valid and invalid Luhn/Verhoeff numbers; attack payloads from a payload file; optional rate pacing (`clock_nanosleep`, `CLOCK_MONOTONIC`) to stdout. Writes a ground-truth file (`seq`, true labels) alongside.
   *Done when:* generating 1M lines with a fixed seed is reproducible (same hash) and ground-truth counts match configured rates within 1%.
-- [ ] **T6.4 Bench rule sets.** `rules/bench_5.rules` … `bench_64.rules` (subsets of the defaults plus realistic extra rules — more keywords, more PII/attack variants — all in the §3.1 subset) for the rule-count experiment.
+- [x] **T6.4 Bench rule sets.** `rules/bench_5.rules` … `bench_64.rules` (subsets of the defaults plus realistic extra rules — more keywords, more PII/attack variants — all in the §3.1 subset) for the rule-count experiment.
   *Done when:* all pass `make difftest` and build under the state cap.
 - [ ] **T6.5 Bench runner** (`tools/run_bench.sh`). Runs a named experiment matrix ≥ 5 times per point, saves raw JSON to `results/<exp>/`, records machine info (`lscpu`, `uname -a`, `gcc --version`, flags) to `results/<exp>/machine.txt`. `tools/plot.py` produces the figures (median with min/max bars).
   *Done when:* a smoke run of E1 at small size produces JSON and a plot.
