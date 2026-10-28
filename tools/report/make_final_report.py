@@ -1,35 +1,39 @@
 #!/usr/bin/env python3
-"""Build docs/Final_Report_IEEE.pdf: the project report (IEEE two-column format) for the state of the
-project at commit da15165 (compiler, classification, parallel pipeline, correlator, base-paper
-reproduction).  Same structure and page machinery as make_review1_report.py, which it imports.
+"""Build docs/Final_Report_IEEE.pdf: the project report (IEEE two-column format) for the finished
+project (compiler, classification, parallel pipeline, correlator, base-paper reproduction, benchmark
+and evaluation framework with experiments E1-E4, E6, E7).  Same structure and page machinery as make_review1_report.py, which it imports.
 
 Structure follows the professor's template: Abstract, 1 Introduction, 2 Literature Survey,
 3 Proposed System (architecture diagram, modules with explanation and pseudocode),
 4 Results and Implementation, 5 Performance and Metrics, 6 Conclusion, References.
 
 Every number is read from files in the repository:
-  results/milestone2/*.json   own-engine measurements of commit da15165
-                              (tools/report/measure_milestone1.py da15165 milestone2, measure_correlator.py)
+  results/e1..e4, e6, e7      the experiments (tools/run_bench.sh, tools/run_eval.sh)
+  results/milestone2/*.json   DFA size sweep, corpus labels, correlator counts of commit da15165
+  results/milestone3/tests.json   test counts and line counts of the final commit
+                              (tools/report/measure_milestone1.py <commit> milestone3 tests)
   results/milestone1/*.json   same measurements at the earlier commit 8093e0a (before/after comparisons)
   results/basepaper/*         base-paper reproduction runs
-  git show da15165:...        line counts of the modules
+  git show <commit>:...       line counts of the modules
 Needs: Graphviz `dot` and reportlab (python3 -m venv v && v/bin/pip install reportlab).
 """
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
 
 sys.path.insert(0, os.path.dirname(__file__))
 import make_review1_report as R                      # page machinery, charts, references, base-paper data
-from make_review1_report import (BLUE, COL_W, FULL_W, GREEN, GREY, ORANGE, P, RB1, RB2, RB4, S, SS, algorithm,
-                                 body, body0, cite, fmt, hbar_err, hbar_log, item, kw, line_chart, si, table,
-                                 vbars, figure, image, abstract, ParagraphStyle, Paragraph, KeepTogether,
+from make_review1_report import (BLUE, COL_W, FULL_W, GREEN, GREY, ORANGE, RB1, RB2, RB4, S, SS, algorithm,
+                                 body, body0, cite, fmt, hbar_err, hbar_log, item, kw, line_chart, si,
+                                 vbars, image, abstract, ParagraphStyle, Paragraph, KeepTogether,
                                  NextPageTemplate, PageBreak, FrameBreak, Spacer, ImageReader, cm, sec, ref)
 
 ROOT = R.ROOT
-COMMIT = "da15165"
+COMMIT = subprocess.run(["git", "log", "-1", "--format=%h", "--", "src", "rules", "tools/gen.c", "tools/run_bench.sh"],
+                        cwd=R.ROOT, capture_output=True, text=True).stdout.strip()
 R.COMMIT = COMMIT
 OUT = os.path.join(ROOT, "docs", "Final_Report_IEEE.pdf")
 R.OUT = OUT
@@ -39,8 +43,62 @@ def jload(p):
     return json.load(open(os.path.join(ROOT, p)))
 
 
-M2 = {k: jload(f"results/milestone2/{k}.json") for k in ("state_sweep", "throughput", "scaling", "corpus", "tests",
-                                                          "correlator")}
+M2 = {k: jload(f"results/milestone2/{k}.json") for k in ("state_sweep", "corpus", "correlator")}
+M2["tests"] = jload("results/milestone3/tests.json")
+E = {k: jload(f"results/{k}/summary.json") for k in ("e1", "e2", "e3", "e4")}
+E6 = jload("results/e6/synthetic/result.json")["all"]
+E7 = jload("results/e7/synthetic_novalidators/result.json")["all"]
+E7L = jload("results/e7/pii_on_logs.json")
+LOGS = jload("results/e6/loghub_full.json")
+POSIX_START_S = jload("results/milestone2/throughput.json")["posix"]["median_startup_s"]   # regcomp of 26 rules, measured earlier
+AIT = {f[:-4]: jload("results/e6/ait", f[:-4], "result.json")["all"]
+       for f in sorted(os.listdir(os.path.join(ROOT, "results/e6/ait"))) if f.endswith(".txt")}
+
+
+def pt(rows, **kw):
+    for r in rows:
+        if all(r[k] == v for k, v in kw.items()):
+            return r
+
+
+# ---- numbered cross-references: @T:key@ / @F:key@ in the text; two passes so forward references resolve ----
+LABELS = {}
+_prev = {}
+
+
+def P(t, st=body):
+    t = re.sub(r"@([TF]):(\w+)@", lambda m: _prev.get(m[1] + m[2], "Table ?" if m[1] == "T" else "Fig. ?"), t)
+    return R.P(t, st)
+
+
+TITLE_KEYS = {"Module split": "modules", "Rejected syntax (message and byte offset)": "rejected",
+              "DFA size versus state cap (26 rules)": "statecap", "Classification output": "classout",
+              "Lines labelled PII, before and after validation": "piival",
+              "Throughput against worker count (median of 5 runs)": "scaling",
+              "Correlator results on the real samples": "corr", "Latency per input, median (µs)": "latency",
+              "Accuracy on the labelled set": "acc", "Architecture comparison (E1)": "e1",
+              "Rule-count sensitivity (E3)": "e3", "Batch size (E4)": "e4", "Accuracy on generated ground truth (E6)": "e6",
+              "Attack detection on AIT-LDS (E6)": "ait", "Validator effect on PII labels (E7)": "e7",
+              "Lines labelled PII on the full real logs": "e7logs", "Full-size Loghub logs": "full"}
+FIG_KEYS = {"Total DFA states": "statecap", "Speed-up of the whole pipeline": "scaling",
+            "End-to-end throughput of the two engines": "engines", "Throughput of six designs": "designs",
+            "F1 per category": "acc", "Throughput against the number of rules": "e3", "Batch size against": "e4"}
+
+
+def table(title, rows, widths, key=None, **kw):
+    key = key or TITLE_KEYS.get(title)
+    out = R.table(title, rows, widths, **kw)
+    if key:
+        LABELS["T" + key] = f"Table {R.roman(R.TAB)}"
+    return out
+
+
+def figure(fl, text, key=None, **kw):
+    key = key or next((v for k, v in FIG_KEYS.items() if text.startswith(k)), None)
+    out = R.figure(fl, text, **kw)
+    if key:
+        LABELS["F" + key] = f"Fig. {R.FIG}"
+    return out
 M1C = {c["file"]: c for c in jload("results/milestone1/corpus.json")}
 
 
@@ -52,10 +110,10 @@ GROUPS = [
     ("Regex front end", ["regex_lex", "regex_parse", "ast"]),
     ("NFA/DFA compiler", ["nfa", "dfa", "dot", "engine_dfa"]),
     ("Classification, confidence, masking", ["validators", "extract", "aggregate", "mask"]),
-    ("Parallel runtime", ["spsc", "pool", "worker", "dispatch", "stats", "pipeline", "reader", "batch"]),
+    ("Parallel runtime", ["spsc", "pool", "worker", "dispatch", "stats", "pipeline", "reader", "batch", "bench"]),
     ("Correlation and routing", ["correlate", "route", "json"]),
     ("Common (rules, CLI, engines, normaliser)", ["main", "cli", "rules", "normalize", "timestamp", "engine",
-                                                  "engine_posix", "types"]),
+                                                  "engine_posix", "engine_fork", "types"]),
 ]
 LOC = {g: src(*f) for g, f in GROUPS}
 assert sum(LOC.values()) == M2["tests"]["sizes"]["src_lines"], (LOC, M2["tests"]["sizes"])
@@ -81,9 +139,16 @@ def title_block():
 
 def content():
     s = []
-    tp, sc, T = M2["throughput"], M2["scaling"]["results"], M2["tests"]
-    dfa_lps, pos_lps = tp["dfa"]["lines_per_s_median"], tp["posix"]["lines_per_s_median"]
-    speed = tp["speedup_dfa_over_posix"]
+    R.SEC = R.TAB = R.ALG = 0           # numbering restarts on every pass; the architecture figure is Fig. 1
+    R.FIG = 1
+    R.ORDER.clear()
+    T = M2["tests"]
+    e1, e2, e3, e4 = E["e1"], E["e2"], E["e3"], E["e4"]
+    d1, p1 = pt(e2, engine="dfa", workers=1), pt(e2, engine="posix", workers=1)
+    dfa_lps, pos_lps = d1["lines_per_s"]["median"], p1["lines_per_s"]["median"]
+    speed = dfa_lps / pos_lps
+    build_ms = d1["build_ms"]
+    NLINES = d1["lines"]
     sw = {r["max_states"]: r for r in M2["state_sweep"]}
     single, grouped = sw[1000000]["dfa_states"], sw[20000]
     checks = sum(T["unit_test_checks"].values())
@@ -92,7 +157,17 @@ def content():
     corp = {c["file"]: c for c in M2["corpus"]}
     cor = {c["file"]: c for c in M2["correlator"]}
     ssh, bgl = cor["OpenSSH_2k.log"], cor["BGL_2k.log"]
-    sp = lambda e, w: sc[e][str(w)]["lines_per_s_median"] / sc[e]["1"]["lines_per_s_median"]
+    sp = lambda e, w: pt(e2, engine=e, workers=w)["lines_per_s"]["median"] / pt(e2, engine=e, workers=1)["lines_per_s"]["median"]
+    WS = sorted({r["workers"] for r in e2})
+    c1 = pt(e1, id="c1-fork")["lines_per_s"]["median"]
+    c2 = pt(e1, id="c2-posix-w1")["lines_per_s"]["median"]
+    c3 = [r for r in e1 if r["id"].startswith("c3")][0]["lines_per_s"]["median"]
+    c4 = [r for r in e1 if r["id"].startswith("c4")][0]["lines_per_s"]["median"]
+    PHYS = max(WS)
+    d_r = {n: pt(e3, engine="dfa", rules=f"bench_{n}") for n in (5, 10, 20, 32, 64)}
+    p_r = {n: pt(e3, engine="posix", rules=f"bench_{n}") for n in (5, 10, 20, 32, 64)}
+    E6c = E6["categories"]
+    pii_on, pii_off = E6c["PII"], E7["categories"]["PII"]
 
     def r2(batch, variant):
         return [x for x in RB2 if x["batch"] == batch and x["variant"] == variant][0]["inputs_per_s"]
@@ -107,23 +182,25 @@ def content():
     s.append(P("<b><i>Abstract</i></b>—Servers emit thousands of log lines per second, and the few that matter—"
                "repeated failed logins, injection attempts, crashes, leaked personal data—must be found as the "
                "lines arrive. This report presents a real-time log triage engine written in C11 around a "
-               "purpose-built regular-expression compiler. Twenty-six detection rules are parsed by a "
-               "recursive-descent parser, converted to a Thompson NFA and compiled by subset construction into "
-               "combined DFAs that match every rule in one pass over a line. A classifier validates matched "
-               "numbers with Luhn, Verhoeff and PAN checks, combines rule evidence by noisy-OR into per-category "
-               "confidences, masks personal data and routes records to alert, store and quarantine files; a "
-               "multi-threaded pipeline with lock-free queues and a correlator that detects brute force, password "
-               "spraying and error storms complete the system. The DFA agrees with the C library's regex engine on "
-               f"{dt['file_lines']:,} corpus lines and {dt['random_strings']:,} generated strings "
-               f"({dt['mismatches']} mismatches) and runs {speed:.1f}× faster than the library on one thread "
-               f"({si(dfa_lps)} against {si(pos_lps)} lines/s). Checksum validation removes "
-               f"{M1C['HDFS_2k.log']['primary_label_counts']['PII'] - corp['HDFS_2k.log']['primary_label_counts']['PII']}"
-               " of 119 false PII labels in an HDFS sample, and the correlator reports "
-               f"{ssh['flags']['ESCALATED_BRUTE_FORCE']} brute-force and {ssh['flags']['ESCALATED_PASSWORD_SPRAY']} "
-               "password-spray episodes in a real SSH log. The report also reproduces and measures the course's base "
-               "paper, whose process-per-pattern design is slower than a sequential loop. Throughput does not yet "
-               "scale with workers for the DFA engine, because serial stages become the bottleneck; this is "
-               "analysed in Section 5.", abstract))
+               "purpose-built regular-expression compiler. Detection rules are parsed by a recursive-descent "
+               "parser, converted to a Thompson NFA and compiled by subset construction into combined DFAs that "
+               "match every rule in one pass over a line. A classifier validates matched numbers with Luhn, "
+               "Verhoeff and PAN checks, fuses rule evidence into confidences by noisy-OR and masks personal "
+               "data; a multi-threaded pipeline with lock-free queues and a windowed correlator for brute force, "
+               "password spraying and error storms complete the system. A synthetic log generator with exact "
+               "ground truth, a benchmark mode and a runner support the evaluation. The DFA agrees with the C "
+               f"library's regex engine on {dt['file_lines']:,} corpus lines and {dt['random_strings']:,} "
+               f"generated strings ({dt['mismatches']} mismatches). On one worker it processes {si(dfa_lps)} "
+               f"lines/s against {si(pos_lps)} for the library ({speed:.1f}×), and from 5 to 64 rules the "
+               f"library falls to {p_r[64]['lines_per_s']['median'] / p_r[5]['lines_per_s']['median'] * 100:.0f} % of its "
+               f"throughput while the DFA stays at {d_r[32]['lines_per_s']['median'] / d_r[5]['lines_per_s']['median'] * 100:.0f} % up to "
+               "32 rules. Checksum validation raises PII precision from "
+               f"{pii_off['precision']:.2f} to {pii_on['precision']:.2f} on a set with look-alike numbers. The "
+               "base paper's process-per-pattern design is "
+               f"{c2 / c1:.0f}× slower than the sequential library engine on our rules. The DFA engine does not "
+               "speed up with more workers because serial stages bound the pipeline; recall on attack-labelled "
+               "real logs is low because the rule set does not cover those attacks. Both are analysed in "
+               "Sections 4 and 5.", abstract))
     s.append(P("<b><i>Index Terms</i></b>—regular expressions, finite automata, subset construction, log "
                "classification, multicore processing, lock-free queues, intrusion detection.",
                ParagraphStyle("it", parent=abstract, fontName="Serif", spaceAfter=2)))
@@ -157,7 +234,9 @@ def content():
                "into calibrated multi-label output. (O3) Process lines on several cores with a clean "
                "hand-off between threads and output identical to the sequential run. (O4) Detect multi-line "
                "attacks with sliding windows. (O5) Measure the base paper's design and fairer alternatives "
-               "under a documented protocol."))
+               "under a documented protocol. (O6) Build the benchmark and evaluation tools (synthetic generator "
+               "with exact ground truth, benchmark mode and runner, evaluation scripts) and use them to "
+               "measure throughput, scaling, rule-count sensitivity, accuracy and the effect of validation."))
     s.append(SS("1.3", "Contributions"))
     s.append(P("1)&nbsp;a <b>regex front end</b> for the regular POSIX-ERE subset that rejects everything "
                "outside it;", item))
@@ -169,13 +248,26 @@ def content():
                "single-consumer queues, a pre-allocated buffer pool and ordered output;", item))
     s.append(P("5)&nbsp;a <b>correlator</b> for brute force, password spraying, fail-then-success and error storms;",
                item))
-    s.append(P("6)&nbsp;a faithful <b>reproduction and benchmark</b> of the base paper.", item))
+    s.append(P("6)&nbsp;a faithful <b>reproduction and benchmark</b> of the base paper;", item))
+    s.append(P("7)&nbsp;an <b>evaluation framework</b>: a synthetic generator with exact ground truth, a "
+               "<tt>--bench</tt> mode, an experiment runner, and tools for labelling samples and computing "
+               "precision, recall, calibration and inter-annotator agreement.", item))
     s.append(SS("1.4", "Organization"))
     s.append(P("Fig. 1 gives an overview: rules are compiled once at start-up; at run time a reader feeds batches to "
                "worker threads, an aggregator and a correlator classify and escalate, and a router writes the "
                "outputs; the evaluation harness measures the base-paper designs. Section 2 surveys related work, "
                "Section 3 describes each module with pseudocode, Section 4 gives implementation results, Section 5 "
                "compares existing and proposed methods, and Section 6 concludes.", body0))
+    s.append(R.FIGSLOT)
+    s.append(SS("1.5", "Scope and Limitations"))
+    s.append(P(f"This report covers the finished project, source commit <tt>{COMMIT}</tt>. All engineering tasks of the "
+               "plan are implemented. Two limits matter for reading the results. First, accuracy on the log rules is "
+               "measured against ground truth that is synthetic (a generator written together with the rules, so "
+               "it checks consistency, not real-world accuracy) and against attack labels of one public data set "
+               "(AIT-LDS); a hand-labelled sample of real log lines needs two people labelling independently, and "
+               "the tools for it exist, but no number is reported until it is done. Second, the correlator "
+               "thresholds are the defaults of the fail2ban tool, not tuned values, and all absolute numbers "
+               "depend on the machine described in Section 4.", body0))
     s.append(R.FIGSLOT)
     s.append(SS("1.5", "Scope and Limitations"))
     s.append(P(f"This report covers the project at commit <tt>{COMMIT}</tt>. The engine is complete for "
@@ -281,7 +373,7 @@ def content():
                "validates and extracts entities, fuses the evidence into labels, applies windowed correlation, "
                "masks personal data and writes JSON-lines records. The tables are read-only after "
                "construction and shared by all workers without locks. The evaluation harness reproduces the "
-               "base paper and measures it together with our DFA. Table II gives the module split.", body0))
+               "base paper and measures it together with our DFA. @T:modules@ gives the module split.", body0))
     rows = [["Module", "Source files", "Lines"]]
     for g, files in GROUPS:
         rows.append([g, ", ".join(files), fmt(LOC[g], 0)])
@@ -487,7 +579,7 @@ def content():
         (1, kw("if") + " <i>line</i> labelled ERROR " + kw("then") + " count it in a 60 s window;"),
         (2, kw("if") + " count ≥ 100 and no storm active " + kw("then") + " escalate(ERROR_STORM, HIGH)")]))
 
-    s.append(SS("3.6", "Base-Paper Reproduction and Benchmark"))
+    s.append(SS("3.6", "Base-Paper Reproduction"))
     s.append(P("The evaluation harness rebuilds the base paper's program as described and measures it. For each input "
                "the program creates a pipe, forks one child per pattern, pins each child to a core, and the child "
                "compiles its regular expression, matches it and reports the result through the pipe "
@@ -510,6 +602,41 @@ def content():
         (2, "read one record; waitpid(<i>pid</i><sub>k</sub>)"),
         (1, kw("return") + " bit mask of matched patterns")]))
 
+    s.append(SS("3.7", "Benchmark and Evaluation Framework"))
+    s.append(P("The evaluation needs inputs of known content and size, measurements that exclude disk and start-up, and "
+               "scripts that compute accuracy. The <i>fork engine</i> (<tt>--engine fork</tt>) runs the base paper's "
+               "design on our rules: per line it forks one child per rule, each child compiles and matches its "
+               "rule and reports through a pipe, and the parent collects and reaps the children; its masks equal "
+               "those of the POSIX engine. The <i>benchmark mode</i> (<tt>--bench</tt>) reads the whole input into an "
+               "anonymous in-memory file before the clock starts, writes the three output sinks to "
+               "<tt>/dev/null</tt> (records are still formatted), stamps every line when the reader ingests it, "
+               "records the time until the aggregator has classified it in a log-scale histogram (8 buckets per "
+               "power of two), and prints one JSON object with throughput, latency percentiles and DFA size. The "
+               "<i>generator</i> mixes four log types (sshd, Apache access and error, application) and injects a "
+               "configured fraction of lines per category: auth failures, attack payloads, errors, "
+               "performance warnings, PII with valid checksums, and look-alike numbers that fail the checksum. The "
+               "number of injected lines is exact, because each line's class is drawn without replacement "
+               "(the first function of Algorithm 10), and the ground-truth file lists the true labels. Its Luhn and Verhoeff checks are "
+               "written independently of the engine's, and source addresses are drawn from the whole IPv4 "
+               "space so that the correlator stays silent and the truth concerns single lines. A <i>runner</i> executes "
+               "named experiments, each point at least five times, interleaved, and logs the machine, the system "
+               "load before every run and the run-to-run spread; a point whose runs differ by more than 15 % is "
+               "flagged for repetition. The <i>evaluation tools</i> draw a stratified sample of lines for two "
+               "independent annotators (without showing the engine's prediction), and compute per-category "
+               "precision, recall and F1, a confusion matrix of primary labels, Cohen's kappa between annotators, "
+               "and the calibration of the confidence of the primary label by reliability diagram and Expected "
+               "Calibration Error, ECE = Σ<sub>b</sub> (|B<sub>b</sub>|/N)·|acc(B<sub>b</sub>) − conf(B<sub>b</sub>)| "
+               "(Algorithm 10).", body0))
+    s.append(algorithm("Exact-count injection and calibration error", [
+        (0, f"{kw('function')} GenerateLine(<i>left</i>[0…K], <i>total</i>):   // left[c] = lines of class c still to write"),
+        (1, "<i>x</i> ← uniform integer in [0, <i>total</i>)"),
+        (1, "<i>c</i> ← the class whose cumulative range of <i>left</i> contains <i>x</i>"),
+        (1, "<i>left</i>[<i>c</i>] ← <i>left</i>[<i>c</i>] − 1;  <i>total</i> ← <i>total</i> − 1"),
+        (1, kw("return") + " a line of class <i>c</i>, and its true labels"),
+        (0, f"{kw('function')} ECE(<i>lines</i>):   // lines with a primary label"),
+        (1, "bin the lines by the confidence of the primary label into 10 bins"),
+        (1, kw("return") + " Σ<sub>b</sub> (|<i>B</i><sub>b</sub>|/<i>N</i>)·|precision(<i>B</i><sub>b</sub>) − mean confidence(<i>B</i><sub>b</sub>)|")]))
+
     # ------------------------------------------------------------------ 4 Results
     s.append(S("Results and Implementation"))
     s.append(P(f"All results come from commit <tt>{COMMIT}</tt>, built with gcc 15.2 and "
@@ -530,6 +657,10 @@ def content():
         ["HDFS_2k", "Loghub sample", f"{corp['HDFS_2k.log']['lines']:,}", "identifiers vs. PII"],
         ["synthetic_small", "hand-written", f"{corp['synthetic_small.log']['lines']}",
          f"{T['annotated_lines_synthetic_small']} annotated lines: positives, near-misses, correlator cases"],
+        ["Loghub full (4 logs)", "Loghub, downloaded", f"{sum(v['lines'] for k, v in LOGS.items() if k != 'HDFS_2k'):,}",
+         "label distribution, correlator"],
+        ["AIT-LDS (3 logs)", "AIT v2.0, labelled", f"{sum(r['n'] for r in AIT.values()):,}", "attack ground truth"],
+        ["generated logs", "tools/gen, fixed seeds", f"{NLINES:,} / 200,000", "speed inputs; accuracy truth"],
         ["labelled set", "generated, fixed seed", f"{lab:,}", "five base-paper categories"]],
         [2.3 * cm, 2.3 * cm, 1.0 * cm, 3.0 * cm], right=(2,)))
     s.append(P(f"The first five are the 2,000-line samples published with Loghub {cite('C8')}. They carry no "
@@ -538,7 +669,12 @@ def content():
                f"12-digit order number or the word “errors”, and contains scripted attacks for the correlator. "
                f"The labelled set of {lab:,} inputs is generated from templates with a fixed seed, balanced over "
                f"e-mail, phone, question, greeting and name plus none, multi-category and near-miss lines; its "
-               f"ground truth describes what a line <i>is</i>, not what the regexes match.", body0))
+               f"ground truth describes what a line <i>is</i>, not what the regexes match. The full-size Loghub logs (OpenSSH, "
+               f"Apache, Linux, BGL) are downloaded by a script; they have no labels. Of the AIT-LDS v2.0 data set "
+               f"{cite('J17')} we take one scenario (russellmitchell): the zip archives are 7 to 27 GB, mostly packet "
+               f"captures, so the script reads only the labelled Apache and authentication logs by HTTP range "
+               f"requests and converts the per-line labels. The generated logs are described in Section 3.7; their "
+               f"ground truth is exact by construction.", body0))
 
     s.append(SS("4.2", "Regex Front End"))
     rej = [("a\\d+", r"\d shorthand not supported (write [0-9])", 1), ("a\\bb", r"\b word boundary not supported", 1),
@@ -552,14 +688,14 @@ def content():
                      str(o)] for p, m, o in rej],
                    [1.5 * cm, 6.0 * cm, 1.0 * cm], right=(2,)))
     s.append(P(f"All 26 default rules parse. The parser test has {T['unit_test_checks']['test_parse']} checks over "
-               f"valid and invalid patterns. Table IV shows that every unsupported construct is refused with a "
+               f"valid and invalid patterns. @T:rejected@ shows that every unsupported construct is refused with a "
                f"message that names a regular alternative where one exists. <i>Inference:</i> the front end "
                f"enforces the regular subset strictly; a rule author is told how to rewrite the rule instead of "
                f"getting silently different behaviour.", body0))
 
     s.append(SS("4.3", "NFA and DFA Compiler"))
-    s.append(P(f"The 26 rules give a combined NFA of {M2['state_sweep'][0]['nfa_states']:,} states. Table V and "
-               f"Fig. 2 show what the state cap does. Without a cap the combined DFA has {single:,} states and "
+    s.append(P(f"The 26 rules give a combined NFA of {M2['state_sweep'][0]['nfa_states']:,} states. @T:statecap@ and "
+               f"@F:statecap@ show what the state cap does. Without a cap the combined DFA has {single:,} states and "
                f"takes {sw[1000000]['build_ms']:.0f} ms to build; with the default cap of 20,000 it is "
                f"split into {grouped['groups']} groups with {grouped['dfa_states']:,} states in total "
                f"({grouped['build_ms']:.0f} ms), a {single / grouped['dfa_states']:.1f}× reduction in table "
@@ -593,14 +729,14 @@ def content():
                                                           key=lambda kv: -kv[1])) or "none"
         rows.append([c["file"].replace(".log", ""), f"{c['lines']:,}", f"{c['lines_with_rule_match']:,}", pl])
     s.append(table("Classification output", rows, [2.4 * cm, 1.0 * cm, 1.3 * cm, 3.9 * cm], right=(1, 2)))
-    s.append(P(f"Table VI shows the distribution on real logs: OpenSSH is dominated by authentication failures "
+    s.append(P(f"@T:classout@ shows the distribution on real logs: OpenSSH is dominated by authentication failures "
                f"({corp['OpenSSH_2k.log']['primary_label_counts']['AUTH_FAILURE']:,} of "
                f"{corp['OpenSSH_2k.log']['lines']:,} lines) and BGL by errors. The Apache sample produces no "
                f"hit: its lines are routine requests and none matches a rule, which the rule set is designed to do. "
                f"The classifier agrees with an independent Python reimplementation of the same specification on "
                f"primary label, label set, severity, confidence and flags for every line of all six files, and "
                f"with the annotations of all {T['annotated_lines_synthetic_small']} annotated lines of the "
-               f"hand-written corpus. Validation is the main change from a pattern-only classifier. Table VII "
+               f"hand-written corpus. Validation is the main change from a pattern-only classifier. @T:piival@ "
                f"compares the number of lines labelled PII before validators existed (commit 8093e0a) and now.",
                body0))
     pii = [["File", "Pattern only", "With validation"]]
@@ -628,30 +764,31 @@ def content():
                f"equal to the independent Python reference. ThreadSanitizer reports no data race on the test suite, the "
                f"end-to-end tests or the comparison sweep, and an allocation-counting test shows that the number of "
                f"allocations does not depend on the input size (it is the same for 100,000 and 500,000 lines at "
-               f"one worker). Table VIII gives the throughput against the worker count on {tp['lines']:,} "
-               f"lines.", body0))
+               f"one worker). @T:scaling@ and @F:scaling@ give the throughput against the worker count (experiment "
+               f"E2: {NLINES:,} generated lines, the default 26 rules, five runs per point, up to {PHYS} workers, "
+               f"the number of physical cores).", body0))
     rows = [["Workers", "DFA (lines/s)", "× vs 1", "POSIX (lines/s)", "× vs 1"]]
-    for w in (1, 2, 4, 8):
-        rows.append([str(w), si(sc["dfa"][str(w)]["lines_per_s_median"]), f"{sp('dfa', w):.2f}",
-                     si(sc["posix"][str(w)]["lines_per_s_median"]), f"{sp('posix', w):.2f}"])
+    for w in WS:
+        rows.append([str(w), si(pt(e2, engine="dfa", workers=w)["lines_per_s"]["median"]), f"{sp('dfa', w):.2f}",
+                     si(pt(e2, engine="posix", workers=w)["lines_per_s"]["median"]), f"{sp('posix', w):.2f}"])
     s.append(table("Throughput against worker count (median of 5 runs)", rows,
                    [1.4 * cm, 2.2 * cm, 1.2 * cm, 2.4 * cm, 1.2 * cm], right=(0, 1, 2, 3, 4)))
-    ser = [("POSIX engine", [(w, sp("posix", w)) for w in (1, 2, 4, 8)], ORANGE, None),
-           ("DFA engine", [(w, sp("dfa", w)) for w in (1, 2, 4, 8)], BLUE, None)]
-    s.append(figure(line_chart(ser, COL_W, 98, [1, 2, 4, 8], 8, "workers", "speed-up vs. 1 worker"),
-                    "Speed-up of the whole pipeline against one worker (median of 5 runs); dotted line = ideal."))
-    s.append(P(f"<i>Inference.</i> The POSIX engine scales: {sp('posix', 8):.1f}× at eight workers, because "
-               f"each line costs 26 library calls and the matching dominates. The DFA engine does not: its single "
-               f"worker already runs at {si(sc['dfa']['1']['lines_per_s_median'])} lines/s, and adding workers "
-               f"leaves it flat or slightly lower ({sp('dfa', 8):.2f}× at eight). Matching is so cheap that the "
-               f"serial stages—the reader, the aggregator, the correlator and the router, each on one "
-               f"thread—limit the pipeline at roughly a million lines per second. This is the expected shape "
-               f"of Amdahl's law, not a defect in the queues: the figure also shows that the DFA engine at one "
-               f"worker is faster than the POSIX engine at eight "
-               f"({si(sc['dfa']['1']['lines_per_s_median'])} against "
-               f"{si(sc['posix']['8']['lines_per_s_median'])} lines/s). Moving work out of the serial "
-               f"stages (for example batch-level masking and output formatting) is the next optimisation, "
-               f"and we do not claim DFA scaling beyond what is measured.", body0))
+    ser = [("POSIX engine", [(w, sp("posix", w)) for w in WS], ORANGE, None),
+           ("DFA engine", [(w, sp("dfa", w)) for w in WS], BLUE, None)]
+    s.append(figure(line_chart(ser, COL_W, 98, WS, 8, "workers", "speed-up vs. 1 worker"),
+                    "Speed-up of the whole pipeline against one worker (median of 5 runs)."))
+    s.append(P(f"<i>Inference.</i> The POSIX engine scales: {sp('posix', PHYS):.1f}× at {PHYS} workers (efficiency "
+               f"{sp('posix', PHYS) / PHYS:.2f}), because each line costs 26 library calls and the matching "
+               f"dominates; it keeps an efficiency of at least 0.8 up to "
+               f"{max(w for w in WS if sp('posix', w) / w >= 0.8)} workers. The DFA engine does not: its single "
+               f"worker already runs at {si(dfa_lps)} lines/s, and adding workers leaves it flat or slightly lower "
+               f"({sp('dfa', PHYS):.2f}× at {PHYS}). Matching is so cheap that the serial stages—the reader, the "
+               f"aggregator, the correlator and the router, each on one thread—limit the pipeline at roughly a "
+               f"million lines per second. This is the shape predicted by Amdahl's law, not a defect in the queues: "
+               f"the DFA engine at one worker is faster than the POSIX engine at {PHYS} workers "
+               f"({si(dfa_lps)} against {si(pt(e2, engine='posix', workers=PHYS)['lines_per_s']['median'])} lines/s). "
+               f"Moving work out of the serial stages (for example batch-level masking and output formatting) is "
+               f"the next optimisation, and we do not claim DFA scaling beyond what is measured.", body0))
 
     s.append(SS("4.6", "Attack Correlation"))
     s.append(table("Correlator results on the real samples", [
@@ -663,7 +800,7 @@ def content():
          str(cor["synthetic_small.log"]["flags"].get("ESCALATED_PASSWORD_SPRAY", 0)), "0",
          str(cor["synthetic_small.log"]["alerts"])]],
         [2.5 * cm, 1.5 * cm, 1.1 * cm, 1.6 * cm, 1.2 * cm], right=(1, 2, 3, 4)))
-    s.append(P(f"Table IX lists the detections. The unit tests (<tt>{T['unit_test_checks']['test_correlate']:,}</tt> checks) cover the cases of "
+    s.append(P(f"@T:corr@ lists the detections. The unit tests (<tt>{T['unit_test_checks']['test_correlate']:,}</tt> checks) cover the cases of "
                f"the specification: 4 failures give nothing, 5 inside the window give exactly one escalation, 5 "
                f"spread over more than the window give nothing, and a success after a burst is CRITICAL. On the "
                f"real OpenSSH sample the correlator reports {ssh['flags']['ESCALATED_BRUTE_FORCE']} brute-force and "
@@ -697,7 +834,7 @@ def content():
     s.append(P(f"The reproduced program classifies one input in {min(fk):.0f}–{max(fk):.0f} µs, while a "
                f"sequential loop that recompiles the five patterns needs "
                f"{min(v['seq-recompile'][i][1] for i in v['fork']):.0f}–"
-               f"{max(v['seq-recompile'][i][1] for i in v['fork']):.0f} µs (Table X). Inside each child, "
+               f"{max(v['seq-recompile'][i][1] for i in v['fork']):.0f} µs (@T:latency@). Inside each child, "
                f"<tt>regcomp</tt> takes about 20 µs and <tt>regexec</tt> about 3–5 µs, so process management "
                f"is most of the {min(fk):.0f} µs. The paper's input module also rejects "
                f"{RB4['paper']['rejected_by_input_module']} of the {lab:,} labelled lines (for example those "
@@ -705,34 +842,141 @@ def content():
                f"inputs. <i>Inference:</i> the paper's central hypothesis—that process overhead dominates—is "
                f"confirmed, and it works against the paper's own speed-up claim.", body0))
 
-    # ------------------------------------------------------------------ 5 Performance
+    s.append(SS("4.8", "Benchmark Experiments"))
+    rows = [["Config", "Engine, workers", "Lines", "Lines/s", "Min–max"]]
+    for r in e1:
+        rows.append([r["id"].split("-")[0].upper(), f"{r['engine']}, {r['workers']}", f"{r['lines']:,}",
+                     si(r["lines_per_s"]["median"]), f"{si(r['lines_per_s']['min'])}–{si(r['lines_per_s']['max'])}"])
+    s.append(table("Architecture comparison (E1)", rows, [1.2 * cm, 2.2 * cm, 1.5 * cm, 1.7 * cm, 2.6 * cm], right=(2, 3, 4)))
+    s.append(P(f"<i>E1, architecture.</i> @T:e1@ compares the four configurations on the same generated log. The "
+               f"base paper's design, applied to our 26 rules (C1), processes {si(c1)} lines/s, which is "
+               f"{c2 / c1:.0f}× slower than the sequential POSIX engine (C2, {si(c2)}) and {c4 / c1:,.0f}× slower than "
+               f"the DFA engine with {PHYS} workers (C4, {si(c4)}); C3 (POSIX, {PHYS} workers) reaches {si(c3)}. "
+               f"C1 is measured on {pt(e1, id='c1-fork')['lines']:,} lines because it is so slow. <i>Inference:</i> the "
+               f"ordering C1 ≪ C2 &lt; C3 &lt; C4 expected from the base-paper analysis holds; creating a process per "
+               f"rule per line costs far more than the matching, as the reproduction in Section 4.7 showed for five "
+               f"patterns.", body0))
+    rows = [["Rules", "POSIX lines/s", "DFA lines/s", "DFA/POSIX", "Groups", "DFA states", "Build ms"]]
+    for n in (5, 10, 20, 32, 64):
+        rows.append([str(n), si(p_r[n]["lines_per_s"]["median"]), si(d_r[n]["lines_per_s"]["median"]),
+                     f"{d_r[n]['lines_per_s']['median'] / p_r[n]['lines_per_s']['median']:.1f}×", str(d_r[n]["dfa_groups"]),
+                     f"{d_r[n]['dfa_states']:,}", f"{d_r[n]['build_ms']:,.0f}"])
+    s.append(table("Rule-count sensitivity (E3)", rows,
+                   [1.0 * cm, 1.7 * cm, 1.7 * cm, 1.3 * cm, 1.0 * cm, 1.4 * cm, 1.2 * cm], right=(0, 1, 2, 3, 4, 5, 6)))
+    ns = [5, 10, 20, 32, 64]
+    ser = [("POSIX engine", [(n, p_r[n]["lines_per_s"]["median"] / 1e5) for n in ns], ORANGE, None),
+           ("DFA engine", [(n, d_r[n]["lines_per_s"]["median"] / 1e5) for n in ns], BLUE, None)]
+    s.append(figure(line_chart(ser, COL_W, 98, ns, 10, "rules in the set", "throughput, 100,000 lines/s", ideal=False),
+                    "Throughput against the number of rules, one worker (median of 5 runs)."))
+    s.append(P(f"<i>E3, rule count (the headline experiment).</i> The rule sets of 5, 10, 20, 32 and 64 rules are "
+               f"nested subsets of the default rules plus 38 extra rules (more keywords, attack and PII variants), "
+               f"all inside the supported syntax and all checked against the C library by the differential test. "
+               f"From 5 to 64 rules the POSIX engine falls to {p_r[64]['lines_per_s']['median'] / p_r[5]['lines_per_s']['median'] * 100:.0f} % of its "
+               f"throughput ({si(p_r[5]['lines_per_s']['median'])} → {si(p_r[64]['lines_per_s']['median'])} lines/s), "
+               f"roughly in proportion to the rule count. The DFA engine stays at "
+               f"{d_r[32]['lines_per_s']['median'] / d_r[5]['lines_per_s']['median'] * 100:.0f} % of its 5-rule throughput up to 32 rules, then falls to "
+               f"{d_r[64]['lines_per_s']['median'] / d_r[5]['lines_per_s']['median'] * 100:.0f} % at 64 rules, where the set needs {d_r[64]['dfa_groups']} DFA groups "
+               f"and the line is scanned once per group. <i>Inference:</i> the expectation that the DFA stays flat "
+               f"holds only while the rule set fits one or two groups; grouping under a state cap trades "
+               f"memory for a pass per group, and at 64 rules the DFA is still {d_r[64]['lines_per_s']['median'] / p_r[64]['lines_per_s']['median']:.1f}× "
+               f"faster than the library. The cost on the other side is start-up: building the 64-rule DFAs takes "
+               f"{d_r[64]['build_ms'] / 1000:.1f} s.", body0))
+    rows = [["Batch", "Lines/s", "p50 (ms)", "p99 (ms)"]]
+    for r in sorted(e4, key=lambda r: r["batch"]):
+        rows.append([str(r["batch"]), si(r["lines_per_s"]["median"]), f"{r['latency_p50_us']['median'] / 1000:.1f}",
+                     f"{r['latency_p99_us']['median'] / 1000:.1f}"])
+    s.append(table("Batch size (E4)", rows, [1.4 * cm, 2.0 * cm, 1.8 * cm, 1.8 * cm], right=(0, 1, 2, 3)))
+    b1, bmax = pt(e4, batch=1), pt(e4, batch=1024)
+    s.append(P(f"<i>E4, batch size.</i> Throughput rises from {si(b1['lines_per_s']['median'])} lines/s with one "
+               f"line per batch to {si(bmax['lines_per_s']['median'])} with 1,024 (@T:e4@), because the cost of a "
+               f"queue hand-off is spread over the batch. The latency columns (ingest to aggregated) are for a "
+               f"preloaded input that the reader pushes in as fast as the bounded queues accept it, so they "
+               f"measure queueing, not a paced stream; the p99 latency falls as the batch grows here because "
+               f"the queues drain faster. Latency under a paced load was not measured.", body0))
+
+    s.append(SS("4.9", "Accuracy and Validator Study"))
+    f4 = lambda v: "—" if v is None else f"{v:.3f}"
+    rows = [["Category", "Precision", "Recall", "F1", "Support"]]
+    for c, m in E6c.items():
+        rows.append([c.replace("_", " ").title(), f4(m["precision"]), f4(m["recall"]), f4(m["f1"]), f"{m['support']:,.0f}"])
+    s.append(table("Accuracy on generated ground truth (E6)", rows, [2.4 * cm, 1.4 * cm, 1.3 * cm, 1.1 * cm, 1.5 * cm],
+                   right=(1, 2, 3, 4)))
+    cal = E6["calibration"]
+    s.append(P(f"<i>E6, accuracy.</i> On {E6['n']:,} generated lines the engine's labels equal the ground truth on every "
+               f"line (@T:e6@, exact label-set match {E6['exact_match']:.3f}). This is a consistency check—the "
+               f"generator and the rules were written together—and it shows that the validators reject all "
+               f"look-alike numbers and that no normal line is labelled; it is not an estimate of accuracy on real "
+               f"logs. The confidence of the primary label is under-confident: ECE = {cal['ece']:.2f}, because the "
+               f"base scores (0.35 weak, 0.6 strong) were set conservatively and every labelled line is correct "
+               f"(observed precision 1.00 in each bin).", body0))
+    rows = [["Log", "Lines", "Attack", "Detected", "False alarms"]]
+    for k, r in AIT.items():
+        a_ = r["categories"]["ATTACK"]
+        nm = k.replace("intranet_server__", "").replace("intranet.smith.russellmitchell.com-", "")
+        rows.append([nm.replace(".log.log", ".log"), f"{r['n']:,}", f"{a_['support']:,.0f}", f"{a_['tp']:,.0f}", f"{a_['fp']:,.0f}"])
+    s.append(table("Attack detection on AIT-LDS (E6)", rows, [3.0 * cm, 1.2 * cm, 1.4 * cm, 1.5 * cm, 1.8 * cm],
+                   right=(1, 2, 3, 4)))
+    atk = sum(r["categories"]["ATTACK"]["support"] for r in AIT.values())
+    det = sum(r["categories"]["ATTACK"]["tp"] for r in AIT.values())
+    fa = sum(r["categories"]["ATTACK"]["fp"] for r in AIT.values())
+    s.append(P(f"On the AIT-LDS scenario, where a line counts as detected if it is labelled security threat or "
+               f"authentication failure, the engine detects {det:,.0f} of {atk:,.0f} labelled attack lines "
+               f"({det / atk * 100:.2f} %) with {fa:,.0f} false alarms (@T:ait@). <i>Inference:</i> the rule set has "
+               f"no rule for most of the attacker's requests, which are WordPress scans and an upload exploit with "
+               f"ordinary-looking URLs; what it flags is correct, but recall is very low. The rules were not changed "
+               f"after seeing these numbers, so that they are not tuned on the evaluation data. On the full "
+               f"Loghub logs, for which there is no ground truth, the correlator reports "
+               f"{LOGS['OpenSSH']['default']['flags'].get('ESCALATED_BRUTE_FORCE', 0):,} brute-force and "
+               f"{LOGS['OpenSSH']['default']['flags'].get('ESCALATED_PASSWORD_SPRAY', 0)} password-spray episodes in the "
+               f"{LOGS['OpenSSH']['lines']:,}-line OpenSSH log and one error storm in BGL, and labels "
+               f"{LOGS['BGL']['default']['primary'].get('ERROR', 0):,} BGL lines as errors.", body0))
+    rows = [["Validators", "PII precision", "PII recall", "False PII"]]
+    rows.append(["off", f4(pii_off["precision"]), f4(pii_off["recall"]), f"{pii_off['fp']:,.0f}"])
+    rows.append(["on", f4(pii_on["precision"]), f4(pii_on["recall"]), f"{pii_on['fp']:,.0f}"])
+    s.append(table("Validator effect on PII labels (E7)", rows, [2.0 * cm, 2.2 * cm, 2.0 * cm, 2.0 * cm], right=(1, 2, 3)))
+    rows = [["Log", "Lines", "Off", "On"]]
+    for k in ("OpenSSH", "Linux", "BGL", "HDFS_2k"):
+        v = E7L[k]
+        rows.append([k.replace("_", " "), f"{v['lines']:,}", f"{v['lines_labelled_pii_no_validators']:,}",
+                     f"{v['lines_labelled_pii_validators']:,}"])
+    s.append(table("Lines labelled PII on the full real logs", rows, [2.2 * cm, 2.2 * cm, 1.8 * cm, 1.8 * cm], right=(1, 2, 3)))
+    s.append(P(f"<i>E7, validators.</i> With the checksum validators switched off (a pattern match is a label), PII "
+               f"precision on the generated set is {pii_off['precision']:.2f}, with {pii_off['fp']:,.0f} false labels on "
+               f"look-alike numbers; with them it is {pii_on['precision']:.2f} at the same recall (@T:e7@). On the real logs "
+               f"the validators remove most PII labels (@T:e7logs@): BGL "
+               f"{E7L['BGL']['lines_labelled_pii_no_validators']:,} → {E7L['BGL']['lines_labelled_pii_validators']:,} lines, "
+               f"OpenSSH {E7L['OpenSSH']['lines_labelled_pii_no_validators']} → {E7L['OpenSSH']['lines_labelled_pii_validators']}, "
+               f"HDFS {E7L['HDFS_2k']['lines_labelled_pii_no_validators']} → {E7L['HDFS_2k']['lines_labelled_pii_validators']}. "
+               f"Without labels we cannot say how many of the remaining lines are true; a random 13–19 digit string "
+               f"passes the Luhn test about one time in ten, so some false labels survive. <i>Inference:</i> the "
+               f"validators are what makes the PII category usable on logs full of identifiers.", body0))
+
     s.append(S("Performance and Metrics"))
     s.append(SS("5.1", "Matching Engine: Existing versus Proposed"))
-    spread = max((tp[e]["lines_per_s_max"] - tp[e]["lines_per_s_min"]) / tp[e]["lines_per_s_median"]
-                 for e in ("dfa", "posix")) * 100
-    extra = tp["dfa"]["median_startup_s"] - tp["posix"]["median_startup_s"]
+    spread = max((x["lines_per_s"]["max"] - x["lines_per_s"]["min"]) / x["lines_per_s"]["median"] for x in (d1, p1)) * 100
+    extra = build_ms / 1000 - POSIX_START_S
     breakeven = extra / (1 / pos_lps - 1 / dfa_lps)
     s.append(P(f"We compare the C library's POSIX engine (one <tt>regexec</tt> per rule, the approach of the "
                f"base paper's matching step) with the proposed combined DFA. Both run the same 26 rules inside "
-               f"the same pipeline with one worker on {tp['lines']:,} log lines ({tp['bytes'] / 1e6:.0f} MB, the "
-               f"six corpus files repeated 100 times), output written to memory-backed files; the start-up "
-               f"cost of each engine (rule compilation) is measured separately on an empty input and "
-               f"subtracted. Five runs per engine were interleaved.", body0))
-    s.append(figure(hbar_err([("POSIX regexec", pos_lps, tp["posix"]["lines_per_s_min"],
-                               tp["posix"]["lines_per_s_max"], ORANGE),
-                              ("Combined DFA", dfa_lps, tp["dfa"]["lines_per_s_min"],
-                               tp["dfa"]["lines_per_s_max"], BLUE)],
+               f"the same pipeline with one worker on {NLINES:,} generated log lines, output written to "
+               f"<tt>/dev/null</tt>, with rule compilation excluded from the timing (<tt>--bench</tt>); five runs "
+               f"per engine, interleaved with the other points of the scaling experiment.", body0))
+    s.append(figure(hbar_err([("POSIX regexec", pos_lps, p1["lines_per_s"]["min"], p1["lines_per_s"]["max"], ORANGE),
+                              ("Combined DFA", dfa_lps, d1["lines_per_s"]["min"], d1["lines_per_s"]["max"], BLUE)],
                              COL_W, 62, "lines per second (median of 5 runs, whiskers = min–max)", 1.2e6),
                     "End-to-end throughput of the two engines on real log rules, one worker."))
     s.append(P(f"The DFA engine sustains {si(dfa_lps)} lines/s and the POSIX engine {si(pos_lps)} lines/s, "
                f"a factor of <b>{speed:.1f}</b>; the spread between the five runs is at most {spread:.0f} % of the "
                f"median. <i>Inference:</i> in a loop of 26 library calls every line is scanned once per rule, and "
-               f"the library's cost grows with the rule count; the DFA scans the line once whatever the rule count. "
+               f"the library's cost grows with the rule count (Section 4.8); the DFA scans the line once per group. "
                f"The factor is a lower bound on the matching speed-up, because the measurement includes the "
                f"unchanged reader, classifier and output. The price is the start-up cost: building the DFAs "
-               f"takes {tp['dfa']['median_startup_s'] * 1000:.0f} ms against "
-               f"{tp['posix']['median_startup_s'] * 1000:.0f} ms for compiling the library's regexes, which "
-               f"is repaid after about {breakeven / 1000:.0f} thousand lines.", body0))
+               f"takes {build_ms:.0f} ms against {POSIX_START_S * 1000:.0f} ms for compiling the library's regexes, "
+               f"which is repaid after about {breakeven / 1000:.0f} thousand lines.", body0))
+    s.append(P(f"Across the rule counts of experiment E3 the DFA engine is {d_r[5]['lines_per_s']['median'] / p_r[5]['lines_per_s']['median']:.1f}× "
+               f"faster than POSIX with 5 rules, {d_r[32]['lines_per_s']['median'] / p_r[32]['lines_per_s']['median']:.1f}× with 32 and "
+               f"{d_r[64]['lines_per_s']['median'] / p_r[64]['lines_per_s']['median']:.1f}× with 64; with {PHYS} workers it is "
+               f"{c4 / c3:.2f}× the POSIX engine (@T:e1@).", body0))
 
     s.append(SS("5.2", "Base-Paper Design versus Alternatives"))
     sp3 = {}
@@ -742,7 +986,7 @@ def content():
                for x in RB2 if x["batch"] == 10000}
     low = sorted(q for q in spreads.values() if q <= 10)
     high = sorted(q for q in spreads.values() if q > 10)
-    s.append(P(f"Fig. 5 compares six designs on the five-pattern task for a batch of 10,000 inputs (median of "
+    s.append(P(f"@F:designs@ compares six designs on the five-pattern task for a batch of 10,000 inputs (median of "
                f"five runs). The run-to-run spread (maximum minus minimum, relative to the median) is at most "
                f"{max(low):.0f} % for {len(low)} designs and {high[0]:.0f} % and {high[1]:.0f} % for the two "
                f"fastest, whose 10,000-input runs last only a few milliseconds or less and are dominated by "
@@ -775,7 +1019,7 @@ def content():
                f"followed by <tt>regexec</tt>; <i>existing</i>) with matching on the unmodified text with the "
                f"same five patterns, as done by the DFA variant (<i>proposed</i>). The DFA gives the same masks as "
                f"<tt>regexec</tt> on every line (asserted by a test), so any difference comes from the paper's "
-               f"input module. Table XI and Fig. 6 give precision (P), recall (R) and F1 per category.", body0))
+               f"input module. @T:acc@ and @F:acc@ give precision (P), recall (R) and F1 per category.", body0))
     cats = ["EMAIL", "PHONE", "QUESTION", "GREETING", "NAME"]
     rows = [["Category", "P<br/>exist.", "R<br/>exist.", "F1<br/>exist.", "P<br/>prop.", "R<br/>prop.", "F1<br/>prop."]]
     for c in cats:
@@ -804,7 +1048,7 @@ def content():
                f"{b['per_category']['NAME']['f1']:.2f}): structured formats are easier for regular "
                f"expressions than natural language, as the paper claims (absolute values depend on our "
                f"templates). For the log rules themselves, precision against human labels is not yet measured; "
-               f"the evidence so far is the validator effect of Table VII (119 to 1 PII labels on HDFS), "
+               f"the evidence so far is the validator effect of @T:piival@ (119 to 1 PII labels on HDFS), "
                f"agreement with the reference classifier on all "
                f"{sum(c['lines'] for c in M2['corpus']):,} lines, and exact agreement with the "
                f"{T['annotated_lines_synthetic_small']} annotated lines. <i>Inference:</i> the proposed approach does not "
@@ -812,12 +1056,15 @@ def content():
                f"stage and from validating matched numbers.", body0))
     s.append(KeepTogether([SS("5.4", "Summary of Metrics")] + table("Existing versus proposed", [
         ["Metric", "Existing", "Proposed"],
-        ["Log-rule throughput, 1 worker", f"{si(pos_lps)} lines/s", f"{si(dfa_lps)} lines/s"],
-        ["Throughput, 8 workers", f"{si(sc['posix']['8']['lines_per_s_median'])} lines/s (POSIX)",
-         f"{si(sc['dfa']['8']['lines_per_s_median'])} lines/s (DFA)"],
+        ["Throughput, 26 rules, 1 worker", f"{si(pos_lps)} lines/s (POSIX)", f"{si(dfa_lps)} lines/s (DFA)"],
+        [f"Throughput, {PHYS} workers", f"{si(c3)} lines/s (POSIX)", f"{si(c4)} lines/s (DFA)"],
+        ["Throughput, 64 rules, 1 worker", f"{si(p_r[64]['lines_per_s']['median'])} lines/s",
+         f"{si(d_r[64]['lines_per_s']['median'])} lines/s"],
+        ["Paper's design on our rules", f"{si(c1)} lines/s (fork)", f"{si(c2)} lines/s (sequential)"],
         ["Inputs/s, 5 patterns, batch 10K", f"{si(thr['fork']['median'])} (fork)",
          f"{si(thr['dfa_t5']['median'])} (DFA)"],
         ["Mask agreement with regexec", "(reference)", f"{dt['mismatches']} mismatches"],
+        ["PII precision, look-alike set", f"{pii_off['precision']:.2f} (no validators)", f"{pii_on['precision']:.2f} (validators)"],
         ["PII labels on HDFS_2k", f"{M1C['HDFS_2k.log']['primary_label_counts']['PII']} (pattern only)",
          f"{corp['HDFS_2k.log']['primary_label_counts']['PII']} (validated)"],
         ["Exact-set accuracy, 5 categories", f"{a['overall']['exact_match_accuracy']:.3f}",
@@ -827,22 +1074,26 @@ def content():
     # ------------------------------------------------------------------ 6 Conclusion
     s.append(S("Conclusion"))
     s.append(P(f"We built a real-time log triage engine around a regex-to-DFA compiler written from first "
-               f"principles. The compiler agrees with the C library on {dt['file_lines']:,} corpus lines and "
-               f"{dt['random_strings']:,} random strings; on 26 rules the DFA engine is {speed:.1f}× faster than "
-               f"the library, grouping keeps the tables at {grouped['dfa_states']:,} states instead of "
-               f"{single:,}, checksum validation removes nearly all false PII labels from identifier-heavy logs, "
-               f"the multi-threaded pipeline reproduces the sequential output exactly on 72 comparison runs, and "
-               f"the correlator turns {ssh['flags']['ESCALATED_BRUTE_FORCE']} bursts of failed logins in a "
-               f"real SSH log into single alerts. The measured reproduction of the base paper shows that its "
-               f"process-per-pattern design is {fork_vs_rec:.0f}× slower than a sequential loop, while "
-               f"parallelism over inputs scales.", body0))
-    s.append(P(f"The measurements also show limits. DFA start-up takes {tp['dfa']['median_startup_s'] * 1000:.0f} ms; "
-               f"the DFA engine's pipeline throughput is capped near a million lines per second by the serial "
-               f"stages and does not rise with workers; and accuracy on the log rules is supported by "
-               f"agreement tests, not yet by human-labelled precision and recall. The remaining work is the "
-               f"in-binary benchmark mode and generator, the full data sets (Loghub, AIT) with hand-labelled "
-               f"samples, and the evaluation experiments that give precision, recall, calibration and the "
-               f"effect of the rule count.", body))
+               f"principles, and the tools to measure it. The compiler agrees with the C library on "
+               f"{dt['file_lines']:,} corpus lines and {dt['random_strings']:,} random strings. On 26 rules the DFA "
+               f"engine is {speed:.1f}× faster than the library on one worker; the library's throughput falls in "
+               f"proportion to the rule count while the DFA's stays within "
+               f"{(1 - d_r[32]['lines_per_s']['median'] / d_r[5]['lines_per_s']['median']) * 100:.0f} % up to 32 rules and falls at 64, where "
+               f"{d_r[64]['dfa_groups']} DFA groups are needed. Checksum validation raises PII precision from "
+               f"{pii_off['precision']:.2f} to {pii_on['precision']:.2f} on a set with look-alike numbers and removes "
+               f"most PII labels from the real logs, the multi-threaded pipeline reproduces the sequential output "
+               f"exactly on 72 comparison runs, and the correlator turns thousands of failed-login bursts into "
+               f"single alerts. The base paper's process-per-pattern design is {c2 / c1:.0f}× slower than the "
+               f"sequential library engine on our rules and {fork_vs_rec:.0f}× slower than a sequential loop on its "
+               f"own five patterns, while parallelism over inputs scales.", body0))
+    s.append(P(f"The measurements also show limits. DFA start-up takes {build_ms:.0f} ms for 26 rules and "
+               f"{d_r[64]['build_ms'] / 1000:.1f} s for 64; the DFA engine's pipeline throughput is capped near a million "
+               f"lines per second by the serial stages and does not rise with workers; confidences are conservative "
+               f"(ECE {cal['ece']:.2f}); and on attack-labelled real logs the recall is {det / atk * 100:.2f} % because the rule set "
+               f"has no rules for those attacks. Accuracy against human labels on real log lines is not yet "
+               f"measured: the sampling and evaluation tools are ready, and two annotators must label the sample "
+               f"independently. Further work is a faster serial stage, a rule set informed by public attack "
+               f"signatures, calibration of the base scores on labelled data, and measurements under a paced load.", body))
 
     s.append(Paragraph("REFERENCES", sec))
     for i, k in enumerate(R.ORDER, 1):
@@ -862,6 +1113,8 @@ def main():
         doc.subject = "Compiler Design project report (IEEE format), state at commit " + COMMIT
         arch_fig = figure(image(arch, FULL_W), "System architecture: start-up compilation, parallel triage "
                           "pipeline and evaluation harness.", wide=True)
+        content()                                   # first pass only collects the table and figure numbers
+        _prev.update(LABELS)
         body_flow = content()
         idx = body_flow.index(R.FIGSLOT)
         full = [NextPageTemplate("figpage"), PageBreak(), arch_fig, FrameBreak(), NextPageTemplate("later")]
