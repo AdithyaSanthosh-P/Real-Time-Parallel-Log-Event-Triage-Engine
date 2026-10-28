@@ -51,7 +51,7 @@ E7 = jload("results/e7/synthetic_novalidators/result.json")["all"]
 E7L = jload("results/e7/pii_on_logs.json")
 LOGS = jload("results/e6/loghub_full.json")
 POSIX_START_S = jload("results/milestone2/throughput.json")["posix"]["median_startup_s"]   # regcomp of 26 rules, measured earlier
-AIT = {f[:-4]: jload("results/e6/ait", f[:-4], "result.json")["all"]
+AIT = {f[:-4]: jload(f"results/e6/ait/{f[:-4]}/result.json")["all"]
        for f in sorted(os.listdir(os.path.join(ROOT, "results/e6/ait"))) if f.endswith(".txt")}
 
 
@@ -266,17 +266,6 @@ def content():
                "it checks consistency, not real-world accuracy) and against attack labels of one public data set "
                "(AIT-LDS); a hand-labelled sample of real log lines needs two people labelling independently, and "
                "the tools for it exist, but no number is reported until it is done. Second, the correlator "
-               "thresholds are the defaults of the fail2ban tool, not tuned values, and all absolute numbers "
-               "depend on the machine described in Section 4.", body0))
-    s.append(R.FIGSLOT)
-    s.append(SS("1.5", "Scope and Limitations"))
-    s.append(P(f"This report covers the project at commit <tt>{COMMIT}</tt>. The engine is complete for "
-               "single-machine use; what is still open is evaluation on the full data sets (the Loghub samples "
-               "used here have 2,000 lines each), hand-labelled precision and recall for the log rules, and "
-               "the benchmark mode that runs the base-paper's forking design inside the engine. Accuracy "
-               "figures therefore exist for the five-pattern task of the base paper, for which a labelled set was "
-               "built; for the log rules we report agreement with annotated lines and with an independent "
-               "reference implementation, and the effect of validation on identifiers. The correlator "
                "thresholds are the defaults of the fail2ban tool, not tuned values, and all absolute numbers "
                "depend on the machine described in Section 4.", body0))
 
@@ -856,13 +845,13 @@ def content():
                f"ordering C1 ≪ C2 &lt; C3 &lt; C4 expected from the base-paper analysis holds; creating a process per "
                f"rule per line costs far more than the matching, as the reproduction in Section 4.7 showed for five "
                f"patterns.", body0))
-    rows = [["Rules", "POSIX lines/s", "DFA lines/s", "DFA/POSIX", "Groups", "DFA states", "Build ms"]]
+    rows = [["Rules", "POSIX lines/s", "DFA lines/s", "DFA / POSIX", "DFA groups", "DFA states", "Build (ms)"]]
     for n in (5, 10, 20, 32, 64):
         rows.append([str(n), si(p_r[n]["lines_per_s"]["median"]), si(d_r[n]["lines_per_s"]["median"]),
                      f"{d_r[n]['lines_per_s']['median'] / p_r[n]['lines_per_s']['median']:.1f}×", str(d_r[n]["dfa_groups"]),
                      f"{d_r[n]['dfa_states']:,}", f"{d_r[n]['build_ms']:,.0f}"])
     s.append(table("Rule-count sensitivity (E3)", rows,
-                   [1.0 * cm, 1.7 * cm, 1.7 * cm, 1.3 * cm, 1.0 * cm, 1.4 * cm, 1.2 * cm], right=(0, 1, 2, 3, 4, 5, 6)))
+                   [0.9 * cm, 1.5 * cm, 1.5 * cm, 1.3 * cm, 1.2 * cm, 1.3 * cm, 1.2 * cm], right=(0, 1, 2, 3, 4, 5, 6)))
     ns = [5, 10, 20, 32, 64]
     ser = [("POSIX engine", [(n, p_r[n]["lines_per_s"]["median"] / 1e5) for n in ns], ORANGE, None),
            ("DFA engine", [(n, d_r[n]["lines_per_s"]["median"] / 1e5) for n in ns], BLUE, None)]

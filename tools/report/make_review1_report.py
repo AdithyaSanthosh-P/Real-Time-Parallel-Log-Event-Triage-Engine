@@ -319,8 +319,9 @@ def line_chart(series, width, height, xticks, ymax, xlabel, ylabel, ideal=True):
         d.add(Line(x0 + 8, ly - 1, x0 + 18, ly - 1, strokeColor=col, strokeWidth=1.1, strokeDashArray=dash))
         d.add(String(x0 + 21, ly - 3, label, fontName=FONT, fontSize=6.6))
         ly -= 8.5
-    d.add(Line(x0 + 8, ly - 1, x0 + 18, ly - 1, strokeColor=GREY, strokeWidth=0.6, strokeDashArray=[2, 2]))
-    d.add(String(x0 + 21, ly - 3, "ideal (linear)", fontName=FONT, fontSize=6.6))
+    if ideal:
+        d.add(Line(x0 + 8, ly - 1, x0 + 18, ly - 1, strokeColor=GREY, strokeWidth=0.6, strokeDashArray=[2, 2]))
+        d.add(String(x0 + 21, ly - 3, "ideal (linear)", fontName=FONT, fontSize=6.6))
     d.add(String((x0 + x1) / 2, 2, xlabel, fontName=FONT, fontSize=7, textAnchor="middle"))
     d.add(String(2, y1 + 5, ylabel, fontName=FONT, fontSize=6.8))
     return d

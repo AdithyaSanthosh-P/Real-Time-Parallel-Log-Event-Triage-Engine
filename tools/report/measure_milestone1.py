@@ -58,6 +58,7 @@ def main():
                     f"gcc: {sh(['gcc', '--version'], src).stdout.splitlines()[0]}\nflags: {flags}\n"
                     f"runs per point: {RUNS}\nthroughput input: corpus x{REPS} (tests/corpus/*.log)\n")
 
+        files = sorted(glob.glob(os.path.join(src, "tests/corpus/*.log")))
         if not TESTS_ONLY:
             # ---- DFA state cap sweep ----
             sweep = []

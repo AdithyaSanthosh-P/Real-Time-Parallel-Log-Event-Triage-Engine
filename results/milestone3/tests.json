@@ -1,0 +1,40 @@
+{
+ "sizes": {
+  "src_files": 62,
+  "src_lines": 7572,
+  "test_lines": 5762,
+  "basepaper_tool_lines": 2099,
+  "other_tool_lines": 3429
+ },
+ "unit_test_checks": {
+  "test_aggregate": 104,
+  "test_bench": 25,
+  "test_cli": 131,
+  "test_correlate": 25571,
+  "test_dfa": 169238,
+  "test_dot": 38,
+  "test_engine": 417,
+  "test_engine_posix": 10374,
+  "test_extract": 2305,
+  "test_mask": 84,
+  "test_nfa": 147102,
+  "test_normalize": 43,
+  "test_parse": 264,
+  "test_reader": 1198,
+  "test_route": 67,
+  "test_rules": 116,
+  "test_runtime": 1197,
+  "test_spsc": 751,
+  "test_timestamp": 43,
+  "test_validators": 5488
+ },
+ "unit_test_programs": 20,
+ "all_passed": true,
+ "difftest": {
+  "file_lines": 10218,
+  "files": 6,
+  "random_strings": 100000,
+  "mismatches": 0
+ },
+ "annotated_lines_synthetic_small": 99
+}
