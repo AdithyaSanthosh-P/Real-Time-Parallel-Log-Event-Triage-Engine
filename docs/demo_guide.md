@@ -1,4 +1,4 @@
-# Review 2 demo guide (project at about 78 % of the required tasks)
+# Demo guide (finished project: all 41 required tasks)
 
 ## How to run
 
@@ -8,9 +8,9 @@ make                      # build once (bin/triage); the demo does not rebuild
 make demo                 # all steps, pauses after each one: press Enter to continue
 ```
 
-Other ways: `tools/demo.sh --no-pause` runs straight through (about 25 s, 64 lines of output);
+Other ways: `tools/demo.sh --no-pause` runs straight through (about 30 s, about 90 lines of output);
 `tools/demo.sh correlate` runs one step. Steps, in order: `status compiler classify pii correlate
-parallel speed basepaper` (`build` is an optional extra). Everything the demo writes goes to
+parallel speed generator basepaper` (`build` is an optional extra). Everything the demo writes goes to
 `out/demo/` (gitignored). Dry-run once on the demo machine first. Optional: `sudo apt install graphviz`
 so step 1 also renders the DFA picture `out/demo/tiny.png`.
 
@@ -20,10 +20,10 @@ Not part of the demo, but the evidence behind it: `make test` (19 test programs)
 
 ## What each step shows and what the output means
 
-**0. Status.** Reads `docs/implementation_plan.md` and counts the required tasks that are ticked:
-32 of 41 (78 %). Optional R5 and the stretch tasks (Phase 8) are not counted. Say: the engine is
-complete; what is open is benchmark tooling (Phase 6: the in-binary fork engine, `--bench`,
-generator, rule sets, runner) and the full datasets with hand-labelled evaluation (Phase 7).
+**0. Status.** Reads `docs/implementation_plan.md` and counts the required tasks that are ticked: 41 of 41.
+Optional R5 and the stretch tasks (Phase 8) are not counted. Say: the engine, the benchmark tooling and the
+evaluation scripts are complete and tested; what is not done is the hand-labelled evaluation, which needs the
+two of us to label a sample independently (the blank sheets and the evaluation tool are ready).
 
 **1. Compiler (the compiler-design core).** The 26 rules go through a recursive-descent parser
 (AST), Thompson construction (NFA) and subset construction (DFA). The first line reads
@@ -71,7 +71,15 @@ as "measured in results/", this step as a live sanity check. Do not claim the DF
 workers: in `results/milestone2/scaling.json` it stays flat near a million lines/s because the serial
 stages limit it (the C library engine scales 4.4x at 8 workers).
 
-**7. Base paper.** Three of the professor's paper's six claims, with the verdict from our measured
+**7. Generator, ground truth and --bench.** `bin/gen` writes 50,000 log lines (four log types) and a truth file
+(seq, true labels, kind) with exactly the configured number of injected lines per category. The engine's labels
+are compared with the truth line by line: 0 differ. This is a consistency check (generator and rules were written
+together), not accuracy on real logs. `--bench` preloads the input, turns the sinks off and prints one JSON line:
+lines/s, MB/s, latency p50/p90/p99/p99.9, DFA size. The last table is the saved rule-count experiment E3
+(`results/SUMMARY.md`): POSIX falls with the rule count (259,850 to 36,829 lines/s from 5 to 64 rules), the DFA
+stays near 880,000 up to 32 rules and falls at 64, where the rule set needs 7 DFA groups (one pass per group).
+
+**8. Base paper.** Three of the professor's paper's six claims, with the verdict from our measured
 reproduction (`results/basepaper/SUMMARY.md`): per-pattern parallelism, near-linear scaling to 6
 cores and "3.7 ms vs 8.9 ms" are all *not reproduced*: the fork-per-pattern design is about 12.6x
 slower than a sequential loop that recompiles and 424x slower than one that precompiles, and only
@@ -84,13 +92,13 @@ Timings and lines/s vary from run to run; everything else is deterministic.
 ```
 
 == 0. Status: tasks of docs/implementation_plan.md ==
-  required tasks done: 32 of 41  (78 %)
-  open: T6.1 T6.2 T6.3 T6.4 T6.5 T7.1 T7.2 T7.3 T7.4
-Done: compiler, classifier, parallel pipeline, correlator, base-paper study. Open: benchmark tooling (Phase 6), full datasets and labelled evaluation (Phase 7).
+  required tasks done: 41 of 41  (100 %)
+  open: none
+All required tasks are done. Not done: hand-labelled evaluation (two people label a sample), optional and stretch items.
 
 == 1. Compiler: rules -> NFA -> one combined DFA ==
 $ bin/triage <26 rules>   (startup line only)
-triage: dfa: 26 rules, NFA 1762 states, 2 DFA groups, 7593 DFA states, built in 468.1 ms
+triage: dfa: 26 rules, NFA 1762 states, 2 DFA groups, 7593 DFA states, built in 493.6 ms
 Unsupported syntax is rejected with its position (rule: failed \d+ times):
 $ bin/triage -r out/demo/bad.rules -o out/demo/empty /dev/null
 triage: rule BAD: offset 7: \d shorthand is not supported; write a bracket expression such as [0-9]
@@ -131,15 +139,42 @@ First brute force, and failures followed by a successful login (CRITICAL):
 == 5. Parallel: 1 worker vs 8 workers, then a live stream ==
 -w 1 and -w 8: identical output (2000 records)
 Live stream, status line every second (queues = backlog per worker):
-triage: 498 lines/s | queues 0 0 0 0 | AUTH 252 SEC 13 ERR 2 PERF 0 PII 0 | dropped 0
+triage: 496 lines/s | queues 0 0 0 0 | AUTH 252 SEC 13 ERR 2 PERF 0 PII 0 | dropped 0
 triage: 0 lines/s | queues 0 0 0 0 | AUTH 252 SEC 13 ERR 2 PERF 0 PII 0 | dropped 0
 
 == 6. Speed: DFA engine vs C library regexec (1 worker, same 26 rules) ==
 204280 log lines; each run includes rule compilation, so absolute numbers are lower than in the report:
-  dfa     0.69 s      295026 lines/s
-  posix   2.52 s       81182 lines/s
+  dfa     0.71 s      287318 lines/s
+  posix   2.92 s       69906 lines/s
 
-== 7. Base paper: reproduced and measured ==
+== 7. Generator, ground truth and --bench ==
+$ bin/gen -n 50000 --seed 5 --truth out/demo/gen.truth.tsv > out/demo/gen.log
+gen: 50000 lines, seed 5, auth 2500, sec 1500, err 2500, perf 1500, pii 1500, lookalike 1000, normal 39500
+First lines of the generated log and of its ground truth (seq, true labels, kind):
+2025-10-09 13:53:20,016 INFO  [pool-4] OrderService - cache hit for key k33593
+Oct  9 13:53:20 web01 sshd[16845]: Received disconnect from 71.229.176.20 port 47783:11: disconnected by user
+Oct  9 13:53:20 web01 sshd[8290]: pam_unix(sshd:session): session opened for user frank by (uid=0)
+0	-	normal_app
+1	-	normal_sshd
+2	-	normal_sshd
+19	PII	pii_aadhaar_valid
+20	-	normal_app
+21	-	normal_app
+Engine labels vs the generator's truth, line by line:
+check_gen: 50000 lines, 0 differ
+Benchmark mode: one JSON line (input preloaded, sinks off):
+$ bin/triage --bench -w 4 out/demo/gen.log
+{"engine":"dfa","workers":4,"batch":256,"lines":50000,"bytes":5600373,"seconds":0.065178,"lines_per_s":767130.8,"mb_per_s":85.924,"latency_us":{"p50":4987.90,"p90":11863.
+Rule-count experiment E3 (saved run, results/SUMMARY.md):
+| rules | posix lines/s | dfa lines/s | dfa / posix | DFA groups | DFA states | DFA build (ms) |
+|---|---|---|---|---|---|---|
+| 5 | 259,850 | 886,235 | 3.4× | 1 | 703 | 4 |
+| 10 | 154,796 | 884,769 | 5.7× | 1 | 2,554 | 24 |
+| 20 | 81,204 | 880,042 | 10.8× | 2 | 4,954 | 487 |
+| 32 | 61,592 | 863,779 | 14.0× | 2 | 20,061 | 816 |
+| 64 | 36,829 | 329,323 | 8.9× | 7 | 26,517 | 1,761 |
+
+== 8. Base paper: reproduced and measured ==
   claim 1: per-pattern parallelism speeds up classification -> Not reproduced
   claim 3: near-linear scaling to 6 cores                   -> Not reproduced
   claim 6: 3.7 ms parallel vs 8.9 ms sequential             -> Not reproduced
@@ -154,8 +189,8 @@ All six claims, tables and figures: results/basepaper/SUMMARY.md, results/basepa
   shared across threads without locks. The `posix` engine stays as the baseline.
 - *How do you know the DFA is correct?* Differential test against glibc on 10,218 corpus lines and
   100,000 random strings (0 mismatches), plus an NFA simulator as a second oracle.
-- *Is it really about 80 % done?* 32 of 41 required tasks, shown live by step 0. The rest is
-  evaluation: benchmark tooling, full datasets, hand-labelled precision/recall.
+- *Is it complete?* All 41 required tasks of the plan, shown live by step 0. Not done: hand-labelled
+  precision/recall on real lines (two annotators), and the optional and stretch items.
 - *Why does the DFA not get faster with more workers?* Matching costs about a microsecond per line,
   so the single-threaded reader, aggregator, correlator and router set the limit (Amdahl's law);
   measured and reported, not hidden. Next optimisation: move more work out of the serial stages.

@@ -4,7 +4,7 @@
 # goes to out/demo/.
 #
 # usage: tools/demo.sh [--no-pause] [STEP...]
-#   steps: status compiler classify pii correlate parallel speed basepaper (default: all; "build" is optional)
+#   steps: status compiler classify pii correlate parallel speed generator basepaper (default: all; "build" is optional)
 # Talking points for each step: docs/demo_guide.md
 set -euo pipefail
 
@@ -12,7 +12,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 pause=1
 if [ "${1:-}" = "--no-pause" ]; then pause=0; shift; fi
-steps="${*:-status compiler classify pii correlate parallel speed basepaper}"
+steps="${*:-status compiler classify pii correlate parallel speed generator basepaper}"
 demo=out/demo
 mkdir -p "$demo"
 
@@ -45,6 +45,8 @@ step_build() {
 
 step_status() {
     title "0. Status: tasks of docs/implementation_plan.md"
+    local done_all=0
+    grep -qE '^- \[ \] \*{0,2}(T[0-7]\.[0-9]+|R[0-46-9])' docs/implementation_plan.md || done_all=1
     python3 -I -c '
 import re
 done = total = 0
@@ -57,9 +59,13 @@ for line in open("docs/implementation_plan.md"):
         if m.group(1) == " ":
             todo.append(m.group(2))
 print(f"  required tasks done: {done} of {total}  ({100 * done / total:.0f} %)")
-print("  open: " + " ".join(todo))
+print("  open: " + (" ".join(todo) or "none"))
 '
-    say "Done: compiler, classifier, parallel pipeline, correlator, base-paper study. Open: benchmark tooling (Phase 6), full datasets and labelled evaluation (Phase 7)."
+    if [ "$done_all" = 1 ]; then
+        say "All required tasks are done. Not done: hand-labelled evaluation (two people label a sample), optional and stretch items."
+    else
+        say "Open tasks are listed above."
+    fi
     wait_key
 }
 
@@ -136,8 +142,26 @@ step_speed() {
     wait_key
 }
 
+step_generator() {
+    title "7. Generator, ground truth and --bench"
+    local n=50000
+    printf '%s$ bin/gen -n %s --seed 5 --truth %s/gen.truth.tsv > %s/gen.log%s\n' "$C" "$n" "$demo" "$demo" "$N"
+    bin/gen -n $n --seed 5 --truth "$demo/gen.truth.tsv" > "$demo/gen.log"
+    say "First lines of the generated log and of its ground truth (seq, true labels, kind):"
+    head -3 "$demo/gen.log" | cut -c1-110
+    sed -n '1,3p;20,22p' "$demo/gen.truth.tsv"
+    bin/triage --quiet -w 4 -o "$demo/gen" "$demo/gen.log"
+    say "Engine labels vs the generator's truth, line by line:"
+    python3 -I tools/check_gen.py "$demo/gen.truth.tsv" "$demo/gen/store.jsonl" | tail -1
+    say "Benchmark mode: one JSON line (input preloaded, sinks off):"
+    run bin/triage --bench -w 4 "$demo/gen.log"
+    say "Rule-count experiment E3 (saved run, results/SUMMARY.md):"
+    sed -n '/^## E3/,/^## E4/p' results/SUMMARY.md | grep '^|' | head -8
+    wait_key
+}
+
 step_basepaper() {
-    title "7. Base paper: reproduced and measured"
+    title "8. Base paper: reproduced and measured"
     python3 -I -c '
 import re
 want = {"1": "per-pattern parallelism speeds up classification",
@@ -157,7 +181,7 @@ for line in open("results/basepaper/SUMMARY.md"):
 
 for s in $steps; do
     case "$s" in
-        build|status|compiler|classify|pii|correlate|parallel|speed|basepaper) "step_$s" ;;
+        build|status|compiler|classify|pii|correlate|parallel|speed|generator|basepaper) "step_$s" ;;
         *) echo "unknown step '$s'" >&2; exit 2 ;;
     esac
 done

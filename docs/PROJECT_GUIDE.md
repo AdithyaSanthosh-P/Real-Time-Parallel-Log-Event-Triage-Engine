@@ -226,7 +226,7 @@ Alerts (severity ≥ HIGH) go to `alerts.jsonl`, PII lines (masked) to `pii_quar
 | `tests/` | Unit tests (`test_*.c`), `corpus/` (Loghub 2k samples + hand-annotated `synthetic_small.log`), `expected/`, `basepaper/`. |
 | `tools/` | `gen.c` (synthetic generator + ground truth), `difftest.c`, `run_bench.sh`, `run_eval.sh`, `plot.py`, `label_eval.py`, `sample_for_labeling.py`, `fetch_*`, `compare_runs.sh`, `demo.sh`, `basepaper/` (Phase R), `report/` (report generators). |
 | `data/` | Full datasets (gitignored; `tools/fetch_datasets.sh`). |
-| `results/` | Saved measurements: `basepaper/`, `milestone1/`, `milestone2/`, `e1`–`e4`, `e6`, `e7`, `SUMMARY.md`. |
+| `results/` | Saved measurements: `basepaper/`, `milestone1/`–`milestone3/`, `e1`–`e4`, `e6`, `e7`, `figures/`, `SUMMARY.md`. |
 | `docs/` | `project_design.md` (spec), `implementation_plan.md`, `progress.md`, reports (PDF), `demo_guide.md`, this file. |
 
 ---
@@ -272,22 +272,17 @@ than one that precompiles. Peak speed-ups: fork 1.72×, per-pattern threads 2.54
 4.83× (6 cores), our DFA 5.29×. The paper's central hypothesis (process overhead dominates) is confirmed;
 its near-linear-scaling claim is not reproduced. Its input module also rejects 146 of 1,250 lines.
 
-Engine measurements (`results/milestone2/`, commit da15165): DFA 998,003 lines/s vs POSIX 76,868 lines/s
-on one worker (13.0×, 1,021,400 lines, 5 runs). The DFA engine does **not** scale with workers (about
-924k → 833k lines/s from 1 to 8) because the serial stages (reader, aggregator, correlator, router) cap the
-pipeline near a million lines/s; the POSIX engine scales 4.4× at 8 workers.
+Engine measurements (`results/e1`–`e4`, `results/SUMMARY.md`; i7-13650HX, 14 physical cores, 5 runs per point,
+input preloaded, sinks off, interleaved runs, system load logged):
 
-Experiment matrix (`tools/run_bench.sh`, `tools/run_eval.sh`; results and exact commands in `results/`,
-tables in `results/SUMMARY.md`, generated from the saved JSON):
-
-| # | Experiment | Question |
-|---|---|---|
-| E1 | fork vs posix -w1 vs posix -wN vs dfa -wN | is the paper's design dominated by process creation? |
-| E2 | scaling with workers | where do serial stages bound the speed-up? |
-| E3 | rule count 5 → 64 | does the DFA stay flat while POSIX falls? (it makes one pass per group, so cost steps up when groups are added) |
-| E4 | batch size 1 → 1,024 | throughput vs latency |
-| E6 | accuracy | P/R/F1 per category on generator truth and AIT; label distribution on full Loghub |
-| E7 | validators on/off | do checksums raise PII precision? (HDFS 2k: 119 PII-labelled lines before validation, 1 after) |
+| # | Result |
+|---|---|
+| E1 | fork design (C1) 358 lines/s; posix -w1 (C2) 73,844; posix -w14 (C3) 521,485; dfa -w14 (C4) 884,119. C1 is 206x slower than C2. |
+| E2 | DFA 971,394 lines/s at 1 worker, flat or slightly lower with more (about 850,000-900,000); POSIX 74,126 at 1 worker, 507,421 at 14 (6.85x, efficiency 0.49; at least 0.8 up to 4 workers). Serial stages bound the DFA pipeline. |
+| E3 | 5 to 64 rules: POSIX 259,850 to 36,829 lines/s (14 %); DFA 886,235 to 329,323; DFA stays within 3 % up to 32 rules, the 64-rule set needs 7 DFA groups and falls. DFA is 8.9x faster than POSIX at 64 rules. Build 4 ms (5 rules) to 1.8 s (64). |
+| E4 | batch 1: 191,318 lines/s; 256: 787,649; 1024: 806,878 (dfa, 4 workers). |
+| E6 | generated truth (200,000 lines): precision, recall, F1 all 1.000 (consistency, not real-world accuracy); ECE 0.37 (under-confident). AIT-LDS: 7 of 7,739 attack lines detected, 0 false alarms. |
+| E7 | PII precision 0.60 without validators, 1.00 with (generated set with look-alikes); real logs: BGL 12,279 to 1,175 PII-labelled lines, OpenSSH 163 to 0, HDFS 2k 119 to 1. |
 
 Notable honest findings: rules do not cover most AIT attacker requests (low recall; not tuned afterwards);
 `PWD=` in sudo lines is flagged as a secret by the `PII_SECRET_QS` rule; confidences are conservative
@@ -310,19 +305,27 @@ Report generators are in `tools/report/` and read numbers from `results/` only.
 
 ## 14. Status and what is open
 
-All required engineering tasks of `docs/implementation_plan.md` are implemented. What humans must still do:
+**All 41 required tasks of `docs/implementation_plan.md` are done**: compiler, classifier, parallel runtime,
+correlator, base-paper study, fork engine, `--bench`, generator, bench rule sets, runner, dataset fetch,
+labelling sample tool, evaluation script, experiments E1-E4, E6, E7. Tests, difftest and e2e pass, and the
+test suite and e2e runs are clean under ThreadSanitizer and AddressSanitizer.
 
-- **Hand-labelling** (Phase 7): both teammates label the same stratified sample *independently*
-  (`tools/sample_for_labeling.py` makes the blank CSVs; `tools/label_eval.py --annot` reports P/R/F1 and
-  Cohen's κ). This gives real-data precision/recall; until then no such number is claimed.
+What humans must still do:
+
+- **Hand-labelling:** both teammates label the same stratified sample *independently*. Blank sheets are
+  generated in `data/labeling/` (`annotator_A.csv`, `annotator_B.csv`; `key.csv` holds the engine's labels and
+  must not be opened before labelling). Fill 1 or 0 in the five category columns. Then run
+  `tools/label_eval.py --annot A.csv B.csv --key key.csv --out results/e6/hand` for P/R/F1, kappa and
+  calibration on real lines. Until then no such number is claimed.
 - **Decisions** logged in `docs/progress.md` ("Open questions"): correlator thresholds as CLI options,
   error-storm defaults, weak rules (bare HTTP 401/403, timeouts) that produce no label alone.
-- **Optional / stretch:** R5 (reproduce the paper's conflict-resolution scoring, ask first), Phase 8 items
-  (Hopcroft minimisation, `--ordered`, ReDoS demo, …) are not started.
+- **Optional / stretch:** R5 (the paper's conflict-resolution scoring; ask first), Phase 8 (Hopcroft
+  minimisation, `--ordered`, latency under paced load E5, ReDoS demo, ...) are not started.
 
-Known limits: DFA start-up is about half a second for 26 rules and grows with the rule set; the DFA engine's
-pipeline throughput is bounded by serial stages; at most 64 rules; IPv4 only for correlation; the DFA
-matches bytes (C locale), not Unicode characters.
+Known limits: DFA start-up is about 0.5 s for 26 rules and 1.8 s for 64; the DFA engine's pipeline throughput is
+bounded by serial stages; at most 64 rules; IPv4 only for correlation; the DFA matches bytes (C locale), not
+Unicode; the rule set has no rules for the AIT attacker requests (recall 0.09 %), and `PWD=` in sudo lines is
+labelled as a secret.
 
 ---
 
