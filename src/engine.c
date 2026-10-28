@@ -61,6 +61,20 @@ void engine_describe(const EnginePrepared *p, char *buf, size_t len)
         snprintf(buf, len, "%s: %d rules", engine_kind_name(p->kind), p->rs->count);
 }
 
+void engine_dfa_info(const EnginePrepared *p, int *nfa_states, int *groups, long long *dfa_states,
+                     double *build_ms)
+{
+    *nfa_states = *groups = 0;
+    *dfa_states = 0;
+    *build_ms = 0;
+    if (p->kind != ENGINE_DFA)
+        return;
+    *nfa_states = p->dfa->nfa_states;
+    *groups = p->dfa->dfas.ngroups;
+    *dfa_states = (long long)p->dfa->dfas.total_states;
+    *build_ms = p->dfa->dfas.build_ms;
+}
+
 void engine_prepared_free(EnginePrepared *p)
 {
     if (!p)

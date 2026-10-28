@@ -7,8 +7,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "aggregate.h"
+#include "bench.h"
 #include "correlate.h"
 #include "dfa.h"
 #include "dispatch.h"
@@ -65,6 +68,7 @@ typedef struct {
     Correlator     *corr;
     Pool            pool;
     Router         *router;
+    BenchHist      *hist;             /* --bench: ingest -> aggregated latency, written by the aggregator */
     Stats           stats;
     atomic_bool     stop;
     int             router_errno;     /* written by the router thread, read after join */
@@ -98,6 +102,13 @@ static void *aggregator_main(void *arg)
                 aggregator_evidence(&p->agg, &res->m[l], &res->ev[l]);
                 aggregator_decide(&p->agg, &res->ev[l], res->m[l].seq,
                                   res->ev[l].kept & ~res->subsumed[l], 0, &res->c[l]);
+            }
+            if (p->hist) {
+                struct timespec ts;
+                clock_gettime(CLOCK_MONOTONIC, &ts);
+                uint64_t now = (uint64_t)ts.tv_sec * 1000000000ull + (uint64_t)ts.tv_nsec;
+                for (uint32_t l = 0; l < job->batch.count; l++)
+                    bench_hist_add(p->hist, now - job->batch.ingest_ns[l]);
             }
             if (!spsc_push(p->to_corr, job, &p->stop))
                 return NULL;
@@ -296,7 +307,8 @@ int pipeline_run(const Options *o)
         fprintf(stderr, "triage: %s\n", err);
         goto done;
     }
-    if (!o->quiet) {
+    const bool quiet = o->quiet || o->bench;           /* --bench prints only its JSON on stdout */
+    if (!quiet) {
         engine_describe(prepared, err, sizeof err);
         fprintf(stderr, "triage: %s\n", err);
     }
@@ -332,12 +344,24 @@ int pipeline_run(const Options *o)
         fprintf(stderr, "triage: out of memory\n");
         goto done;
     }
-    p.router = router_open(o->out_dir, &rs, err, sizeof err);
+    p.router = o->bench ? router_open_null(&rs, err, sizeof err) : router_open(o->out_dir, &rs, err, sizeof err);
     if (!p.router) {
         fprintf(stderr, "triage: %s\n", err);
         goto done;
     }
-    reader = reader_open_path(o->input, 0);
+    BenchHist hist;
+    size_t bench_bytes = 0;
+    if (o->bench) {
+        /* the whole input is read into memory before the clock starts (spec §10.2) */
+        memset(&hist, 0, sizeof hist);
+        p.hist = &hist;
+        int fd = bench_preload(o->input, &bench_bytes);
+        reader = fd < 0 ? NULL : reader_open_fd(fd, true, 0);
+        if (!reader && fd >= 0)
+            close(fd);
+    } else {
+        reader = reader_open_path(o->input, 0);
+    }
     if (!reader) {
         fprintf(stderr, "triage: %s: %s\n", o->input ? o->input : "stdin", strerror(errno));
         goto done;
@@ -360,14 +384,16 @@ int pipeline_run(const Options *o)
     nw_started = start_workers(&p, &trc, err, sizeof err);
     if (nw_started < p.nw)
         goto start_failed;
-    if (!o->quiet)
+    if (!quiet)
         fprintf(stderr, "triage: %s\n", err);
-    if (!o->quiet) {
+    if (!quiet) {
         rep = (StatsReporter){ .stats = &p.stats, .queues = p.in_rings, .nqueues = p.nw,
                                .dropped = &disp.dropped_lines, .out = stderr, .interval_ms = 1000 };
         stats_reporter_start(&rep);
     }
 
+    struct timespec t_start, t_end;
+    clock_gettime(CLOCK_MONOTONIC, &t_start);
     int read_errno = read_and_dispatch(&p, reader, &disp);
     if (read_errno)
         atomic_store_explicit(&p.stop, true, memory_order_release);
@@ -387,6 +413,7 @@ join:
         pthread_join(corr_thread, NULL);
     if (router_started)
         pthread_join(router_thread, NULL);
+    clock_gettime(CLOCK_MONOTONIC, &t_end);
     stats_reporter_stop(&rep);
 
     if (read_errno > 0)
@@ -396,14 +423,23 @@ join:
     if (p.seq_gap)
         fprintf(stderr, "triage: internal error: batches missing at end of input\n");
     for (int i = 0; i < nw_started; i++)
-        if (p.workers[i].pin_failed && !o->quiet)
+        if (p.workers[i].pin_failed && !quiet)
             fprintf(stderr, "triage: warning: could not pin worker %d to CPU %d\n", i, p.workers[i].cpu);
     if (read_errno == 0 && !p.router_errno && !p.seq_gap) {
         uint64_t dropped = atomic_load(&disp.dropped_lines);
         uint64_t esc = 0;
         for (int b = 0; b < 4; b++)
             esc += correlator_count(p.corr, b);
-        if (!o->quiet)
+        if (o->bench) {
+            BenchResult br = { .engine = engine_kind_name(o->engine), .workers = p.nw, .batch = o->batch,
+                               .lines = router_records(p.router), .bytes = bench_bytes,
+                               .seconds = (double)(t_end.tv_sec - t_start.tv_sec) +
+                                          (double)(t_end.tv_nsec - t_start.tv_nsec) / 1e9,
+                               .latency = &hist };
+            engine_dfa_info(prepared, &br.nfa_states, &br.dfa_groups, &br.dfa_states, &br.build_ms);
+            bench_print_json(stdout, &br);
+        }
+        if (!quiet)
             fprintf(stderr, "triage: %llu lines, %llu alerts, %llu PII, %llu escalations, %llu dropped -> %s\n",
                     (unsigned long long)router_records(p.router),
                     (unsigned long long)router_alerts(p.router),

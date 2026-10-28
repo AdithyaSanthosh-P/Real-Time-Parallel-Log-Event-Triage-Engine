@@ -163,12 +163,9 @@ static FILE *open_sink(const char *dir, const char *name, char *err, size_t err_
     return f;
 }
 
-Router *router_open(const char *out_dir, const RuleSet *rs, char *err, size_t err_len)
+static Router *router_create(const char *dir, const char *const names[3], const RuleSet *rs,
+                             char *err, size_t err_len)
 {
-    if (make_dirs(out_dir) != 0) {
-        snprintf(err, err_len, "%s: cannot create output directory: %s", out_dir, strerror(errno));
-        return NULL;
-    }
     Router *r = calloc(1, sizeof *r);
     if (!r) {
         snprintf(err, err_len, "out of memory");
@@ -176,9 +173,9 @@ Router *router_open(const char *out_dir, const RuleSet *rs, char *err, size_t er
     }
     r->rs = rs;
     sb_init(&r->buf);
-    r->alerts = open_sink(out_dir, "alerts.jsonl", err, err_len);
-    r->store = r->alerts ? open_sink(out_dir, "store.jsonl", err, err_len) : NULL;
-    r->pii = r->store ? open_sink(out_dir, "pii_quarantine.jsonl", err, err_len) : NULL;
+    r->alerts = open_sink(dir, names[0], err, err_len);
+    r->store = r->alerts ? open_sink(dir, names[1], err, err_len) : NULL;
+    r->pii = r->store ? open_sink(dir, names[2], err, err_len) : NULL;
     if (!r->alerts || !r->store || !r->pii) {
         if (r->alerts)
             fclose(r->alerts);
@@ -189,6 +186,22 @@ Router *router_open(const char *out_dir, const RuleSet *rs, char *err, size_t er
         return NULL;
     }
     return r;
+}
+
+Router *router_open(const char *out_dir, const RuleSet *rs, char *err, size_t err_len)
+{
+    if (make_dirs(out_dir) != 0) {
+        snprintf(err, err_len, "%s: cannot create output directory: %s", out_dir, strerror(errno));
+        return NULL;
+    }
+    static const char *const names[3] = { "alerts.jsonl", "store.jsonl", "pii_quarantine.jsonl" };
+    return router_create(out_dir, names, rs, err, err_len);
+}
+
+Router *router_open_null(const RuleSet *rs, char *err, size_t err_len)
+{
+    static const char *const names[3] = { "null", "null", "null" };
+    return router_create("/dev", names, rs, err, err_len);
 }
 
 int router_emit(Router *r, const Batch *b, uint32_t i, const Classified *c,

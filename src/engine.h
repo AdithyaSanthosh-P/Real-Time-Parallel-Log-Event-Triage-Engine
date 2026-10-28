@@ -32,6 +32,10 @@ EnginePrepared *engine_prepare(EngineKind kind, const RuleSet *rs, int max_state
 /* One line about what was built, e.g. "dfa: 2 groups, 7593 states, 613.2 ms". */
 void engine_describe(const EnginePrepared *p, char *buf, size_t len);
 
+/* Size of what was built, for --bench: all zero for engines without a DFA. */
+void engine_dfa_info(const EnginePrepared *p, int *nfa_states, int *groups, long long *dfa_states,
+                     double *build_ms);
+
 void engine_prepared_free(EnginePrepared *p);
 
 /* A per-thread matcher. NULL + `err` on failure. */

@@ -173,7 +173,6 @@ static void test_unimplemented(void)
     char err[256];
     static const struct { const char *a, *b; const char *name; } nyi[] = {
         { "--ordered", NULL,      "--ordered" },
-        { "--bench", NULL,        "--bench" },
     };
     for (size_t i = 0; i < sizeof nyi / sizeof nyi[0]; i++) {
         int rc = nyi[i].b ? PARSE(&o, err, "--engine", "posix", nyi[i].a, nyi[i].b)
@@ -199,6 +198,8 @@ static void test_unimplemented(void)
     CHECK_EQ_INT(PARSE(&o, err, "--engine", "posix", "-w", "1", "-b", "8", "--quiet", "x.log"), 0);
     CHECK(cli_unimplemented(&o) == NULL);
     CHECK_EQ_INT(PARSE(&o, err, "--engine", "dfa", "--max-states", "5000", "x.log"), 0);
+    CHECK(cli_unimplemented(&o) == NULL);
+    CHECK_EQ_INT(PARSE(&o, err, "--engine", "fork", "--bench", "x.log"), 0);
     CHECK(cli_unimplemented(&o) == NULL);
 
     /* --help never reports anything */

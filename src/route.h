@@ -42,6 +42,10 @@ bool route_is_alert(const Classified *c);
  * on failure. */
 Router *router_open(const char *out_dir, const RuleSet *rs, char *err, size_t err_len);
 
+/* Like router_open() but the three sinks are /dev/null (--bench): records are
+ * still formatted, only the disk is out of the measurement. */
+Router *router_open_null(const RuleSet *rs, char *err, size_t err_len);
+
 /* Append the JSON record (no trailing newline) for line `i` of `b`. `line`
  * (`line_len` bytes) replaces the raw line as the "line" field when not NULL
  * (the masked text of mask.h). */

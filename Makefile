@@ -39,7 +39,7 @@ endif
 
 CFLAGS  += $(CSTD) $(OPT) $(WARN) -pthread -MMD -MP
 LDFLAGS += $(OPT) -pthread
-LDLIBS  +=
+LDLIBS  += -lm
 
 BUILD   := build/$(VARIANT)
 

@@ -148,4 +148,27 @@ else
     echo "e2e ok   [stats]: $nstats stats lines, e.g. \"$(grep -m1 'lines/s' "$tmp/stats.err")\""
 fi
 
+# --bench: exactly one JSON object on stdout, line count equals the input's, no sink files
+for eng in dfa posix; do
+    out="$tmp/bench_$eng"
+    "$bin" --bench --engine "$eng" -w 2 -o "$out" "$big" > "$tmp/bench.json" 2> "$tmp/bench.err"
+    if ! python3 -I - "$tmp/bench.json" "$(wc -l < "$big")" "$eng" <<'PY'
+import json, sys
+text = open(sys.argv[1]).read()
+r = json.loads(text)                         # one object, nothing else on stdout
+assert text.count("\n") == 1, "more than one line"
+assert r["lines"] == int(sys.argv[2]), (r["lines"], sys.argv[2])
+assert r["engine"] == sys.argv[3] and r["workers"] == 2 and r["lines_per_s"] > 0
+l = r["latency_us"]
+assert 0 < l["p50"] <= l["p90"] <= l["p99"] <= l["p99.9"] <= l["max"], l
+PY
+    then
+        cat "$tmp/bench.json"; echo "e2e FAIL [bench $eng]"; fail=1
+    elif [ -e "$out" ]; then
+        echo "e2e FAIL [bench $eng]: wrote $out"; fail=1
+    else
+        echo "e2e ok   [bench $eng]: $(wc -l < "$big") lines, $(python3 -I -c 'import json,sys;r=json.load(open(sys.argv[1]));print("%d lines/s, p99 %.0f us" % (r["lines_per_s"], r["latency_us"]["p99"]))' "$tmp/bench.json")"
+    fi
+done
+
 exit $fail
