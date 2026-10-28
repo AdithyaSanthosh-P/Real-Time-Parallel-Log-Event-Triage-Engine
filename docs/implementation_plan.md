@@ -137,7 +137,7 @@ Keep them in `tools/basepaper/patterns.h` (one shared definition used by every v
 
 ## Phase 7 — Evaluation (§10)
 
-- [ ] **T7.1 Dataset fetch.** `tools/fetch_datasets.sh` downloads full Loghub OpenSSH, Apache, Linux, BGL (Zenodo links in the Loghub README) and one AIT-LDS v2.0 scenario into `data/` (gitignored); converts AIT JSON labels into the ground-truth format used by `label_eval.py`. Print sizes and checksums.
+- [x] **T7.1 Dataset fetch.** `tools/fetch_datasets.sh` downloads full Loghub OpenSSH, Apache, Linux, BGL (Zenodo links in the Loghub README) and one AIT-LDS v2.0 scenario into `data/` (gitignored); converts AIT JSON labels into the ground-truth format used by `label_eval.py`. Print sizes and checksums.
 - [ ] **T7.2 Labeling helper.** `tools/sample_for_labeling.py` draws a stratified sample (by predicted category + unmatched) into a CSV with empty label columns for two annotators. *Humans do the labeling* — Claude Code only builds the tool.
 - [ ] **T7.3 `tools/label_eval.py`.** Multi-label P/R/F1 per category, confusion matrix, Cohen's κ between annotators, reliability diagram + ECE (§5.4).
   *Done when:* runs on generator ground truth and produces numbers + plots.

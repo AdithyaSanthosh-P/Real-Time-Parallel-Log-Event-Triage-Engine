@@ -2,14 +2,15 @@
 # Download the full Loghub datasets into data/ (gitignored) (plan T7.1, spec §10.1).
 #
 #   tools/fetch_datasets.sh [--force] [openssh apache linux bgl ...]   (default: those four)
-#   tools/fetch_datasets.sh --ait [SCENARIO]                           AIT-LDS v2.0 scenario (large!)
+#   tools/fetch_datasets.sh --ait [SCENARIO]                           AIT-LDS v2.0: labelled web/auth logs
 #
 # Sources (Zenodo record 8196385, linked from the Loghub README):
 #   openssh  SSH.tar.gz      655,146 lines    apache  Apache.tar.gz    56,481 lines
 #   linux    Linux.tar.gz     25,567 lines    bgl     BGL.zip       4,747,963 lines
-# AIT-LDS v2.0 (Zenodo record 5789064) has eight scenarios of 7-27 GB each; --ait downloads one
-# (default russellmitchell, the smallest, 7.1 GB), checks its md5 and extracts only the labelled
-# web/auth logs. Nothing here runs in the tests. Prints size, line count and sha256 of every file.
+# AIT-LDS v2.0 (Zenodo record 5789064) has eight scenarios of 7-27 GB each, mostly packet captures;
+# --ait reads only the labelled Apache and auth logs of one scenario (default russellmitchell) with
+# HTTP range requests (a few MB) and converts the AIT line labels to <log>.truth.tsv (seq, ATTACK|-, labels).
+# Nothing here runs in the tests. Prints size, line count and sha256 of every file.
 # Idempotent: existing files are kept unless --force is given.
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -54,21 +55,8 @@ fetch_loghub() {   # fetch_loghub NAME
     report "$out"
 }
 
-fetch_ait() {
-    local sc="${1:-russellmitchell}" dir="$data/ait"
-    mkdir -p "$dir"
-    local zip="$dir/$sc.zip"
-    local md5
-    md5="$(curl -fsSL "https://zenodo.org/api/records/5789064" | python3 -I -c "
-import json, sys
-for f in json.load(sys.stdin)['files']:
-    if f['key'] == '$sc.zip': print(f['checksum'].split(':')[1])")"
-    [ -n "$md5" ] || { echo "fetch_datasets: unknown AIT scenario '$sc'" >&2; return 1; }
-    echo "fetch  AIT-LDS v2.0 $sc (md5 $md5) ..."
-    curl -fL --retry 3 --retry-delay 5 -C - -o "$zip" "https://zenodo.org/records/5789064/files/$sc.zip?download=1"
-    [ "$(md5sum "$zip" | cut -d' ' -f1)" = "$md5" ] || { echo "fetch_datasets: md5 mismatch for $zip" >&2; return 1; }
-    unzip -q -o "$zip" -d "$dir/$sc"
-    echo "  extracted to $dir/$sc (labels: <scenario>_labels* / gather/*/logs; see the AIT README)"
+fetch_ait() {   # only the labelled web/auth logs, by HTTP range requests (see tools/fetch_ait.py)
+    python3 -I "$root/tools/fetch_ait.py" "${1:-russellmitchell}" --out "$data/ait"
 }
 
 if [ "$ait" -eq 1 ]; then fetch_ait "${want[0]:-}"; exit 0; fi
