@@ -445,6 +445,13 @@ def content():
         (0, f"{kw('for each')} rule <i>r</i>: (<i>s</i><sub>r</sub>, <i>e</i><sub>r</sub>) ← Build(<i>ast</i><sub>r</sub>);"
             f" tag <i>e</i><sub>r</sub> accept(<i>r</i>)"),
         (0, "start ← new state with ε-edges to every <i>s</i><sub>r</sub>")]))
+    s.append(P("Algorithm 2 leaves an NFA in which many states can be active at once: every ε-edge is followed "
+               "without reading a byte, and every byte may lead to several states. Subset construction removes "
+               "this nondeterminism by treating the <i>set</i> of NFA states that can be active together as one "
+               "DFA state. The two operations it needs are the ε-closure of a set (all states reachable through "
+               "ε-edges alone) and <i>move</i> (the states reached from a set by one byte class). A DFA state "
+               "inherits the rule numbers of every accept state it contains, which is how one state can report "
+               "several rules at once.", body0))
     s.append(algorithm("Subset construction with accept masks and grouping", [
         (0, f"{kw('function')} BuildDfa(<i>rules</i>, <i>cap</i>):"),
         (1, "<i>U</i> ← ε-closure of the start states of rules not '^'-anchored"),
@@ -465,6 +472,11 @@ def content():
         (1, kw("if") + " BuildDfa(<i>rules</i>) = TOO_BIG " + kw("then")),
         (2, kw("if") + " |<i>rules</i>| = 1 " + kw("then") + " Error"),
         (2, "BuildAll(first half); BuildAll(second half)")]))
+    s.append(P("The result of Algorithm 3 is a set of flat tables. Each group has a transition table indexed by "
+               "state and byte class, an accept mask per state, and an accept-at-end mask per state for rules that "
+               "end in <tt>$</tt>. The tables are written once and never changed, which is why all worker threads "
+               "can read them without locks. Algorithm 4 shows that matching then reduces to one table lookup and "
+               "one OR per input byte.", body0))
     s.append(algorithm("DFA match loop", [
         (0, f"{kw('function')} Match(<i>line</i>) → mask:"),
         (1, "<i>mask</i> ← 0"),
@@ -502,6 +514,13 @@ def content():
             kw("if") + " <i>x</i> > 9 " + kw("then") + " <i>x</i> ← <i>x</i> − 9"),
         (2, "<i>sum</i> ← <i>sum</i> + <i>x</i>"),
         (1, kw("return") + " <i>sum</i> mod 10 = 0")]))
+    s.append(P("As a worked example, the digits <tt>4111 1111 1111 1111</tt> pass Algorithm 5 (the weighted sum is "
+               "a multiple of 10), whereas <tt>4111 1111 1111 1112</tt> fails it, so the second number never "
+               "becomes a PII label even though both have the shape of a card number. Algorithm 6 then turns the "
+               "surviving rules into labels. For the passing card number on a line containing the word "
+               "<tt>payment</tt>, the card rule scores 0.35 + 0.25 (checksum) + 0.15 (keyword) = 0.75, which is "
+               "above the threshold of 0.5, so the line is labelled PII with confidence 0.75; without the "
+               "checksum or the keyword the score would stay below the threshold.", body0))
     s.append(algorithm("Evidence fusion (aggregator)", [
         (0, f"{kw('function')} Decide(<i>mask</i>, <i>valid</i>, <i>ctx</i>):"),
         (1, kw("for each") + " rule <i>r</i> in <i>mask</i> " + kw("do")),
@@ -768,6 +787,8 @@ def content():
                      si(pt(e2, engine="posix", workers=w)["lines_per_s"]["median"]), f"{sp('posix', w):.2f}"])
     s.append(table("Throughput against worker count (median of 5 runs)", rows,
                    [1.4 * cm, 2.2 * cm, 1.2 * cm, 2.4 * cm, 1.2 * cm], right=(0, 1, 2, 3, 4)))
+    s.append(P("@F:scaling@ shows the same numbers as speed-up: each curve is divided by the throughput of the "
+               "same engine with one worker, so a curve on the dotted diagonal would be perfect scaling.", body0))
     ser = [("POSIX engine", [(w, sp("posix", w)) for w in WS], BLUE, [4, 2]),
            ("DFA engine", [(w, sp("dfa", w)) for w in WS], BLUE, None)]
     s.append(figure(line_chart(ser, COL_W, 98, WS, 8, "workers", "speed-up vs. 1 worker"),
@@ -858,6 +879,8 @@ def content():
                      f"{d_r[n]['dfa_states']:,}", f"{d_r[n]['build_ms']:,.0f}"])
     s.append(table("Rule-count sensitivity (E3)", rows,
                    [0.9 * cm, 1.5 * cm, 1.5 * cm, 1.3 * cm, 1.2 * cm, 1.3 * cm, 1.2 * cm], right=(0, 1, 2, 3, 4, 5, 6)))
+    s.append(P("@F:e3@ plots the throughput columns of @T:e3@ against the number of rules: the POSIX curve falls "
+               "steadily, while the DFA curve stays level until the rule set no longer fits in two DFA groups.", body0))
     ns = [5, 10, 20, 32, 64]
     ser = [("POSIX engine", [(n, p_r[n]["lines_per_s"]["median"] / 1e5) for n in ns], BLUE, [4, 2]),
            ("DFA engine", [(n, d_r[n]["lines_per_s"]["median"] / 1e5) for n in ns], BLUE, None)]
@@ -950,6 +973,10 @@ def content():
     rows.append(["off", f4(pii_off["precision"]), f4(pii_off["recall"]), f"{pii_off['fp']:,.0f}"])
     rows.append(["on", f4(pii_on["precision"]), f4(pii_on["recall"]), f"{pii_on['fp']:,.0f}"])
     s.append(table("Validator effect on PII labels (E7)", rows, [2.0 * cm, 2.2 * cm, 2.0 * cm, 2.0 * cm], right=(1, 2, 3)))
+    s.append(P(f"@T:e7@ shows the controlled comparison: the generated set contains {pii_off['fp']:,.0f} numbers that look "
+               f"like cards or Aadhaar numbers but fail their checksum, and without validators every one of them "
+               f"becomes a false PII label. The same switch applied to the real logs, for which no labels exist, "
+               f"is shown in @T:e7logs@ and counts the lines labelled PII.", body0))
     rows = [["Log", "Lines", "Off", "On"]]
     for k in ("OpenSSH", "Linux", "BGL", "HDFS_2k"):
         v = E7L[k]
@@ -1049,6 +1076,8 @@ def content():
                  f"{b['overall']['label_accuracy']:.3f}"])
     s.append(table("Accuracy on the labelled set", rows,
                    [1.9 * cm, 1.1 * cm, 1.1 * cm, 1.1 * cm, 1.1 * cm, 1.1 * cm, 1.1 * cm], right=(1, 2, 3, 4, 5, 6)))
+    s.append(P("@F:acc@ shows the F1 columns of @T:acc@ side by side for the two pipelines, which makes the effect of "
+               "the paper's input module on each category visible at a glance.", body0))
     f1 = [(c.title(), [a["per_category"][c]["f1"], b["per_category"][c]["f1"]]) for c in cats]
     s.append(figure(vbars(f1, [ORANGE, BLUE], COL_W, 92, 1.0, "F1 score", "{:.2f}",
                           series_names=["existing (input module + regexec)", "proposed (DFA, raw text)"]),
