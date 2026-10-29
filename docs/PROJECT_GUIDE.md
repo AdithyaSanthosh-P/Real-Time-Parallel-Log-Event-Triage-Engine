@@ -217,6 +217,16 @@ Alerts (severity ≥ HIGH) go to `alerts.jsonl`, PII lines (masked) to `pii_quar
 
 ---
 
+## 8b. Live dashboard (Triage Desk)
+
+`make dashboard`, then open http://127.0.0.1:8765/. Live view: strip chart per category, classified lines, alerts and
+escalations, throughput, mix, busiest rules, confidence. Press Start to run a paced source (generated mix or a sample
+log) or write a run yourself into `out/live`: `bin/gen -n 100000 --rate 500 | bin/triage -o out/live -`. Experiments and
+Accuracy views draw the saved runs in `results/`. Light theme by default; Palette button for five palettes. The engine
+flushes its output after every batch when its input is a stream, which is what makes it live. See `tools/dashboard/README.md`.
+
+---
+
 ## 9. Repository map
 
 | Path | Contents |
@@ -227,6 +237,7 @@ Alerts (severity ≥ HIGH) go to `alerts.jsonl`, PII lines (masked) to `pii_quar
 | `tools/` | `gen.c` (synthetic generator + ground truth), `difftest.c`, `run_bench.sh`, `run_eval.sh`, `plot.py`, `label_eval.py`, `sample_for_labeling.py`, `fetch_*`, `compare_runs.sh`, `demo.sh`, `basepaper/` (Phase R), `report/` (report generators). |
 | `data/` | Full datasets (gitignored; `tools/fetch_datasets.sh`). |
 | `results/` | Saved measurements: `basepaper/`, `milestone1/`–`milestone3/`, `e1`–`e4`, `e6`, `e7`, `figures/`, `SUMMARY.md`. |
+| `tools/dashboard/` | Triage Desk, the live dashboard (`make dashboard`): `server.py`, `static/`, README. |
 | `docs/` | `project_design.md` (spec), `implementation_plan.md`, `progress.md`, reports (PDF), `demo_guide.md`, this file. |
 
 ---

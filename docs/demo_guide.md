@@ -18,6 +18,12 @@ Not part of the demo, but the evidence behind it: `make test` (19 test programs)
 (0 mismatches against glibc), `make e2e`, `make compare` (72 runs), and the same under
 `make SAN=thread` / `make SAN=address`.
 
+## Live dashboard (optional, after the steps)
+
+`make dashboard`, open http://127.0.0.1:8765/, choose "OpenSSH sample" and press Start: the strip chart slides, the feed fills,
+and the brute-force and password-spray alerts appear after a few seconds. The Experiments and Accuracy tabs show the saved
+results as charts. The Palette button changes the colour scheme (light by default). Do one dry run first and close other programs.
+
 ## What each step shows and what the output means
 
 **0. Status.** Reads `docs/implementation_plan.md` and counts the required tasks that are ticked: 41 of 41.
