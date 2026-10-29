@@ -14,6 +14,7 @@
     <button role="tab" aria-selected="false" data-view="exp">Experiments</button>
     <button role="tab" aria-selected="false" data-view="acc">Accuracy</button>
   </nav>
+  <span class="spacer"></span>
   <div class="controls" id="controls">
     <label>Source <select id="src"></select></label>
     <label>Rate <input id="rate" type="range" min="0" max="100" value="50" aria-label="Lines per second">
@@ -21,6 +22,10 @@
     <button class="btn" id="startBtn">Start</button>
     <button class="btn ghost" id="stopBtn" disabled>Stop</button>
     <span class="status" id="status"><i class="dot"></i><span id="statusTxt">Waiting for output</span></span>
+  </div>
+  <div class="palette">
+    <button class="btn ghost" id="palBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="palPanel">Palette</button>
+    <div class="pop" id="palPanel" role="dialog" aria-label="Colour palette" aria-hidden="true"></div>
   </div>
 </header>
 
@@ -53,7 +58,7 @@
   </div>
 
   <div class="grid g3">
-    <section class="card"><header><h2>Throughput</h2><span>lines per second</span></header><div id="thrChart"></div></section>
+    <section class="card"><header><h2>Throughput</h2><span>lines per second</span></header><canvas id="thrCanvas" role="img" aria-label="Lines per second over the last three minutes"></canvas></section>
     <section class="card"><header><h2>Category mix</h2><span>primary label, since start</span></header><div id="mixChart"></div></section>
     <section class="card"><header><h2>Busiest rules</h2><span>lines matched</span></header><div id="ruleChart"></div></section>
     <section class="card"><header><h2>Confidence</h2><span>primary label, 10 bins</span></header><div id="confChart"></div>

@@ -171,7 +171,7 @@ class State:
             recent = sum(x[1] for x in secs[-4:-1]) / 3.0
             running = self.proc is not None and self.proc.poll() is None
             return {
-                "now": now, "running": running, "run": self.run, "out": os.path.relpath(self.dir, ROOT),
+                "now": now, "now_f": time.time(), "running": running, "run": self.run, "out": os.path.relpath(self.dir, ROOT),
                 "idle_s": None if self.last_at is None else round(time.time() - self.last_at, 1),
                 "total": self.total, "rate": round(recent, 1), "alerts": self.alerts_n, "pii": self.pii_n,
                 "cat": {c: self.cat.get(c, 0) for c in CATS}, "label": {c: self.label.get(c, 0) for c in CATS},

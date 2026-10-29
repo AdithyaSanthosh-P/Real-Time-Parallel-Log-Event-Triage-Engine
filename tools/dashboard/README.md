@@ -21,3 +21,9 @@ live; a run from a file is written in large blocks and shows up in bursts.
 
 **Experiments** and **Accuracy** draw the saved runs under `results/` (E1–E4, the base-paper runs, E6, E7, the AIT-LDS
 and AI-annotator checks); nothing there is computed by the page. Links: `/?tab=exp`, `/?tab=acc`.
+
+**Look and motion.** The default is a light theme (the professor asked for light). The *Palette* button opens five options
+(Harbour, Colour-blind safe, Dusk, Moss and graphite, Black and white), each in light and dark; the choice is remembered.
+The strip chart and the throughput line are drawn against the clock, so they slide continuously between the one-second
+updates; counters ease to their new values; the feed adds only new lines; bars glide; views fade when you switch.
+`prefers-reduced-motion` turns all of it off. URL options: `?theme=dusk&mode=dark`, `?tab=exp`, `?panel=1`, `?still=1`.
