@@ -235,6 +235,13 @@ uint64_t router_records(const Router *r) { return r->n_records; }
 uint64_t router_alerts(const Router *r)  { return r->n_alerts; }
 uint64_t router_quarantined(const Router *r) { return r->n_pii; }
 
+int router_flush(Router *r)
+{
+    if (fflush(r->alerts) != 0 || fflush(r->store) != 0 || fflush(r->pii) != 0)
+        r->failed = true;
+    return r->failed ? -1 : 0;
+}
+
 int router_close(Router *r)
 {
     if (!r)

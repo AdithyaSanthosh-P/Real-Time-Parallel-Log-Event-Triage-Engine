@@ -68,6 +68,7 @@ typedef struct {
     Correlator     *corr;
     Pool            pool;
     Router         *router;
+    bool            live;             /* input is a stream (stdin): flush the sinks after every batch */
     BenchHist      *hist;             /* --bench: ingest -> aggregated latency, written by the aggregator */
     Stats           stats;
     atomic_bool     stop;
@@ -219,6 +220,11 @@ static void *router_main(void *arg)
             }
             stats_count_line(&p->stats, res->c[i].label_mask);
         }
+        if (p->live && router_flush(p->router) != 0) {
+            p->router_errno = errno ? errno : EIO;
+            atomic_store_explicit(&p->stop, true, memory_order_release);
+            return NULL;
+        }
         /* the free ring holds every job, so this never waits */
         spsc_push(p->pool.free_ring, job, &p->stop);
     }
@@ -349,6 +355,7 @@ int pipeline_run(const Options *o)
         fprintf(stderr, "triage: %s\n", err);
         goto done;
     }
+    p.live = !o->bench && (!o->input || strcmp(o->input, "-") == 0);
     BenchHist hist;
     size_t bench_bytes = 0;
     if (o->bench) {

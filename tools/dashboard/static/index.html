@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Triage Desk</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <div class="brand"><h1>Triage Desk</h1><small>Real-time log triage engine</small></div>
+  <nav role="tablist" aria-label="Views">
+    <button role="tab" aria-selected="true" data-view="live">Live</button>
+    <button role="tab" aria-selected="false" data-view="exp">Experiments</button>
+    <button role="tab" aria-selected="false" data-view="acc">Accuracy</button>
+  </nav>
+  <div class="controls" id="controls">
+    <label>Source <select id="src"></select></label>
+    <label>Rate <input id="rate" type="range" min="0" max="100" value="50" aria-label="Lines per second">
+      <output id="rateOut" class="num" style="min-width:6.5em">400 lines/s</output></label>
+    <button class="btn" id="startBtn">Start</button>
+    <button class="btn ghost" id="stopBtn" disabled>Stop</button>
+    <span class="status" id="status"><i class="dot"></i><span id="statusTxt">Waiting for output</span></span>
+  </div>
+</header>
+
+<main>
+<!-- ============ LIVE ============ -->
+<div class="view" id="v-live">
+  <dl class="ledger">
+    <div><dt>Lines classified</dt><dd id="kTotal" class="num">0</dd></div>
+    <div><dt>Rate, last 3 s</dt><dd id="kRate" class="num">0<small>lines/s</small></dd></div>
+    <div><dt>Alerts (high or critical)</dt><dd id="kAlerts" class="num">0</dd></div>
+    <div><dt>Escalations</dt><dd id="kEsc" class="num">0</dd></div>
+    <div><dt>PII quarantined</dt><dd id="kPii" class="num">0</dd></div>
+  </dl>
+
+  <section class="card" style="margin-bottom:16px">
+    <header><h2>Strip chart</h2><span>Last 3 minutes, one tick per second. Height is lines labelled in that second; darker is a worse severity.</span></header>
+    <div class="rails" id="rails"></div>
+    <div class="axis"><span></span><div><span>3 min ago</span><span>2 min</span><span>1 min</span><span>now</span></div></div>
+    <div class="legend-sev" id="sevLegend"></div>
+  </section>
+
+  <div class="grid g-feed">
+    <section class="card"><header><h2>Classified lines</h2><span id="feedNote">Labelled lines, newest first</span></header>
+      <ul class="feed" id="feed" aria-live="off"></ul></section>
+    <div style="display:grid;gap:16px;align-content:start">
+      <section class="card"><header><h2>Alerts and escalations</h2><span id="escNote"></span></header>
+        <ul class="feed" id="alertFeed" style="max-height:250px"></ul></section>
+      <section class="card"><header><h2>Severity</h2></header><div id="sevChart"></div></section>
+    </div>
+  </div>
+
+  <div class="grid g3">
+    <section class="card"><header><h2>Throughput</h2><span>lines per second</span></header><div id="thrChart"></div></section>
+    <section class="card"><header><h2>Category mix</h2><span>primary label, since start</span></header><div id="mixChart"></div></section>
+    <section class="card"><header><h2>Busiest rules</h2><span>lines matched</span></header><div id="ruleChart"></div></section>
+    <section class="card"><header><h2>Confidence</h2><span>primary label, 10 bins</span></header><div id="confChart"></div>
+      <p class="note">Noisy-OR of rule scores: 0.35 weak, 0.6 strong, +0.25 checksum passed, +0.15 keyword.</p></section>
+  </div>
+</div>
+</div>
+
+<!-- ============ EXPERIMENTS ============ -->
+<div class="view" id="v-exp" hidden>
+  <p class="note" id="machineNote" style="margin:0 0 14px"></p>
+  <div class="grid g2">
+    <section class="card"><header><h2>Architecture comparison</h2><span>E1, lines per second, log scale</span></header><div id="e1"></div>
+      <p class="note">The base paper's design, run on our 26 rules, is far below even a sequential loop over the C library.</p></section>
+    <section class="card"><header><h2>Scaling with workers</h2><span>E2, lines per second</span></header><div id="e2"></div><div class="key" id="e2k"></div>
+      <p class="note">The library engine scales; the DFA engine is already near a million lines per second on one worker, so the single-threaded stages around it limit the pipeline.</p></section>
+    <section class="card"><header><h2>Rule-count sensitivity</h2><span>E3, one worker</span></header><div id="e3"></div><div class="key" id="e3k"></div>
+      <p class="note">The DFA stays level while the rule set fits in two groups; the 64-rule set needs seven groups, and the line is scanned once per group.</p></section>
+    <section class="card"><header><h2>DFA size and build time</h2><span>E3</span></header><div id="e3s"></div></section>
+    <section class="card"><header><h2>Batch size</h2><span>E4, dfa, 4 workers</span></header><div id="e4"></div><div class="key" id="e4k"></div></section>
+    <section class="card"><header><h2>Base paper: batch size</h2><span>five patterns, inputs per second, log scale</span></header><div id="rb2"></div><div class="key" id="rb2k"></div></section>
+    <section class="card"><header><h2>Base paper: core scaling</h2><span>speed-up against the same design on one core</span></header><div id="rb3"></div><div class="key" id="rb3k"></div>
+      <p class="note">The paper reports 5.62× at eight cores. Splitting the inputs across threads scales; one process per pattern does not.</p></section>
+  </div>
+</div>
+
+<!-- ============ ACCURACY ============ -->
+<div class="view" id="v-acc" hidden>
+  <p class="warn"><b>Read these as three different kinds of evidence.</b> Generated truth checks consistency (the generator and the rules were written together). The 100 AI-labelled real lines are an interim check, not human ground truth. The AIT logs are real, attack-labelled data the rules were not written for.</p>
+  <div class="grid g2">
+    <section class="card"><header><h2>Generated ground truth</h2><span id="e6n"></span></header><div id="e6"></div><div class="key" id="e6k"></div></section>
+    <section class="card"><header><h2>Validators</h2><span>PII precision, look-alike numbers on and off</span></header><div id="e7"></div>
+      <div id="e7t"></div></section>
+    <section class="card"><header><h2>Real lines, labelled by an AI annotator</h2><span>100 lines, strata weighted</span></header><div id="ai"></div><div class="key" id="aik"></div>
+      <p class="note">Failed-login precision is perfect but recall is lower; sshd <i>error:</i> lines are missed by the ERROR rule; all-zero memory addresses pass the card checksum.</p></section>
+    <section class="card"><header><h2>AIT-LDS attack labels</h2><span>recall by log</span></header><div id="ait"></div>
+      <p class="note">The rules have no rule for most of the attacker's requests. What is flagged is correct (no false alarms).</p></section>
+    <section class="card"><header><h2>Full Loghub logs</h2><span>primary label counts, no ground truth</span></header><div id="loghub"></div></section>
+  </div>
+</div>
+</main>
+<!--BOOT-->
+<script src="/app.js"></script>
+</body>
+</html>

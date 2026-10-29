@@ -58,6 +58,11 @@ void route_format(const RuleSet *rs, const Batch *b, uint32_t i, const Classifie
 int router_emit(Router *r, const Batch *b, uint32_t i, const Classified *c,
                 const char *line, size_t line_len);
 
+/* Push buffered records out to the files (used for a live stream, so a reader of the files sees new
+ * records within one batch instead of when the 1 MiB buffers fill). Returns 0, or -1 on a write error
+ * (sticky, like router_emit). */
+int router_flush(Router *r);
+
 uint64_t router_records(const Router *r);   /* lines written to store.jsonl */
 uint64_t router_alerts(const Router *r);    /* lines written to alerts.jsonl */
 uint64_t router_quarantined(const Router *r); /* lines written to pii_quarantine.jsonl */
